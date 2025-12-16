@@ -31,3 +31,61 @@
     <%= link_to "Log in to subscribe", login_path, class: "btn" %>
   <% end %>
 <% end %>
+
+<div class="section" style="margin-top: 24px;">
+  <h2>Comments</h2>
+
+  <% if @root_comments.any? %>
+    <div class="stack">
+      <% @root_comments.each do |comment| %>
+        <div class="card" id="comment-<%= comment.id %>">
+          <p><strong>Student comment</strong> by <%= comment.user.email %></p>
+          <p><%= comment.body %></p>
+
+          <% if comment.replies.any? %>
+            <div class="stack" style="margin-left: 16px; margin-top: 8px;">
+              <% comment.replies.each do |reply| %>
+                <div class="card" style="background: #f7f7f9;">
+                  <p><strong>Coach reply</strong> by <%= reply.user.email %></p>
+                  <p><%= reply.body %></p>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+
+          <% if @can_reply %>
+            <%= form_with model: [@lesson, Comment.new], local: true do |f| %>
+              <%= f.hidden_field :parent_id, value: comment.id %>
+              <div>
+                <%= f.label :body, "Reply" %><br>
+                <%= f.text_area :body, rows: 2, required: true %>
+              </div>
+              <div>
+                <%= f.submit "Reply", class: "btn secondary" %>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="muted">No comments yet.</p>
+  <% end %>
+
+  <% if @can_comment %>
+    <div class="card" style="margin-top: 12px;">
+      <h3>Leave a comment</h3>
+      <%= form_with model: [@lesson, Comment.new], local: true do |f| %>
+        <div>
+          <%= f.label :body, "Your comment" %><br>
+          <%= f.text_area :body, rows: 3, required: true %>
+        </div>
+        <div>
+          <%= f.submit "Post comment", class: "btn" %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="muted">You must be subscribed to comment on this lesson.</p>
+  <% end %>
+</div>

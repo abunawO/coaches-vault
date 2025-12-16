@@ -1,6 +1,8 @@
 class Lesson < ApplicationRecord
   belongs_to :coach, class_name: "User"
 
+  has_many :comments, dependent: :destroy
+
   validates :title, presence: true
   validates :video_url, presence: true
 

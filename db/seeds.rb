@@ -62,6 +62,17 @@ end
   sub.save!
 end
 
+first_lesson = coach1.lessons.first
+if first_lesson
+  student_comment = Comment.find_or_create_by!(lesson: first_lesson, user: student1, parent_id: nil) do |comment|
+    comment.body = "Great lesson! The angle breakdown was super helpful."
+  end
+
+  Comment.find_or_create_by!(lesson: first_lesson, user: coach1, parent: student_comment) do |reply|
+    reply.body = "Glad it helped! Drill the entries slowly first."
+  end
+end
+
 seeded_coaches = [coach1, coach2].map(&:email)
 seeded_students = [student1, student2].map(&:email)
 seeded_lessons = Lesson.count

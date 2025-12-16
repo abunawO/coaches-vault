@@ -22,6 +22,9 @@ class LessonsController < ApplicationController
 
   def show
     @authorized ||= false
+    @root_comments = @lesson.comments.includes(:user, replies: :user).where(parent_id: nil)
+    @can_comment = current_user&.student? && current_user.subscribed_to?(@lesson.coach)
+    @can_reply = current_user&.coach? && current_user.id == @lesson.coach_id
   end
 
   private

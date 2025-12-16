@@ -35,4 +35,11 @@ Rails.application.routes.draw do
   get "/favorites", to: "favorites#index"
 
   get "/search", to: "search#index", as: :search
+
+  resources :lessons, only: [] do
+    resources :comments, only: [:create]
+  end
+
+  get "/notifications", to: "notifications#index", as: :notifications
+  post "/notifications/mark_all_read", to: "notifications#mark_all_read", as: :mark_all_notifications_read
 end

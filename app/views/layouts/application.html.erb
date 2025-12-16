@@ -34,6 +34,9 @@
           <%= link_to "Subscriptions", subscriptions_path, class: nav_link_class(subscriptions_path) %>
           <%= link_to "Favorites", favorites_path, class: nav_link_class(favorites_path) %>
         <% end %>
+        <% if logged_in? %>
+          <%= link_to "Notifications#{current_user.unread_notifications_count.positive? ? " (#{current_user.unread_notifications_count})" : ""}", notifications_path, class: nav_link_class(notifications_path) %>
+        <% end %>
       </div>
       <div class="nav-right">
         <% if logged_in? %>

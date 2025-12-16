@@ -4,6 +4,8 @@ class User < ApplicationRecord
   has_many :lessons, foreign_key: :coach_id, dependent: :destroy
   has_many :favorites, foreign_key: :student_id, dependent: :destroy
   has_many :favorite_lessons, through: :favorites, source: :lesson
+  has_many :comments, dependent: :destroy
+  has_many :notifications, foreign_key: :recipient_id, dependent: :destroy
 
   VALID_ROLES = %w[coach student].freeze
 
@@ -42,5 +44,13 @@ class User < ApplicationRecord
     return false unless student?
 
     favorite_lessons.exists?(lesson.id)
+  end
+
+  def unread_notifications
+    notifications.where(read_at: nil)
+  end
+
+  def unread_notifications_count
+    unread_notifications.count
   end
 end
