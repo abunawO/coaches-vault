@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_15_153251) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_16_175000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -23,6 +23,18 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_15_153251) do
     t.bigint "user_id", null: false
     t.index ["slug"], name: "index_coach_profiles_on_slug", unique: true
     t.index ["user_id"], name: "index_coach_profiles_on_user_id", unique: true
+  end
+
+  create_table "comments", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.bigint "lesson_id", null: false
+    t.integer "parent_id"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["lesson_id"], name: "index_comments_on_lesson_id"
+    t.index ["parent_id"], name: "index_comments_on_parent_id"
+    t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
   create_table "favorites", force: :cascade do |t|
@@ -43,6 +55,21 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_15_153251) do
     t.datetime "updated_at", null: false
     t.string "video_url", null: false
     t.index ["coach_id"], name: "index_lessons_on_coach_id"
+  end
+
+  create_table "notifications", force: :cascade do |t|
+    t.bigint "actor_id"
+    t.datetime "created_at", null: false
+    t.string "message", null: false
+    t.integer "notifiable_id", null: false
+    t.string "notifiable_type", null: false
+    t.datetime "read_at"
+    t.bigint "recipient_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["actor_id"], name: "index_notifications_on_actor_id"
+    t.index ["notifiable_type", "notifiable_id"], name: "index_notifications_on_notifiable_type_and_notifiable_id"
+    t.index ["read_at"], name: "index_notifications_on_read_at"
+    t.index ["recipient_id"], name: "index_notifications_on_recipient_id"
   end
 
   create_table "subscriptions", force: :cascade do |t|
@@ -69,9 +96,13 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_15_153251) do
   end
 
   add_foreign_key "coach_profiles", "users"
+  add_foreign_key "comments", "lessons"
+  add_foreign_key "comments", "users"
   add_foreign_key "favorites", "lessons"
   add_foreign_key "favorites", "users", column: "student_id"
   add_foreign_key "lessons", "users", column: "coach_id"
+  add_foreign_key "notifications", "users", column: "actor_id"
+  add_foreign_key "notifications", "users", column: "recipient_id"
   add_foreign_key "subscriptions", "users", column: "coach_id"
   add_foreign_key "subscriptions", "users", column: "student_id"
 end

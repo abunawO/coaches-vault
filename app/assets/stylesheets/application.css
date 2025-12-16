@@ -293,6 +293,10 @@ a:hover {
   color: #6b7280;
 }
 
+.notification-unread {
+  background: #f0f4ff;
+}
+
 .btn {
   display: inline-block;
   padding: 8px 12px;
