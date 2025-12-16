@@ -1,0 +1,95 @@
+<div class="container">
+  <header class="page-header search-header">
+    <div>
+      <p class="muted">Search</p>
+      <h1>Find coaches and lessons</h1>
+    </div>
+  </header>
+
+  <div class="search-bar">
+    <%= form_with url: search_path, method: :get, local: true do |form| %>
+      <%= form.text_field :q, value: @query, placeholder: "Search lessons, coaches, techniques…", class: "search-input", autofocus: true %>
+      <%= form.submit "Search", class: "btn" %>
+    <% end %>
+  </div>
+
+  <% if @query.blank? %>
+    <div class="card empty-state">
+      <p>Start searching across all coaches’ vaults.</p>
+      <p class="muted">Try: guard · angles · front headlock · void</p>
+    </div>
+  <% elsif @lesson_results.empty? && @coach_results.empty? %>
+    <div class="card empty-state">
+      <p>No results found for “<%= @query %>”.</p>
+      <p class="muted">Try simplifying your search or checking spelling.</p>
+    </div>
+  <% else %>
+    <% if @lesson_results.any? %>
+      <section class="section">
+        <h2>Lessons</h2>
+        <div class="card-grid">
+          <% @lesson_results.each do |lesson| %>
+            <% coach_profile = lesson.coach&.coach_profile %>
+            <% coach_name = coach_profile&.display_name || lesson.coach&.email || "Coach" %>
+            <% unlocked = if current_user&.coach? && lesson.coach_id == current_user.id
+                            true
+                          elsif current_user&.student?
+                            @subscription_coach_ids.include?(lesson.coach_id)
+                          else
+                            false
+                          end %>
+            <% open_path = if coach_profile&.slug && lesson.respond_to?(:slug) && lesson.try(:slug).present?
+                             public_coach_lesson_path(coach_profile.slug, lesson.slug)
+                           elsif coach_profile&.slug
+                             public_coach_lesson_path(coach_profile.slug, lesson)
+                           else
+                             lesson_path(lesson)
+                           end %>
+            <% locked_path = coach_profile&.slug ? coach_path(coach_profile.slug) : coaches_path %>
+            <%= render "shared/lesson_card",
+                       lesson: lesson,
+                       locked: !unlocked,
+                       coach_display_name: coach_name,
+                       open_path: open_path,
+                       locked_path: locked_path %>
+          <% end %>
+        </div>
+      </section>
+    <% end %>
+
+    <% if @coach_results.any? %>
+      <section class="section">
+        <h2>Coaches</h2>
+        <div class="card-grid">
+          <% @coach_results.each do |coach_profile| %>
+            <% coach = coach_profile.user %>
+            <% coach_user_id = coach&.id %>
+            <% subscribed = current_user&.student? && coach_user_id.present? && @subscription_coach_ids.include?(coach_user_id) %>
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title"><%= coach_profile.display_name %></h3>
+                  <p class="muted"><%= truncate(coach_profile.bio, length: 140) %></p>
+                </div>
+              </div>
+              <div class="card-actions">
+                <%= link_to "View coach", coach_path(coach_profile.slug), class: "btn" %>
+                <%= link_to "View lessons", public_coach_lessons_path(coach_profile.slug), class: "btn secondary" %>
+                <% if !logged_in? %>
+                  <%= link_to "Log in to subscribe", login_path, class: "btn secondary" %>
+                <% elsif current_user.student? %>
+                  <% if subscribed %>
+                    <span class="badge badge-open">Subscribed</span>
+                    <%= link_to "Manage subscription", subscriptions_path, class: "btn secondary" %>
+                  <% else %>
+                    <%= link_to "Subscribe", coach_path(coach_profile.slug), class: "btn" %>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </section>
+    <% end %>
+  <% end %>
+</div>

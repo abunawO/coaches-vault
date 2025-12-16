@@ -1,0 +1,33 @@
+<h1><%= @lesson.title %></h1>
+
+<% if current_user&.student? %>
+  <% favorited = Favorite.exists?(student_id: current_user.id, lesson_id: @lesson.id) %>
+  <% if favorited %>
+    <%= button_to "Unfavorite", unfavorite_lesson_path(@lesson), method: :delete, class: "btn secondary" %>
+  <% else %>
+    <%= button_to "Favorite", favorite_lesson_path(@lesson), method: :post, class: "btn" %>
+  <% end %>
+<% end %>
+
+<p><%= @lesson.description %></p>
+
+<% if @authorized %>
+  <% if @lesson.video_url&.include?("youtube") || @lesson.video_url&.include?("youtu.be") %>
+    <div class="video-embed">
+      <iframe width="560" height="315" src="<%= @lesson.video_url.sub("watch?v=", "embed/") %>" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+  <% elsif @lesson.video_url&.include?("vimeo") %>
+    <div class="video-embed">
+      <iframe src="<%= @lesson.video_url.sub("vimeo.com/", "player.vimeo.com/video/") %>" width="640" height="360" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+    </div>
+  <% else %>
+    <%= link_to "Watch video", @lesson.video_url, class: "btn", target: "_blank", rel: "noopener" %>
+  <% end %>
+<% else %>
+  <p>Subscribe to unlock this lesson.</p>
+  <% if logged_in? && current_user.student? %>
+    <%= button_to "Subscribe", coach_subscription_path(@lesson.coach), method: :post, class: "btn" %>
+  <% else %>
+    <%= link_to "Log in to subscribe", login_path, class: "btn" %>
+  <% end %>
+<% end %>

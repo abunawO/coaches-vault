@@ -24,6 +24,33 @@
   </head>
 
   <body>
-    <%= yield %>
+    <header class="nav">
+      <div class="nav-left">
+        <%= link_to "Coaches", coaches_path, class: nav_link_class(coaches_path) %>
+        <%= link_to "Lessons", lessons_path, class: nav_link_class(lessons_path) %>
+        <%= link_to "Dashboard", root_path, class: nav_link_class(root_path) %>
+        <%= link_to "Search", search_path, class: nav_link_class(search_path) %>
+        <% if logged_in? && current_user.student? %>
+          <%= link_to "Subscriptions", subscriptions_path, class: nav_link_class(subscriptions_path) %>
+          <%= link_to "Favorites", favorites_path, class: nav_link_class(favorites_path) %>
+        <% end %>
+      </div>
+      <div class="nav-right">
+        <% if logged_in? %>
+          <span>Logged in as <%= current_user.email %> (<%= current_user.role %>)</span>
+          <%= button_to "Logout", logout_path, method: :delete, form: { class: "inline-form" } %>
+        <% else %>
+          <%= link_to "Login", login_path %>
+        <% end %>
+      </div>
+    </header>
+
+    <% flash.each do |type, message| %>
+      <div class="flash flash-<%= type %>"><%= message %></div>
+    <% end %>
+
+    <main class="page">
+      <%= yield %>
+    </main>
   </body>
 </html>

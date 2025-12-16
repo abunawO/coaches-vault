@@ -1,0 +1,114 @@
+<div class="container">
+  <% if current_user.coach? %>
+    <header class="page-header">
+      <div>
+        <p class="muted">Coach Dashboard</p>
+        <h1><%= current_user.coach_profile&.display_name || current_user.email %></h1>
+      </div>
+      <div class="actions-row">
+        <%= link_to "Create new lesson", new_coach_lesson_path, class: "btn" %>
+      </div>
+    </header>
+
+    <div class="pills">
+      <span class="pill">Your lessons: <%= @lesson_count || 0 %></span>
+    </div>
+
+    <section class="section">
+      <div class="section-header">
+        <h2>Recent lessons</h2>
+      </div>
+      <% if @recent_lessons.present? %>
+        <div class="grid">
+          <% @recent_lessons.each do |lesson| %>
+            <div class="card">
+              <h3 class="card-title"><%= lesson.title %></h3>
+              <% if lesson.description.present? %>
+                <p class="muted"><%= truncate(lesson.description, length: 140) %></p>
+              <% end %>
+              <div class="card-actions">
+                <%= link_to "View", lesson_path(lesson), class: "btn secondary" %>
+                <%= link_to "Edit", edit_coach_lesson_path(lesson), class: "btn secondary" %>
+                <%= button_to "Delete", coach_lesson_path(lesson), method: :delete, form: { data: { turbo_confirm: "Delete this lesson?" } }, class: "btn secondary" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="card">
+          <p>No lessons yet.</p>
+          <div class="card-actions">
+            <%= link_to "Create your first lesson", new_coach_lesson_path, class: "btn" %>
+          </div>
+        </div>
+      <% end %>
+    </section>
+
+  <% else %>
+    <header class="page-header">
+      <div>
+        <p class="muted">Dashboard</p>
+        <h1>Welcome, <%= current_user.email %></h1>
+      </div>
+      <%= link_to "Refresh", root_path, class: "btn secondary" %>
+    </header>
+
+    <div class="pills">
+      <span class="pill"><%= current_user.role.capitalize %></span>
+      <% if current_user.student? %>
+        <span class="pill">Subscriptions: <%= @subscription_count || 0 %></span>
+      <% end %>
+    </div>
+
+    <section class="section">
+      <div class="section-header">
+        <div>
+          <p class="muted">Explore Vaults</p>
+          <h2>Featured lessons</h2>
+        </div>
+      </div>
+
+      <div class="card-grid">
+        <% @vault_lessons.each do |lesson| %>
+          <% coach_profile = lesson.coach&.coach_profile %>
+          <% coach_name = coach_profile&.display_name || lesson.coach&.email || "Coach" %>
+          <% locked = current_user.coach? ? lesson.coach_id != current_user.id : !@subscription_coach_ids.include?(lesson.coach_id) %>
+          <% open_path = if coach_profile&.slug && lesson.respond_to?(:slug) && lesson.slug.present?
+                           public_coach_lesson_path(coach_profile.slug, lesson.slug)
+                         elsif coach_profile&.slug
+                           public_coach_lesson_path(coach_profile.slug, lesson)
+                         else
+                           lesson_path(lesson)
+                         end %>
+          <% locked_path = coach_profile&.slug ? coach_path(coach_profile.slug) : coaches_path %>
+          <%= render "shared/lesson_card",
+                     lesson: lesson,
+                     locked: locked,
+                     coach_display_name: coach_name,
+                     open_path: open_path,
+                     locked_path: locked_path %>
+        <% end %>
+      </div>
+    </section>
+
+    <% if Rails.env.development? %>
+      <details class="testing-panel">
+        <summary>Testing</summary>
+        <ul>
+          <li><%= link_to "Coaches index", coaches_path %></li>
+          <% if current_user.coach? %>
+            <li><%= link_to "Your lessons (admin)", coach_lessons_path %></li>
+            <% if current_user.coach_profile.present? %>
+              <li><%= link_to "Your public lessons", public_coach_lessons_path(current_user.coach_profile.slug) %></li>
+            <% end %>
+          <% elsif current_user.student? %>
+            <li><%= link_to "Lessons", lessons_path %></li>
+            <li><%= link_to "Coach Test lessons", public_coach_lessons_path("coach-test") %></li>
+          <% end %>
+          <li>Coach: coach@test.com / password</li>
+          <li>Student: student@test.com / password</li>
+        </ul>
+      </details>
+    <% end %>
+  <% end %>
+</div>

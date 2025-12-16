@@ -1,0 +1,19 @@
+<div class="container">
+  <div class="page-header">
+    <h1>Coaches</h1>
+  </div>
+
+  <div class="grid">
+    <% @coach_profiles.each do |profile| %>
+      <div class="card">
+        <strong><%= profile.display_name %></strong>
+        <% if profile.bio.present? %>
+          <p class="muted"><%= truncate(profile.bio, length: 140) %></p>
+        <% end %>
+        <div class="card-actions">
+          <%= link_to "View profile", coach_path(profile.slug), class: "btn secondary" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,49 @@
+<div class="container">
+  <div class="page-header">
+    <div>
+      <h1>
+        <% if current_user&.coach? %>
+          My Lessons
+        <% elsif @coach %>
+          Lessons by <%= @coach_profile.display_name %>
+        <% else %>
+          Lessons
+        <% end %>
+      </h1>
+    </div>
+    <% if current_user&.coach? %>
+      <div class="actions-row">
+        <%= link_to "Create lesson", new_coach_lesson_path, class: "btn" %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="grid">
+    <% @lessons.each do |lesson| %>
+      <div class="card">
+        <h3 class="card-title"><%= lesson.title %></h3>
+        <% if lesson.description.present? %>
+          <p class="muted"><%= truncate(lesson.description, length: 140) %></p>
+        <% end %>
+        <% if current_user&.coach? %>
+          <div class="card-actions">
+            <%= link_to "View", lesson_path(lesson), class: "btn secondary" %>
+            <%= link_to "Edit", edit_coach_lesson_path(lesson), class: "btn secondary" %>
+            <%= button_to "Delete", coach_lesson_path(lesson), method: :delete, form: { data: { turbo_confirm: "Delete this lesson?" } }, class: "btn secondary" %>
+          </div>
+        <% elsif @coach %>
+          <div class="card-actions">
+            <%= link_to "Open", public_coach_lesson_path(@coach_profile.slug, lesson), class: "btn" %>
+          </div>
+        <% else %>
+          <div class="card-actions">
+            <% coach_profile = lesson.coach&.coach_profile %>
+            <% coach_name = coach_profile&.display_name || lesson.coach&.email || "Coach" %>
+            <span class="muted">by <%= coach_name %></span>
+            <%= link_to "Open", lesson_path(lesson), class: "btn" %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
