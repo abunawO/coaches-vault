@@ -1,24 +1,62 @@
-# README
+# MyVault (Coaches Vault)
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+A subscription-based platform where coaches host private lesson vaults and students subscribe to access structured, searchable content without social media noise.
 
-Things you may want to cover:
+## Core Concepts
+- **Roles:** Coaches create/manage lessons; students subscribe and favorite lessons.
+- **Vaults:** Each coach has a public-facing profile and a private lesson vault.
+- **Access:** Lessons unlock for subscribed students (multiple coach subscriptions supported); MVP uses YouTube/Vimeo embeds for video content.
 
-* Ruby version
+## Features
+- Authentication (email/password) with role-based access (coach vs student)
+- Coach profiles (public)
+- Lesson management (CRUD for coaches)
+- Subscriptions (students ↔ coaches)
+- Favorites (students → lessons)
+- Search (coaches + lessons)
+- Public browsing for guests (read-only lists and profiles)
 
-* System dependencies
+## Tech Stack
+- Ruby, Ruby on Rails 8
+- SQLite (development)
+- ERB views, minimal JS (Rails defaults), no frontend framework
 
-* Configuration
+## Setup
+1. Clone the repo.
+2. Ruby 3.x recommended.
+3. Install gems: `bundle install`
+4. Database setup:
+   - `rails db:create`
+   - `rails db:migrate`
+   - `rails db:seed`
+5. Start the app: `bin/dev` (or `rails server`)
+6. Visit: `http://localhost:3000`
 
-* Database creation
+## Seeded Accounts
+- Coach: `coach@test.com` (role: coach)
+- Student: `student@test.com` (role: student)
+- Passwords are defined in `db/seeds.rb`.
 
-* Database initialization
+## App Navigation
+- `/coaches` — browse coaches
+- `/coaches/:slug` — public coach page
+- `/lessons` — role-based lesson view (coaches see their lessons; students/guests see public list)
+- `/dashboard` — role-specific dashboard
+- `/search` — search lessons & coaches
+- `/favorites` — student favorites
+- `/subscriptions` — manage student subscriptions
 
-* How to run the test suite
+## Role-Based Behavior
+- **Coach:** Manage own lessons (create/edit/delete), see only own lessons on dashboard and /lessons, public coach page for their vault.
+- **Student:** Browse coaches, subscribe, view unlocked lessons, favorite lessons, manage subscriptions/favorites.
+- **Guest:** Browse public coaches and lesson lists; must log in to subscribe or access locked content.
 
-* Services (job queues, cache servers, search engines, etc.)
+## Project Status
+MVP in active development, focused on clarity, structure, and usability.
 
-* Deployment instructions
-
-* ...
+### Future Ideas
+- Comments
+- Tags
+- Analytics for coaches
+- Payments (Stripe)
+- Mobile-friendly UI
