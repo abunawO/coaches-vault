@@ -1,20 +1,22 @@
 <%= form_with model: [:coach, @lesson], local: true do |form| %>
-  <div>
-    <%= form.label :title %><br>
-    <%= form.text_field :title, required: true %>
+  <div class="form-row">
+    <%= form.label :title %>
+    <%= form.text_field :title, required: true, class: "input", placeholder: "e.g., Distance & Angles 101" %>
   </div>
 
-  <div>
-    <%= form.label :description %><br>
-    <%= form.text_area :description %>
+  <div class="form-row">
+    <%= form.label :description %>
+    <%= form.text_area :description, rows: 4, class: "textarea", placeholder: "What students will learn in this lesson..." %>
   </div>
 
-  <div>
-    <%= form.label :video_url %><br>
-    <%= form.text_field :video_url, required: true %>
+  <div class="form-row">
+    <%= form.label :video_url, "Video URL" %>
+    <%= form.text_field :video_url, required: true, class: "input", placeholder: "https://www.youtube.com/watch?v=..." %>
+    <span class="muted">YouTube or Vimeo link recommended.</span>
   </div>
 
-  <div>
-    <%= form.submit %>
+  <div class="card-actions">
+    <%= form.submit(@lesson.persisted? ? "Update lesson" : "Create lesson", class: "btn btn-primary") %>
+    <%= link_to "Cancel", coach_lessons_path, class: "btn btn-ghost" %>
   </div>
 <% end %>

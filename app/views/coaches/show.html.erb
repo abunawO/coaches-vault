@@ -10,14 +10,14 @@
 
       <% if logged_in? && current_user.student? %>
         <% if current_user.subscribed_to?(@coach) %>
-          <%= button_to "Cancel subscription", cancel_coach_subscription_path(@coach), method: :delete, class: "btn secondary" %>
+          <%= button_to "Cancel subscription", cancel_coach_subscription_path(@coach), method: :delete, class: "btn btn-secondary" %>
         <% else %>
-          <%= button_to "Subscribe", coach_subscription_path(@coach), method: :post, class: "btn secondary" %>
+          <%= button_to "Subscribe", coach_subscription_path(@coach), method: :post, class: "btn btn-secondary" %>
         <% end %>
       <% elsif logged_in? && current_user.coach? %>
         <span class="muted">You are viewing your coach profile.</span>
       <% else %>
-        <%= link_to "Log in to subscribe", login_path, class: "btn secondary" %>
+        <%= link_to "Log in to subscribe", login_path, class: "btn btn-secondary" %>
       <% end %>
     </div>
   </div>

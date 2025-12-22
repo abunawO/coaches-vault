@@ -1,10 +1,10 @@
 <div class="container">
   <div class="page-header">
     <div>
-      <p class="muted">Notifications</p>
-      <h1>Your notifications</h1>
+      <h1 class="page-title">Notifications</h1>
+      <p class="page-subtitle">Unread items appear first.</p>
     </div>
-    <%= button_to "Mark all as read", mark_all_notifications_read_path, method: :post, class: "btn secondary" %>
+    <%= button_to "Mark all as read", mark_all_notifications_read_path, method: :post, class: "btn btn-secondary" %>
   </div>
 
   <% if @notifications.any? %>
@@ -18,20 +18,20 @@
           <div class="card-actions">
             <% if notification.notifiable.is_a?(Comment) %>
               <% lesson = notification.notifiable.lesson %>
-              <%= link_to "View lesson", lesson_path(lesson), class: "btn secondary" %>
+              <%= link_to "View lesson", lesson_path(lesson), class: "btn btn-secondary" %>
             <% end %>
             <% if notification.read_at.nil? %>
-              <span class="pill">Unread</span>
+              <span class="badge badge-warning">Unread</span>
             <% else %>
-              <span class="pill">Read</span>
+              <span class="badge badge-neutral">Read</span>
             <% end %>
           </div>
         </div>
       <% end %>
     </div>
   <% else %>
-    <div class="card">
-      <p class="muted">No notifications.</p>
+    <div class="card empty-state">
+      <p>No notifications.</p>
     </div>
   <% end %>
 </div>

@@ -1,17 +1,22 @@
 <div class="container">
   <div class="page-header">
-    <h1>Coaches</h1>
+    <div>
+      <h1 class="page-title">Coaches</h1>
+      <p class="page-subtitle">Explore coach vaults and public profiles.</p>
+    </div>
   </div>
 
   <div class="grid">
     <% @coach_profiles.each do |profile| %>
       <div class="card">
-        <strong><%= profile.display_name %></strong>
+        <div class="card-header">
+          <strong><%= profile.display_name %></strong>
+        </div>
         <% if profile.bio.present? %>
           <p class="muted"><%= truncate(profile.bio, length: 140) %></p>
         <% end %>
         <div class="card-actions">
-          <%= link_to "View profile", coach_path(profile.slug), class: "btn secondary" %>
+          <%= link_to "View profile", coach_path(profile.slug), class: "btn btn-secondary" %>
         </div>
       </div>
     <% end %>

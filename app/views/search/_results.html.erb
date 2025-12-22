@@ -1,0 +1,49 @@
+<% lesson_cards ||= [] %>
+<% query ||= "" %>
+
+<% if query.blank? %>
+  <div class="search-hint-card">
+    <p>Start searching across all coaches’ vaults.</p>
+    <p class="muted">Try: guard · angles · front headlock · void</p>
+  </div>
+<% elsif lesson_cards.blank? %>
+  <div class="search-hint-card">
+    <p>No results found for “<%= query %>”.</p>
+    <p class="muted">Try simplifying your search or checking spelling.</p>
+  </div>
+<% else %>
+  <div class="ig-grid">
+    <% lesson_cards.each do |card| %>
+      <% lesson = card[:lesson] %>
+      <% coach_profile = card[:coach_profile] %>
+      <% coach_name = coach_profile&.display_name || lesson.coach&.email || "Coach" %>
+      <% locked = card[:locked] %>
+      <% open_path = if coach_profile&.slug && lesson.respond_to?(:slug) && lesson.try(:slug).present?
+                       public_coach_lesson_path(coach_profile.slug, lesson.slug)
+                     elsif coach_profile&.slug
+                       public_coach_lesson_path(coach_profile.slug, lesson)
+                     else
+                       lesson_path(lesson)
+                     end %>
+      <% locked_path = coach_profile&.slug ? coach_path(coach_profile.slug) : coaches_path %>
+      <% thumb = lesson_thumbnail_url(lesson) %>
+
+      <% tile_path = locked ? locked_path : open_path %>
+      <%= link_to tile_path, class: "tile-link #{'locked' if locked}", data: { track: "search_tile", lesson_id: lesson.id, turbo_frame: "_top" } do %>
+        <article class="ig-tile <%= "is-locked" if locked %>">
+          <div class="ig-thumb" style="background-image: url('<%= thumb %>');"></div>
+          <div class="ig-overlay">
+            <% if locked %>
+              <p class="muted">Locked • Subscribe to unlock</p>
+              <span class="btn btn-primary">View coach</span>
+            <% else %>
+              <h3><%= lesson.title %></h3>
+              <p class="muted">by <%= coach_name %></p>
+              <span class="btn btn-primary">Open</span>
+            <% end %>
+          </div>
+        </article>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
