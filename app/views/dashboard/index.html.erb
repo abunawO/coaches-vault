@@ -1,94 +1,141 @@
 <div class="container">
-    <% if current_user.coach? %>
+  <% if current_user.coach? %>
     <header class="page-header">
-        <div>
-            <p class="muted">Coach Dashboard</p>
-            <h1><%= current_user.coach_profile&.display_name || current_user.email %></h1>
-        </div>
-        <div class="actions-row">
-            <%= link_to "Create new lesson", new_coach_lesson_path, class: "btn" %>
-        </div>
+      <div>
+        <h1 class="page-title">Coach dashboard</h1>
+        <p class="page-subtitle"><%= current_user.coach_profile&.display_name || current_user.email %></p>
+      </div>
+      <div class="actions-row">
+        <%= link_to "Create new lesson", new_coach_lesson_path, class: "btn btn-primary" %>
+        <%= link_to "Manage my lessons", lessons_path, class: "btn btn-secondary" %>
+        <% if current_user.coach_profile.present? %>
+          <%= link_to "View my public page", coach_path(current_user.coach_profile.slug), class: "btn btn-ghost" %>
+        <% end %>
+      </div>
     </header>
 
-    <div class="pills">
-        <span class="pill">Your lessons: <%= @lesson_count || 0 %></span>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-header">
+          <span class="muted">Total lessons</span>
+          <h3 class="card-title"><%= @lesson_count || 0 %></h3>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="muted">Locked lessons</span>
+          <h3 class="card-title">—</h3>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="muted">Subscribers</span>
+          <h3 class="card-title"><%= @subscriber_count || 0 %></h3>
+        </div>
+      </div>
     </div>
 
     <section class="section">
-        <div class="section-header">
-            <h2>Recent lessons</h2>
-        </div>
-        <% if @recent_lessons.present? %>
+      <div class="section-header">
+        <h2>Recent lessons</h2>
+      </div>
+      <% if @recent_lessons.present? %>
         <div class="grid">
-            <% @recent_lessons.each do |lesson| %>
+          <% @recent_lessons.each do |lesson| %>
             <div class="card">
-                <h3 class="card-title"><%= lesson.title %></h3>
-                <% if lesson.description.present? %>
+              <h3 class="card-title"><%= lesson.title %></h3>
+              <% if lesson.description.present? %>
                 <p class="muted"><%= truncate(lesson.description, length: 140) %></p>
                 <% end %>
-                <div class="card-actions">
-                    <%= link_to "View", lesson_path(lesson), class: "btn secondary" %>
-                    <%= link_to "Edit", edit_coach_lesson_path(lesson), class: "btn secondary" %>
-                    <%= button_to "Delete", coach_lesson_path(lesson), method: :delete, form: { data: { turbo_confirm: "Delete this lesson?" } }, class: "btn secondary" %>
-                </div>
+              <div class="card-actions">
+                <%= link_to "View", lesson_path(lesson), class: "btn btn-secondary" %>
+                <%= link_to "Edit", edit_coach_lesson_path(lesson), class: "btn btn-secondary" %>
+                <%= button_to "Delete", coach_lesson_path(lesson), method: :delete, form: { data: { turbo_confirm: "Delete this lesson?" } }, class: "btn btn-danger" %>
+              </div>
             </div>
-            <% end %>
+          <% end %>
         </div>
-        <% else %>
+      <% else %>
         <div class="card">
-            <p>No lessons yet.</p>
-            <div class="card-actions">
-                <%= link_to "Create your first lesson", new_coach_lesson_path, class: "btn" %>
-            </div>
+          <p class="muted">No lessons yet.</p>
+          <div class="card-actions">
+            <%= link_to "Create your first lesson", new_coach_lesson_path, class: "btn btn-primary" %>
+          </div>
         </div>
-        <% end %>
+      <% end %>
     </section>
 
-    <% else %>
-    <header class="page-header">
+  <% else %>
+    <section class="card dashboard-hero">
+      <div class="dashboard-hero-header">
         <div>
-            <p class="muted">Dashboard</p>
-            <h1>Welcome, <%= current_user.email %></h1>
+          <p class="muted">Dashboard</p>
+          <h1 class="page-title">Welcome back</h1>
+          <p class="page-subtitle"><%= current_user.email %></p>
         </div>
-        <%= link_to "Refresh", root_path, class: "btn secondary" %>
-    </header>
+        <%= link_to "Refresh", root_path, class: "btn btn-secondary" %>
+      </div>
 
-    <div class="pills">
+      <div class="dashboard-hero-stats">
         <span class="pill"><%= current_user.role.capitalize %></span>
         <% if current_user.student? %>
-        <span class="pill">Subscriptions: <%= @subscription_count || 0 %></span>
+          <span class="pill">Subscriptions: <%= @subscription_count || 0 %></span>
         <% end %>
-    </div>
+      </div>
+    </section>
 
     <section class="section">
-        <div class="section-header">
-            <div>
-                <p class="muted">Explore Vaults</p>
-                <h2>Featured lessons</h2>
-            </div>
+      <div class="section-header">
+        <div>
+          <p class="muted">Explore Vaults</p>
+          <h2>Featured lessons</h2>
         </div>
+      </div>
 
-        <div class="card-grid">
-            <% @vault_lessons.each do |lesson| %>
-            <% coach_profile = lesson.coach&.coach_profile %>
-            <% coach_name = coach_profile&.display_name || lesson.coach&.email || "Coach" %>
-            <% locked = current_user.coach? ? lesson.coach_id != current_user.id : !@subscription_coach_ids.include?(lesson.coach_id) %>
-            <% open_path = if coach_profile&.slug && lesson.respond_to?(:slug) && lesson.slug.present?
+      <div class="feed">
+        <% @feed_lessons.each do |lesson| %>
+          <% coach_profile = lesson.coach&.coach_profile %>
+          <% coach_name = coach_profile&.display_name || lesson.coach&.email || "Coach" %>
+          <% unlocked = @subscription_coach_ids.include?(lesson.coach_id) %>
+          <% open_path = if coach_profile&.slug && lesson.respond_to?(:slug) && lesson.slug.present?
                            public_coach_lesson_path(coach_profile.slug, lesson.slug)
                          elsif coach_profile&.slug
                            public_coach_lesson_path(coach_profile.slug, lesson)
                          else
                            lesson_path(lesson)
                          end %>
-            <% locked_path = coach_profile&.slug ? coach_path(coach_profile.slug) : coaches_path %>
-            <%= render "shared/lesson_card",
-                     lesson: lesson,
-                     locked: locked,
-                     coach_display_name: coach_name,
-                     open_path: open_path,
-                     locked_path: locked_path %>
-            <% end %>
-        </div>
+          <% locked_path = coach_profile&.slug ? coach_path(coach_profile.slug) : coaches_path %>
+          <article class="feed-item card">
+            <div class="feed-media">
+              <% if unlocked %>
+                <% if lesson.video_url&.include?("youtube") || lesson.video_url&.include?("youtu.be") %>
+                  <iframe src="<%= lesson.video_url.sub("watch?v=", "embed/") %>" title="Video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <% elsif lesson.video_url&.include?("vimeo") %>
+                  <iframe src="<%= lesson.video_url.sub("vimeo.com/", "player.vimeo.com/video/") %>" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+                <% else %>
+                  <div class="feed-media-fallback">Watch lesson</div>
+                <% end %>
+                <%= link_to open_path, class: "feed-media-link" do %>
+                  <span class="sr-only">Open lesson</span>
+                <% end %>
+              <% else %>
+                <div class="feed-media-fallback"></div>
+                <div class="feed-lock-overlay">
+                  <div class="feed-lock-cta">
+                    <span class="badge badge-warning">Locked</span>
+                    <p>Subscribe to unlock</p>
+                    <%= link_to "View coach", locked_path, class: "btn btn-primary" %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+            <div class="feed-meta">
+              <h3><%= lesson.title %></h3>
+              <p class="muted">by <%= coach_name %></p>
+            </div>
+          </article>
+        <% end %>
+      </div>
     </section>
     <% end %>
 </div>

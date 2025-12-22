@@ -1,28 +1,35 @@
-<h1>Your Favorites</h1>
+<div class="container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Your Favorites</h1>
+      <p class="page-subtitle">Save lessons for quick access.</p>
+    </div>
+  </div>
 
-<% if @favorites.any? %>
-  <div class="card-list">
-    <% @favorites.each do |favorite| %>
-      <% lesson = favorite.lesson %>
-      <div class="card">
-        <div class="card-header">
-          <strong><%= link_to lesson.title, lesson_path(lesson) %></strong>
-          <% if lesson.coach&.coach_profile %>
-            <span class="muted">by <%= lesson.coach.coach_profile.display_name %></span>
+  <% if @favorites.any? %>
+    <div class="grid">
+      <% @favorites.each do |favorite| %>
+        <% lesson = favorite.lesson %>
+        <div class="card">
+          <div class="card-header">
+            <strong><%= link_to lesson.title, lesson_path(lesson) %></strong>
+            <% if lesson.coach&.coach_profile %>
+              <span class="muted">by <%= lesson.coach.coach_profile.display_name %></span>
+            <% end %>
+          </div>
+          <% if lesson.description.present? %>
+            <p class="muted"><%= truncate(lesson.description, length: 120) %></p>
           <% end %>
+          <div class="card-actions">
+            <%= button_to "Unfavorite", unfavorite_lesson_path(lesson), method: :delete, class: "btn btn-secondary" %>
+          </div>
         </div>
-        <% if lesson.description.present? %>
-          <p class="muted"><%= truncate(lesson.description, length: 120) %></p>
-        <% end %>
-        <div class="card-actions">
-          <%= button_to "Unfavorite", unfavorite_lesson_path(lesson), method: :delete, class: "btn secondary" %>
-        </div>
-      </div>
-    <% end %>
-  </div>
-<% else %>
-  <div class="card">
-    <p>No favorites yet.</p>
-    <p><%= link_to "Browse coaches", coaches_path, class: "btn" %></p>
-  </div>
-<% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="card empty-state">
+      <p>No favorites yet.</p>
+      <p><%= link_to "Browse coaches", coaches_path, class: "btn btn-primary" %></p>
+    </div>
+  <% end %>
+</div>

@@ -1,7 +1,7 @@
 <div class="card lesson-card">
   <div class="card-header">
     <div>
-      <div class="badge <%= locked ? "badge-locked" : "badge-open" %>"><%= locked ? "Locked" : "Unlocked" %></div>
+      <div class="badge <%= locked ? "badge-warning" : "badge-success" %>"><%= locked ? "Locked" : "Unlocked" %></div>
       <h3 class="card-title"><%= lesson.title %></h3>
       <p class="muted">by <%= coach_display_name %></p>
     </div>
@@ -11,9 +11,9 @@
   <% end %>
   <div class="card-actions">
     <% if locked %>
-      <%= link_to "Subscribe to unlock", locked_path, class: "btn secondary" %>
+      <%= link_to "Subscribe to unlock", locked_path, class: "btn btn-secondary" %>
     <% else %>
-      <%= link_to "Open", open_path, class: "btn" %>
+      <%= link_to "Open", open_path, class: "btn btn-primary" %>
     <% end %>
   </div>
 </div>

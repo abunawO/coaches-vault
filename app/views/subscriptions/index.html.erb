@@ -1,10 +1,15 @@
 <div class="container">
-  <h1>My Subscriptions</h1>
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">My Subscriptions</h1>
+      <p class="page-subtitle">Manage coaches you follow.</p>
+    </div>
+  </div>
 
   <section class="section">
     <h2>Active Subscriptions</h2>
     <% if @active_subscriptions.any? %>
-      <div class="card-grid">
+      <div class="grid">
         <% @active_subscriptions.each do |sub| %>
           <% coach = sub.coach %>
           <% coach_profile = coach.coach_profile %>
@@ -17,21 +22,21 @@
               </div>
             </div>
             <div class="card-actions">
-              <%= link_to "Coach page", coach_profile&.slug ? coach_path(coach_profile.slug) : coaches_path, class: "btn secondary" %>
+              <%= link_to "Coach page", coach_profile&.slug ? coach_path(coach_profile.slug) : coaches_path, class: "btn btn-secondary" %>
               <% if coach_profile&.slug %>
-                <%= link_to "Lessons", public_coach_lessons_path(coach_profile.slug), class: "btn secondary" %>
+                <%= link_to "Lessons", public_coach_lessons_path(coach_profile.slug), class: "btn btn-secondary" %>
               <% else %>
-                <%= link_to "Lessons", lessons_path, class: "btn secondary" %>
+                <%= link_to "Lessons", lessons_path, class: "btn btn-secondary" %>
               <% end %>
-              <%= button_to "Cancel", cancel_coach_subscription_path(coach), method: :delete, class: "btn" %>
+              <%= button_to "Cancel", cancel_coach_subscription_path(coach), method: :delete, class: "btn btn-danger" %>
             </div>
           </div>
         <% end %>
       </div>
     <% else %>
-      <div class="card">
+      <div class="card empty-state">
         <p>You’re not subscribed to any coaches right now.</p>
-        <p><%= link_to "Browse coaches", coaches_path, class: "btn" %></p>
+        <p><%= link_to "Browse coaches", coaches_path, class: "btn btn-primary" %></p>
       </div>
     <% end %>
   </section>
@@ -39,7 +44,7 @@
   <section class="section">
     <h2>Previously Subscribed Coaches</h2>
     <% if @past_subscriptions.any? %>
-      <div class="card-grid">
+      <div class="grid">
         <% @past_subscriptions.each do |sub| %>
           <% coach = sub.coach %>
           <% coach_profile = coach.coach_profile %>
@@ -52,18 +57,18 @@
               </div>
             </div>
             <div class="card-actions">
-              <%= link_to "Coach page", coach_profile&.slug ? coach_path(coach_profile.slug) : coaches_path, class: "btn secondary" %>
+              <%= link_to "Coach page", coach_profile&.slug ? coach_path(coach_profile.slug) : coaches_path, class: "btn btn-secondary" %>
               <% if coach_profile&.slug %>
-                <%= link_to "Lessons", public_coach_lessons_path(coach_profile.slug), class: "btn secondary" %>
+                <%= link_to "Lessons", public_coach_lessons_path(coach_profile.slug), class: "btn btn-secondary" %>
               <% else %>
-                <%= link_to "Lessons", lessons_path, class: "btn secondary" %>
+                <%= link_to "Lessons", lessons_path, class: "btn btn-secondary" %>
               <% end %>
             </div>
           </div>
         <% end %>
       </div>
     <% else %>
-      <div class="card">
+      <div class="card empty-state">
         <p>No past subscriptions.</p>
       </div>
     <% end %>

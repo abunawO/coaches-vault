@@ -1,10 +1,13 @@
 <div class="container">
   <div class="page-header">
-    <h1>Your Lessons</h1>
+    <div>
+      <h1 class="page-title">Your Lessons</h1>
+      <p class="page-subtitle">Create, edit, and manage your vault.</p>
+    </div>
   </div>
 
   <div class="card-actions" style="margin-bottom: 12px;">
-    <%= link_to "New Lesson", new_coach_lesson_path, class: "btn" %>
+    <%= link_to "New Lesson", new_coach_lesson_path, class: "btn btn-primary" %>
   </div>
 
   <div class="grid">
@@ -15,8 +18,8 @@
           <p class="muted"><%= truncate(lesson.description, length: 140) %></p>
         <% end %>
         <div class="card-actions">
-          <%= link_to "Edit", edit_coach_lesson_path(lesson), class: "btn secondary" %>
-          <%= button_to "Delete", coach_lesson_path(lesson), method: :delete, form: { data: { turbo_confirm: "Are you sure?" } }, class: "btn secondary" %>
+          <%= link_to "Edit", edit_coach_lesson_path(lesson), class: "btn btn-secondary" %>
+          <%= button_to "Delete", coach_lesson_path(lesson), method: :delete, form: { data: { turbo_confirm: "Are you sure?" } }, class: "btn btn-danger" %>
         </div>
       </div>
     <% end %>

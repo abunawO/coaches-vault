@@ -25,7 +25,8 @@
 
   <body>
     <header class="nav">
-      <div class="nav-left">
+      <div class="container">
+        <div class="nav-left">
         <% if logged_in? %>
           <% if current_user.student? %>
             <%= link_to "Coaches", coaches_path, class: nav_link_class(coaches_path) %>
@@ -33,30 +34,44 @@
             <%= link_to "Search", search_path, class: nav_link_class(search_path) %>
             <%= link_to "Subscriptions", subscriptions_path, class: nav_link_class(subscriptions_path) %>
             <%= link_to "Favorites", favorites_path, class: nav_link_class(favorites_path) %>
-            <%= link_to notifications_label, notifications_path, class: nav_link_class(notifications_path) %>
+            <%= link_to notifications_path, class: nav_link_class(notifications_path) do %>
+              Notifications
+              <% if current_user.unread_notifications_count.positive? %>
+                <span class="nav-badge"><%= current_user.unread_notifications_count %></span>
+              <% end %>
+            <% end %>
           <% elsif current_user.coach? %>
             <%= link_to "Dashboard", root_path, class: nav_link_class(root_path) %>
             <%= link_to "My Lessons", lessons_path, class: nav_link_class(lessons_path) %>
-            <%= link_to notifications_label, notifications_path, class: nav_link_class(notifications_path) %>
+            <%= link_to notifications_path, class: nav_link_class(notifications_path) do %>
+              Notifications
+              <% if current_user.unread_notifications_count.positive? %>
+                <span class="nav-badge"><%= current_user.unread_notifications_count %></span>
+              <% end %>
+            <% end %>
           <% end %>
         <% else %>
           <%= link_to "Coaches", coaches_path, class: nav_link_class(coaches_path) %>
           <%= link_to "Search", search_path, class: nav_link_class(search_path) %>
           <%= link_to "Login", login_path, class: nav_link_class(login_path) %>
         <% end %>
-      </div>
-      <div class="nav-right">
-        <% if logged_in? %>
-          <span>Logged in as <%= current_user.email %> (<%= current_user.role %>)</span>
-          <%= button_to "Logout", logout_path, method: :delete, form: { class: "inline-form" } %>
-        <% else %>
-          <%= link_to "Login", login_path %>
-        <% end %>
+        </div>
+        <div class="nav-right">
+          <% if logged_in? %>
+            <span class="muted">Signed in as <%= current_user.email %></span>
+            <%= button_to "Logout", logout_path, method: :delete, form: { class: "inline-form" }, class: "btn btn-secondary" %>
+          <% end %>
+        </div>
       </div>
     </header>
 
     <% flash.each do |type, message| %>
-      <div class="flash flash-<%= type %>"><%= message %></div>
+      <div class="flash flash-<%= type %>">
+        <div class="flash-row">
+          <span><%= message %></span>
+          <button class="flash-close" type="button" onclick="this.closest('.flash').remove()">×</button>
+        </div>
+      </div>
     <% end %>
 
     <main class="page">
