@@ -1,0 +1,38 @@
+<div class="container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Inbox</h1>
+            <p class="page-subtitle">Direct messages between you and your students.</p>
+        </div>
+    </div>
+
+    <% if @conversations.any? %>
+    <div class="card-list">
+        <% @conversations.each do |conversation| %>
+        <% other_user = conversation.other_party(current_user) %>
+        <% last_message = conversation.messages.order(created_at: :desc).first %>
+        <% unread_count = conversation.unread_count_for(current_user) %>
+        <div class="card conversation-card">
+            <div class="conversation-card__header">
+                <div>
+                    <div class="conversation-name"><%= other_user&.email || "Conversation" %></div>
+                    <% if last_message %>
+                    <div class="conversation-preview muted"><%= truncate(last_message.body, length: 120) %></div>
+                    <% end %>
+                </div>
+                <div class="conversation-card__meta">
+                    <% if unread_count.positive? %>
+                    <span class="badge badge-warning"><%= unread_count %> new</span>
+                    <% end %>
+                    <%= link_to "Open", conversation_path(conversation), class: "btn btn-secondary" %>
+                </div>
+            </div>
+        </div>
+        <% end %>
+    </div>
+    <% else %>
+    <div class="empty-state">
+        No messages yet.
+    </div>
+    <% end %>
+</div>

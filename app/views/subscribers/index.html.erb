@@ -1,0 +1,33 @@
+<div class="container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Subscribers</h1>
+      <p class="page-subtitle">Students currently subscribed to your vault.</p>
+    </div>
+    <div class="chip">
+      <span class="chip__label">Total subscribers</span>
+      <span class="chip__value"><%= @subscriber_count %></span>
+    </div>
+  </div>
+
+  <% if @subscriptions.any? %>
+    <div class="stack">
+      <% @subscriptions.each do |subscription| %>
+        <% student = subscription.student %>
+        <div class="card subscriber-card">
+          <div class="subscriber-row">
+            <div class="avatar"><%= student.email.to_s.first&.upcase %></div>
+            <div class="subscriber-meta">
+              <div class="subscriber-name"><%= student.email %></div>
+              <div class="subscriber-date muted">Subscribed since <%= subscription.created_at.strftime("%b %e, %Y") %></div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="card empty-state">
+      <p>No subscribers yet. Share your public page to grow your vault.</p>
+    </div>
+  <% end %>
+</div>

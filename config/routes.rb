@@ -40,6 +40,13 @@ Rails.application.routes.draw do
     resources :comments, only: [:create]
   end
 
+  resources :conversations, only: [:index, :show, :create] do
+    resources :messages, only: [:create]
+  end
+
+  get "/subscribers", to: "subscribers#index", as: :subscribers
+
   get "/notifications", to: "notifications#index", as: :notifications
+  get "/notifications/:id", to: "notifications#show", as: :notification
   post "/notifications/mark_all_read", to: "notifications#mark_all_read", as: :mark_all_notifications_read
 end
