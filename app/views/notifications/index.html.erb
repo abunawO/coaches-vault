@@ -16,10 +16,7 @@
           </div>
           <p class="muted"><%= notification.created_at.strftime("%b %d, %Y %H:%M") %></p>
           <div class="card-actions">
-            <% if notification.notifiable.is_a?(Comment) %>
-              <% lesson = notification.notifiable.lesson %>
-              <%= link_to "View lesson", lesson_path(lesson), class: "btn btn-secondary" %>
-            <% end %>
+            <%= link_to "Open", notification_path(notification), class: "btn btn-secondary" %>
             <% if notification.read_at.nil? %>
               <span class="badge badge-warning">Unread</span>
             <% else %>

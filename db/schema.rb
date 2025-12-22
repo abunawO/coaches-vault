@@ -37,6 +37,16 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_16_175000) do
     t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
+  create_table "conversations", force: :cascade do |t|
+    t.bigint "coach_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "student_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["coach_id"], name: "index_conversations_on_coach_id"
+    t.index ["student_id", "coach_id"], name: "index_conversations_on_student_id_and_coach_id", unique: true
+    t.index ["student_id"], name: "index_conversations_on_student_id"
+  end
+
   create_table "favorites", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "lesson_id", null: false
@@ -55,6 +65,19 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_16_175000) do
     t.datetime "updated_at", null: false
     t.string "video_url", null: false
     t.index ["coach_id"], name: "index_lessons_on_coach_id"
+  end
+
+  create_table "messages", force: :cascade do |t|
+    t.text "body", null: false
+    t.bigint "conversation_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "read_at"
+    t.bigint "sender_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conversation_id", "created_at"], name: "index_messages_on_conversation_id_and_created_at"
+    t.index ["conversation_id"], name: "index_messages_on_conversation_id"
+    t.index ["read_at"], name: "index_messages_on_read_at"
+    t.index ["sender_id"], name: "index_messages_on_sender_id"
   end
 
   create_table "notifications", force: :cascade do |t|
@@ -98,9 +121,13 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_16_175000) do
   add_foreign_key "coach_profiles", "users"
   add_foreign_key "comments", "lessons"
   add_foreign_key "comments", "users"
+  add_foreign_key "conversations", "users", column: "coach_id"
+  add_foreign_key "conversations", "users", column: "student_id"
   add_foreign_key "favorites", "lessons"
   add_foreign_key "favorites", "users", column: "student_id"
   add_foreign_key "lessons", "users", column: "coach_id"
+  add_foreign_key "messages", "conversations"
+  add_foreign_key "messages", "users", column: "sender_id"
   add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "notifications", "users", column: "recipient_id"
   add_foreign_key "subscriptions", "users", column: "coach_id"

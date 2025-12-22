@@ -6,6 +6,9 @@ class User < ApplicationRecord
   has_many :favorite_lessons, through: :favorites, source: :lesson
   has_many :comments, dependent: :destroy
   has_many :notifications, foreign_key: :recipient_id, dependent: :destroy
+  has_many :student_conversations, class_name: "Conversation", foreign_key: :student_id, dependent: :destroy, inverse_of: :student
+  has_many :coach_conversations, class_name: "Conversation", foreign_key: :coach_id, dependent: :destroy, inverse_of: :coach
+  has_many :sent_messages, class_name: "Message", foreign_key: :sender_id, dependent: :destroy
 
   VALID_ROLES = %w[coach student].freeze
 
@@ -52,5 +55,18 @@ class User < ApplicationRecord
 
   def unread_notifications_count
     unread_notifications.count
+  end
+
+  def unread_messages_count
+    Message
+      .joins(:conversation)
+      .where(read_at: nil)
+      .where.not(sender_id: id)
+      .where("conversations.student_id = :id OR conversations.coach_id = :id", id: id)
+      .count
+  end
+
+  def all_conversations
+    Conversation.where("student_id = :id OR coach_id = :id", id: id)
   end
 end

@@ -1,0 +1,64 @@
+<div class="chat-page">
+  <div class="chat-shell">
+    <div class="chat-header">
+      <%= link_to "← Inbox", conversations_path, class: "chat-back" %>
+      <div class="chat-header__text">
+        <% if (other = @conversation.other_party(current_user)) %>
+          <h1 class="chat-title"><%= other.email %></h1>
+          <p class="chat-subtitle">Direct messages</p>
+        <% else %>
+          <h1 class="chat-title">Conversation</h1>
+          <p class="chat-subtitle">Direct messages</p>
+        <% end %>
+      </div>
+    </div>
+
+    <div id="chat-messages" class="chat-messages">
+      <% if @messages.blank? %>
+        <div class="chat-empty">
+          <div class="chat-empty-icon">💬</div>
+          <div class="chat-empty-title">Start the conversation</div>
+          <% if (other = @conversation.other_party(current_user)) %>
+            <div class="chat-empty-subtitle">Send a message to <%= other.email %></div>
+          <% else %>
+            <div class="chat-empty-subtitle">Send a message to get started</div>
+          <% end %>
+        </div>
+      <% else %>
+        <% @messages.each do |message| %>
+          <% mine = message.sender_id == current_user.id %>
+          <div class="chat-row <%= mine ? "chat-row--me" : "chat-row--them" %>">
+            <div class="chat-bubble">
+              <div class="chat-body"><%= simple_format(message.body) %></div>
+              <div class="chat-meta"><%= message.created_at.strftime("%b %e, %l:%M %p") %></div>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+
+    <div class="chat-composer">
+      <% if @allow_messaging %>
+        <%= form_with model: [@conversation, @message], local: true, class: "chat-form" do |f| %>
+          <%= f.label :body, "Message", class: "sr-only" %>
+          <%= f.text_area :body, rows: 2, class: "chat-input", placeholder: "Write a message…" %>
+          <%= f.submit "Send", class: "btn btn-primary chat-send" %>
+        <% end %>
+      <% else %>
+        <div class="chat-locked">
+          <div class="chat-locked__title">Messaging is available to subscribers.</div>
+          <div class="chat-locked__subtitle">Subscribe to this coach to send messages.</div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("turbo:load", () => {
+    const container = document.getElementById("chat-messages");
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  });
+</script>

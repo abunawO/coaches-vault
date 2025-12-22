@@ -10,9 +10,14 @@
 
       <% if logged_in? && current_user.student? %>
         <% if current_user.subscribed_to?(@coach) %>
+          <%= button_to "Message coach", conversations_path(coach_id: @coach.id), method: :post, class: "btn btn-secondary" %>
           <%= button_to "Cancel subscription", cancel_coach_subscription_path(@coach), method: :delete, class: "btn btn-secondary" %>
         <% else %>
-          <%= button_to "Subscribe", coach_subscription_path(@coach), method: :post, class: "btn btn-secondary" %>
+          <div class="surface stack" style="padding: 12px 16px; text-align: left;">
+            <strong>Subscribe to message this coach</strong>
+            <p class="muted" style="margin: 4px 0 10px 0;">Unlock DMs and lessons by subscribing.</p>
+            <%= button_to "Subscribe to unlock", coach_subscription_path(@coach), method: :post, class: "btn btn-primary" %>
+          </div>
         <% end %>
       <% elsif logged_in? && current_user.coach? %>
         <span class="muted">You are viewing your coach profile.</span>
