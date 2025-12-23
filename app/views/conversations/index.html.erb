@@ -1,38 +1,107 @@
-<div class="container">
-    <div class="page-header">
-        <div>
-            <h1 class="page-title">Inbox</h1>
-            <p class="page-subtitle">Direct messages between you and your students.</p>
-        </div>
+<div class="container" data-controller="confirm-modal">
+  <div class="mx-auto max-w-3xl px-4">
+    <div class="page-header" style="margin-bottom: 12px;">
+      <div>
+        <h1 class="page-title">Inbox</h1>
+        <p class="page-subtitle">Direct messages between you and your students.</p>
+      </div>
+    </div>
+
+    <div class="inbox-toolbar">
+      <div class="inbox-tabs" style="margin: 0;">
+        <%= link_to "All", conversations_path(tab: "all", q: @q), class: inbox_tab_class("all", @tab), aria: { current: ("page" if @tab == "all") } %>
+        <%= link_to "Unread", conversations_path(tab: "unread", q: @q), class: inbox_tab_class("unread", @tab), aria: { current: ("page" if @tab == "unread") } %>
+      </div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <%= form_with url: conversations_path, method: :get, local: true, class: "inline-form" do |f| %>
+          <%= hidden_field_tag :tab, @tab %>
+          <%= f.search_field :q, value: @q, placeholder: "Search inbox…", class: "input", style: "width:200px;" %>
+        <% end %>
+        <% if @q.present? %>
+          <%= link_to "Clear", conversations_path(tab: @tab), class: "btn btn-secondary btn-small" %>
+        <% end %>
+        <button type="button"
+                class="btn btn-secondary btn-small"
+                data-action="confirm-modal#open"
+                data-confirm-title="Mark all as read?"
+                data-confirm-body="This will mark all unread messages as read."
+                data-confirm-action="<%= mark_all_read_conversations_path(tab: @tab, q: @q) %>"
+                data-confirm-method="post"
+                data-confirm-label="Mark all">Mark all as read</button>
+      </div>
     </div>
 
     <% if @conversations.any? %>
-    <div class="card-list">
+      <div class="conversation-grid">
         <% @conversations.each do |conversation| %>
-        <% other_user = conversation.other_party(current_user) %>
-        <% last_message = conversation.messages.order(created_at: :desc).first %>
-        <% unread_count = conversation.unread_count_for(current_user) %>
-        <div class="card conversation-card">
-            <div class="conversation-card__header">
-                <div>
-                    <div class="conversation-name"><%= other_user&.email || "Conversation" %></div>
-                    <% if last_message %>
-                    <div class="conversation-preview muted"><%= truncate(last_message.body, length: 120) %></div>
-                    <% end %>
+          <% other_user = conversation.other_party(current_user) %>
+          <% last_message = conversation.messages.max_by(&:created_at) %>
+          <% unread = last_message.present? && last_message.read_at.nil? && last_message.sender_id != current_user.id %>
+          <% preview_prefix = last_message&.sender_id == current_user.id ? "You: " : "" %>
+          <% card_classes = ["card", "conversation-card"] %>
+          <% card_classes << "notification-unread" if unread %>
+          <%= link_to conversation_path(conversation), class: card_classes.join(" "), "data-unread": unread do %>
+            <div class="conversation-card__body">
+              <div class="conversation-avatar avatar"><%= other_user&.email.to_s.first&.upcase %></div>
+              <div class="conversation-text">
+                <div class="conversation-name <%= 'unread' if unread %>">
+                  <% if unread %><span class="unread-dot" aria-hidden="true"></span><% end %>
+                  <%= other_user&.email || "Conversation" %>
                 </div>
-                <div class="conversation-card__meta">
-                    <% if unread_count.positive? %>
-                    <span class="badge badge-warning"><%= unread_count %> new</span>
-                    <% end %>
-                    <%= link_to "Open", conversation_path(conversation), class: "btn btn-secondary" %>
-                </div>
+                <% if last_message %>
+                  <div class="conversation-preview muted"><%= preview_prefix %><%= truncate(last_message.body, length: 120) %></div>
+                <% end %>
+              </div>
+              <div class="conversation-card__meta conversation-timestamp">
+                <% if last_message %>
+                  <span><%= time_ago_in_words(last_message.created_at) %> ago</span>
+                <% end %>
+              </div>
             </div>
-        </div>
+          <% end %>
         <% end %>
-    </div>
+      </div>
     <% else %>
-    <div class="empty-state">
-        No messages yet.
-    </div>
+      <% if @tab == "unread" %>
+        <div class="empty-card">
+          <h3><%= @q.present? ? "No results" : "No unread messages" %></h3>
+          <p class="muted">
+            <% if @q.present? %>
+              No conversations match “<%= @q %>”.
+            <% else %>
+              You’re all caught up. When someone messages you, it’ll appear here.
+            <% end %>
+          </p>
+          <div class="card-actions" style="justify-content: center;">
+            <% if @q.present? %>
+              <%= link_to "Clear search", conversations_path(tab: @tab), class: "btn btn-primary" %>
+            <% else %>
+              <%= link_to "View all messages", conversations_path(tab: "all"), class: "btn btn-primary" %>
+            <% end %>
+            <%= link_to "Go to dashboard", root_path, class: "btn btn-secondary" %>
+          </div>
+        </div>
+      <% else %>
+        <div class="empty-card">
+          <h3><%= @q.present? ? "No results" : "No messages yet" %></h3>
+          <p class="muted">
+            <% if @q.present? %>
+              No conversations match “<%= @q %>”.
+            <% else %>
+              When a conversation starts, it will show up here.
+            <% end %>
+          </p>
+          <div class="card-actions" style="justify-content: center;">
+            <% if @q.present? %>
+              <%= link_to "Clear search", conversations_path(tab: @tab), class: "btn btn-primary" %>
+            <% else %>
+              <%= link_to "Browse coaches", coaches_path, class: "btn btn-primary" %>
+            <% end %>
+            <%= link_to "Go to dashboard", root_path, class: "btn btn-secondary" %>
+          </div>
+        </div>
+      <% end %>
     <% end %>
+  </div>
+
 </div>

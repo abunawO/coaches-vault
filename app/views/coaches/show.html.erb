@@ -1,29 +1,111 @@
-<div class="container">
-  <div class="surface surface--narrow center stack">
-    <h1><%= @coach_profile.display_name %></h1>
-    <% if @coach_profile.bio.present? %>
-      <p class="muted coach-bio"><%= @coach_profile.bio %></p>
-    <% end %>
+<div class="container profile-page">
+    <section class="profile-hero">
+        <div class="profile-avatar" style="background-image: url('<%= @coach_profile.avatar_url.presence || "https://via.placeholder.com/160x160.png?text=Coach" %>');"></div>
+        <div class="profile-meta">
+            <div class="profile-name-row">
+                <h1 class="profile-name"><%= @coach_profile.display_name %></h1>
+                <span class="profile-handle">@<%= @coach_profile.slug %></span>
+                <% if @coach_profile.verified? %>
+                <span class="verified-badge">Verified</span>
+                <% end %>
+            </div>
+            <% if @coach_profile.bio.present? %>
+            <p class="profile-bio"><%= @coach_profile.bio %></p>
+            <% end %>
+            <% if @coach_profile.location.present? %>
+            <p class="profile-location">📍 <%= @coach_profile.location %></p>
+            <% end %>
+            <div class="profile-socials">
+                <% if @coach_profile.instagram_url.present? %>
+                <%= link_to "Instagram", @coach_profile.instagram_url, class: "social-link", target: "_blank", rel: "noopener" %>
+                <% end %>
+                <% if @coach_profile.youtube_url.present? %>
+                <%= link_to "YouTube", @coach_profile.youtube_url, class: "social-link", target: "_blank", rel: "noopener" %>
+                <% end %>
+                <% if @coach_profile.website_url.present? %>
+                <%= link_to "Website", @coach_profile.website_url, class: "social-link", target: "_blank", rel: "noopener" %>
+                <% end %>
+                <% if @coach_profile.tiktok_url.present? %>
+                <%= link_to "TikTok", @coach_profile.tiktok_url, class: "social-link", target: "_blank", rel: "noopener" %>
+                <% end %>
+            </div>
+            <% subscribed = current_user&.student? && current_user.subscribed_to?(@coach) %>
+            <% owning_coach = current_user&.coach? && current_user.id == @coach.id %>
+            <div class="profile-actions">
+                <% if !logged_in? %>
+                <%= link_to "Explore Lessons", public_coach_lessons_path(@coach_profile.slug), class: "btn btn-primary", aria: { label: "Explore lessons" } %>
+                <%= link_to "Log in to subscribe", login_path, class: "btn btn-secondary", aria: { label: "Log in to subscribe" } %>
+                <% elsif owning_coach %>
+                <span class="muted">You are viewing your profile.</span>
+                <% elsif current_user.student? %>
+                <% if subscribed %>
+                <%= button_to "Message", conversations_path(coach_id: @coach.id), method: :post, class: "btn btn-secondary", aria: { label: "Message coach" } %>
+                <% else %>
+                <%= button_to "Subscribe to unlock all lessons", coach_subscription_path(@coach), method: :post, class: "btn btn-primary", aria: { label: "Subscribe to unlock all lessons" } %>
+                <%= link_to "View free lessons", public_coach_lessons_path(@coach_profile.slug), class: "btn btn-secondary", aria: { label: "View free lessons" } %>
+                <button class="btn btn-secondary" aria-label="Subscribe to message this coach" disabled>🔒 Message (subscribers only)</button>
+                <% end %>
+                <% else %>
+                <%= link_to "Explore Lessons", public_coach_lessons_path(@coach_profile.slug), class: "btn btn-primary", aria: { label: "Explore lessons" } %>
+                <% end %>
+            </div>
+            <div class="profile-stats">
+                <div class="stat">
+                    <div class="stat-value"><%= @coach.lessons.count %></div>
+                    <div class="stat-label">Lessons</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value"><%= Subscription.active.where(coach_id: @coach.id).distinct.count(:student_id) %></div>
+                    <div class="stat-label">Subscribers</div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <div class="actions-row" style="justify-content: center;">
-      <%= link_to "View Lessons", public_coach_lessons_path(@coach_profile.slug), class: "btn btn-primary" %>
+    <% featured_lessons = @coach.lessons.order(created_at: :desc).limit(6) %>
+    <% latest_lessons = @coach.lessons.order(created_at: :desc).limit(5) %>
 
-      <% if logged_in? && current_user.student? %>
-        <% if current_user.subscribed_to?(@coach) %>
-          <%= button_to "Message coach", conversations_path(coach_id: @coach.id), method: :post, class: "btn btn-secondary" %>
-          <%= button_to "Cancel subscription", cancel_coach_subscription_path(@coach), method: :delete, class: "btn btn-secondary" %>
-        <% else %>
-          <div class="surface stack" style="padding: 12px 16px; text-align: left;">
-            <strong>Subscribe to message this coach</strong>
-            <p class="muted" style="margin: 4px 0 10px 0;">Unlock DMs and lessons by subscribing.</p>
-            <%= button_to "Subscribe to unlock", coach_subscription_path(@coach), method: :post, class: "btn btn-primary" %>
-          </div>
-        <% end %>
-      <% elsif logged_in? && current_user.coach? %>
-        <span class="muted">You are viewing your coach profile.</span>
-      <% else %>
-        <%= link_to "Log in to subscribe", login_path, class: "btn btn-secondary" %>
-      <% end %>
-    </div>
-  </div>
+    <section class="profile-section">
+        <div class="profile-content">
+            <div class="profile-featured">
+                <div class="section-header profile-lessons-header">
+                    <h2 class="section-title">Featured lessons</h2>
+                    <%= link_to "View all lessons →", public_coach_lessons_path(@coach_profile.slug), class: "view-all-link", aria: { label: "View all lessons" } %>
+                </div>
+                <div class="profile-grid">
+                    <% featured_lessons.each do |lesson| %>
+                    <% lesson_path_to_use = public_coach_lesson_path(@coach_profile.slug, lesson) %>
+                    <% locked = !subscribed && !owning_coach %>
+                    <%= link_to lesson_path_to_use, class: "profile-tile #{'tile-locked' if locked}" do %>
+                    <div class="tile-thumb" style="background-image: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #93c5fd 100%);"></div>
+                    <div class="tile-overlay">
+                        <h3><%= lesson.title %></h3>
+                        <p><%= truncate(lesson.description.to_s, length: 80) %></p>
+                        <% if locked %>
+                        <span class="badge badge-warning">Subscriber-only</span>
+                        <% end %>
+                    </div>
+                    <% end %>
+                    <% end %>
+                </div>
+            </div>
+
+            <aside class="profile-latest">
+                <div class="section-header">
+                    <h3 class="section-title">Latest drops</h3>
+                </div>
+                <div class="latest-list">
+                    <% latest_lessons.each do |lesson| %>
+                    <%= link_to public_coach_lesson_path(@coach_profile.slug, lesson), class: "latest-card" do %>
+                    <div class="latest-title"><%= lesson.title %></div>
+                    <% if lesson.description.present? %>
+                    <div class="latest-desc"><%= truncate(lesson.description, length: 90) %></div>
+                    <% end %>
+                    <div class="latest-meta muted">Dropped <%= l(lesson.created_at, format: :short) %></div>
+                    <% end %>
+                    <% end %>
+                </div>
+            </aside>
+        </div>
+    </section>
 </div>

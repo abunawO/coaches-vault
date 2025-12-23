@@ -10,6 +10,9 @@ class User < ApplicationRecord
   has_many :coach_conversations, class_name: "Conversation", foreign_key: :coach_id, dependent: :destroy, inverse_of: :coach
   has_many :sent_messages, class_name: "Message", foreign_key: :sender_id, dependent: :destroy
 
+  has_many :lesson_shares, dependent: :destroy
+  has_many :shared_lessons, through: :lesson_shares, source: :lesson
+
   VALID_ROLES = %w[coach student].freeze
 
   scope :coaches, -> { where(role: "coach") }

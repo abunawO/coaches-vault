@@ -11,15 +11,29 @@
   </div>
 
   <% if @subscriptions.any? %>
-    <div class="stack">
+    <div class="subscriber-actions">
+      <label class="select-all">
+        <input type="checkbox" id="select-all" />
+        <span>Select all</span>
+      </label>
+    </div>
+
+    <div class="stack" id="subscriber-list" data-total="<%= @subscriber_count %>">
       <% @subscriptions.each do |subscription| %>
         <% student = subscription.student %>
-        <div class="card subscriber-card">
+        <div class="card subscriber-card" data-subscriber-id="<%= student.id %>">
           <div class="subscriber-row">
+            <input type="checkbox"
+                   class="subscriber-checkbox"
+                   aria-label="Select <%= student.email %>"
+                   data-subscriber-id="<%= student.id %>" />
             <div class="avatar"><%= student.email.to_s.first&.upcase %></div>
             <div class="subscriber-meta">
               <div class="subscriber-name"><%= student.email %></div>
               <div class="subscriber-date muted">Subscribed since <%= subscription.created_at.strftime("%b %e, %Y") %></div>
+            </div>
+            <div class="subscriber-actions-row">
+              <button class="btn btn-secondary btn-small subscriber-message" data-student-id="<%= student.id %>" data-student-email="<%= student.email %>">Message</button>
             </div>
           </div>
         </div>
@@ -31,3 +45,186 @@
     </div>
   <% end %>
 </div>
+
+<div class="bulk-bar" id="bulk-bar" hidden>
+  <div class="bulk-bar__left">
+    <span id="bulk-count">0 selected</span>
+    <button class="btn btn-secondary btn-small" id="select-all-button">Select all (<span id="bulk-total"><%= @subscriber_count %></span>)</button>
+    <button class="btn btn-secondary btn-small" id="clear-selection">Clear</button>
+  </div>
+  <div class="bulk-bar__right">
+    <button class="btn btn-primary" id="open-bulk-modal" disabled>Send message</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="bulk-modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bulk-modal-title">
+    <div class="modal-header">
+      <h3 id="bulk-modal-title">Send message</h3>
+      <button type="button" class="modal-close" id="close-bulk-modal" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="recipient-summary" class="recipient-summary"></div>
+      <div id="all-warning" class="muted" style="display:none;">This will message all <%= @subscriber_count %> subscribers.</div>
+      <%= form_with url: bulk_message_subscribers_path, method: :post, local: true, id: "bulk-form" do |f| %>
+        <div id="recipient-inputs"></div>
+        <div class="form-row">
+          <%= f.label :body, "Message", class: "sr-only" %>
+          <%= f.text_area :body, rows: 4, class: "textarea", placeholder: "Write your announcement or update...", required: true, id: "bulk-body" %>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="cancel-bulk">Cancel</button>
+          <%= f.submit "Send", class: "btn btn-primary", id: "bulk-send", disabled: true %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("turbo:load", () => {
+    const list = document.getElementById("subscriber-list");
+    if (!list) return;
+
+    const checkboxes = Array.from(list.querySelectorAll(".subscriber-checkbox"));
+    const selectAll = document.getElementById("select-all");
+    const bulkBar = document.getElementById("bulk-bar");
+    const bulkCount = document.getElementById("bulk-count");
+    const openBulkModal = document.getElementById("open-bulk-modal");
+    const selectAllBtn = document.getElementById("select-all-button");
+    const clearBtn = document.getElementById("clear-selection");
+    const modal = document.getElementById("bulk-modal");
+    const closeModalBtn = document.getElementById("close-bulk-modal");
+    const cancelBulk = document.getElementById("cancel-bulk");
+    const bulkForm = document.getElementById("bulk-form");
+    const recipientInputs = document.getElementById("recipient-inputs");
+    const recipientSummary = document.getElementById("recipient-summary");
+    const bulkBody = document.getElementById("bulk-body");
+    const bulkSend = document.getElementById("bulk-send");
+    const allWarning = document.getElementById("all-warning");
+    const total = parseInt(list.dataset.total || "0", 10);
+
+    const ensureClosed = () => {
+      modal.hidden = true;
+      document.body.style.overflow = "";
+    };
+
+    ensureClosed();
+
+    const rowMessageButtons = Array.from(document.querySelectorAll(".subscriber-message"));
+
+    function selectedIds() {
+      return checkboxes.filter((cb) => cb.checked).map((cb) => parseInt(cb.dataset.subscriberId, 10));
+    }
+
+    function updateUI() {
+      const ids = selectedIds();
+      const count = ids.length;
+      const allChecked = count === checkboxes.length && checkboxes.length > 0;
+      if (selectAll) selectAll.checked = allChecked;
+      bulkBar.hidden = count === 0;
+      bulkCount.textContent = `${count} selected`;
+      openBulkModal.disabled = count === 0;
+      checkboxes.forEach((cb) => {
+        const card = cb.closest(".subscriber-card");
+        if (!card) return;
+        card.classList.toggle("selected", cb.checked);
+      });
+    }
+
+    // ensure initial state closed/hidden and select-all defaults
+    bulkBar.hidden = true;
+    ensureClosed();
+    if (selectAll && checkboxes.length === 0) selectAll.disabled = true;
+
+    checkboxes.forEach((cb) => {
+      cb.addEventListener("change", updateUI);
+    });
+
+    if (selectAll) {
+      selectAll.addEventListener("change", (e) => {
+        const checked = e.target.checked;
+        checkboxes.forEach((cb) => (cb.checked = checked));
+        updateUI();
+      });
+    }
+
+    selectAllBtn?.addEventListener("click", () => {
+      checkboxes.forEach((cb) => (cb.checked = true));
+      updateUI();
+    });
+
+    clearBtn?.addEventListener("click", () => {
+      checkboxes.forEach((cb) => (cb.checked = false));
+      updateUI();
+    });
+
+    function openModalWith(ids, emails) {
+      if (ids.length === 0) return;
+      modal.hidden = false;
+      document.body.style.overflow = "hidden";
+      recipientInputs.innerHTML = "";
+      ids.forEach((id) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = "recipient_ids[]";
+        input.value = id;
+        recipientInputs.appendChild(input);
+      });
+      const summaryParts = [];
+      emails.slice(0, 2).forEach((email) => summaryParts.push(`<span class="chip">${email}</span>`));
+      if (emails.length > 2) {
+        summaryParts.push(`<span class="chip">+${emails.length - 2} more</span>`);
+      }
+      recipientSummary.innerHTML = summaryParts.join(" ");
+      allWarning.style.display = ids.length === total ? "block" : "none";
+      bulkBody.value = "";
+      bulkSend.disabled = true;
+      bulkBody.focus();
+    }
+
+    openBulkModal?.addEventListener("click", () => {
+      const ids = selectedIds();
+      const emails = ids.map((id) => {
+        const card = list.querySelector(`[data-subscriber-id="${id}"]`);
+        return card?.querySelector(".subscriber-name")?.textContent?.trim() || "Subscriber";
+      });
+      openModalWith(ids, emails);
+    });
+
+    rowMessageButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = parseInt(btn.dataset.studentId, 10);
+        const email = btn.dataset.studentEmail;
+        openModalWith([id], [email]);
+      });
+    });
+
+    function closeModal() {
+      ensureClosed();
+      bulkBody.value = "";
+      bulkSend.disabled = true;
+    }
+
+    closeModalBtn?.addEventListener("click", closeModal);
+    cancelBulk?.addEventListener("click", closeModal);
+
+    modal?.addEventListener("click", (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !modal.hidden) {
+        closeModal();
+      }
+    });
+
+    if (bulkSend) bulkSend.disabled = true;
+
+    bulkBody?.addEventListener("input", () => {
+      bulkSend.disabled = bulkBody.value.trim() === "";
+    });
+
+    document.addEventListener("turbo:before-cache", ensureClosed);
+  });
+</script>

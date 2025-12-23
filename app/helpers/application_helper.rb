@@ -5,6 +5,20 @@ module ApplicationHelper
     classes.join(" ")
   end
 
+  def inbox_tab_class(name, current)
+    base = "tab-button"
+    name == current ? "#{base} is-active" : base
+  end
+
+  def visibility_badge_class(visibility)
+    case visibility
+    when "free" then "badge badge-success"
+    when "subscribers" then "badge badge-neutral"
+    when "restricted" then "badge badge-warning"
+    else "badge badge-neutral"
+    end
+  end
+
   def notifications_label
     count = current_user&.unread_notifications_count.to_i
     count.positive? ? "Notifications (#{count})" : "Notifications"

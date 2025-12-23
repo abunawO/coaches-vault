@@ -21,10 +21,13 @@ class LessonsController < ApplicationController
   end
 
   def show
-    @authorized ||= false
+    @access_level = @lesson.viewer_access_level(current_user)
+    @authorized = @access_level == :full
+    @lock_reason = @lesson.lock_reason_for(current_user)
+    @can_view_lesson = @access_level == :full
     @root_comments = @lesson.comments.includes(:user, replies: :user).where(parent_id: nil)
-    @can_comment = current_user&.student? && current_user.subscribed_to?(@lesson.coach)
-    @can_reply = current_user&.coach? && current_user.id == @lesson.coach_id
+    @can_comment = @authorized && current_user&.student? && current_user.subscribed_to?(@lesson.coach)
+    @can_reply = @authorized && current_user&.coach? && current_user.id == @lesson.coach_id
   end
 
   private
@@ -50,13 +53,19 @@ class LessonsController < ApplicationController
   end
 
   def authorize_lesson_access!
-    @authorized = logged_in? && can_view_lesson?(@lesson)
-    return if @authorized
+    @access_level = @lesson.viewer_access_level(current_user)
+    @lock_reason = @lesson.lock_reason_for(current_user)
+    @authorized = @access_level == :full
 
-    unless logged_in?
-      redirect_to login_path, alert: "Please log in to view lessons." and return
+    return if @access_level == :full || @access_level == :preview
+
+    case @lock_reason
+    when :not_logged_in
+      redirect_to login_path, alert: "Please log in to view this lesson." and return
+    when :not_subscribed
+      flash.now[:alert] = "Subscribe to unlock this lesson."
+    when :not_shared
+      flash.now[:alert] = "This lesson is private and not shared with your account."
     end
-
-    flash.now[:alert] = "Subscribe to access this lesson."
   end
 end

@@ -24,8 +24,15 @@ class ApplicationController < ActionController::Base
   def can_view_lesson?(lesson)
     return false unless current_user
     return true if lesson.coach_id == current_user.id
+    return false unless current_user.student?
 
-    current_user.subscribed_to?(lesson.coach)
+    # must be an active subscriber
+    return false unless current_user.subscribed_to?(lesson.coach)
+
+    # visibility rules
+    return true if lesson.subscribers?
+
+    lesson.selected_subscribers? && lesson.lesson_shares.exists?(user_id: current_user.id)
   end
 
   def require_login
