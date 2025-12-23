@@ -10,17 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_16_175000) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_20_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "coach_profiles", force: :cascade do |t|
+    t.string "avatar_url"
     t.text "bio"
     t.datetime "created_at", null: false
     t.string "display_name", null: false
+    t.string "instagram_url"
+    t.string "location"
     t.string "slug", null: false
+    t.string "tiktok_url"
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.boolean "verified", default: false, null: false
+    t.string "website_url"
+    t.string "youtube_url"
     t.index ["slug"], name: "index_coach_profiles_on_slug", unique: true
     t.index ["user_id"], name: "index_coach_profiles_on_user_id", unique: true
   end
@@ -57,13 +64,26 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_16_175000) do
     t.index ["student_id"], name: "index_favorites_on_student_id"
   end
 
+  create_table "lesson_shares", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "lesson_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["lesson_id", "user_id"], name: "index_lesson_shares_on_lesson_id_and_user_id", unique: true
+    t.index ["lesson_id"], name: "index_lesson_shares_on_lesson_id"
+    t.index ["user_id"], name: "index_lesson_shares_on_user_id"
+  end
+
   create_table "lessons", force: :cascade do |t|
     t.bigint "coach_id", null: false
     t.datetime "created_at", null: false
     t.text "description"
+    t.boolean "preview", default: false, null: false
+    t.text "preview_text"
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.string "video_url", null: false
+    t.integer "visibility", default: 1, null: false
     t.index ["coach_id"], name: "index_lessons_on_coach_id"
   end
 
@@ -125,6 +145,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_16_175000) do
   add_foreign_key "conversations", "users", column: "student_id"
   add_foreign_key "favorites", "lessons"
   add_foreign_key "favorites", "users", column: "student_id"
+  add_foreign_key "lesson_shares", "lessons"
+  add_foreign_key "lesson_shares", "users"
   add_foreign_key "lessons", "users", column: "coach_id"
   add_foreign_key "messages", "conversations"
   add_foreign_key "messages", "users", column: "sender_id"

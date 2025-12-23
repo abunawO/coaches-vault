@@ -25,7 +25,7 @@
       <p class="muted"><%= @lesson.description %></p>
     <% end %>
 
-    <% if @authorized %>
+    <% if @access_level == :full %>
       <% if @lesson.video_url&.include?("youtube") || @lesson.video_url&.include?("youtu.be") %>
         <div class="video-embed">
           <iframe src="<%= @lesson.video_url.sub("watch?v=", "embed/") %>" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -37,8 +37,11 @@
       <% else %>
         <%= link_to "Watch video", @lesson.video_url, class: "btn btn-primary", target: "_blank", rel: "noopener" %>
       <% end %>
-    <% else %>
-      <p class="muted">Subscribe to unlock this lesson.</p>
+    <% elsif @access_level == :preview %>
+      <% if @lesson.preview_text.present? %>
+        <p class="muted"><%= @lesson.preview_text %></p>
+      <% end %>
+      <p class="muted">Preview available. Subscribe to unlock full lesson.</p>
       <div class="card-actions">
         <% if logged_in? && current_user.student? %>
           <%= button_to "Subscribe", coach_subscription_path(@lesson.coach), method: :post, class: "btn btn-primary" %>
@@ -46,81 +49,105 @@
           <%= link_to "Log in to subscribe", login_path, class: "btn btn-primary" %>
         <% end %>
       </div>
+    <% else %>
+      <% if @lock_reason == :not_subscribed %>
+        <% if @lesson.restricted? %>
+          <p class="muted">Subscribe required. This lesson is private and access is granted by the coach.</p>
+        <% else %>
+          <p class="muted">Subscribe to unlock this lesson.</p>
+        <% end %>
+        <div class="card-actions">
+          <% if logged_in? && current_user.student? %>
+            <%= button_to "Subscribe", coach_subscription_path(@lesson.coach), method: :post, class: "btn btn-primary" %>
+          <% else %>
+            <%= link_to "Log in to subscribe", login_path, class: "btn btn-primary" %>
+          <% end %>
+        </div>
+      <% elsif @lock_reason == :not_shared %>
+        <p class="muted">This lesson is private and not shared with your account.</p>
+      <% else %>
+        <p class="muted">Please log in to view this lesson.</p>
+        <div class="card-actions">
+          <%= link_to "Log in", login_path, class: "btn btn-primary" %>
+        </div>
+      <% end %>
     <% end %>
   </div>
 
-  <section class="section comments-section">
-    <div class="section-header">
-      <div>
-        <h2 class="page-title">Comments</h2>
-        <p class="page-subtitle">Student questions and coach replies.</p>
+  <% if @can_view_lesson %>
+    <section class="section comments-section">
+      <div class="section-header">
+        <div>
+          <h2 class="page-title">Comments</h2>
+          <p class="page-subtitle">Student questions and coach replies.</p>
+        </div>
       </div>
-    </div>
 
-    <% if @root_comments.any? %>
-      <div class="comment-list">
-        <% @root_comments.each do |comment| %>
-          <div class="comment-card" id="comment-<%= comment.id %>">
-            <div class="comment-header">
-              <div class="avatar"><%= comment.user.email.first.upcase %></div>
-              <div>
-                <p class="comment-author"><%= comment.user.email %></p>
-                <p class="muted">Student comment</p>
-              </div>
-            </div>
-            <p><%= comment.body %></p>
-
-            <% if comment.replies.any? %>
-              <div class="reply-list">
-                <% comment.replies.each do |reply| %>
-                  <div class="comment-card reply-card">
-                    <div class="comment-header">
-                      <div class="avatar coach-avatar"><%= reply.user.email.first.upcase %></div>
-                      <div>
-                        <p class="comment-author"><%= reply.user.email %></p>
-                        <p class="muted">Coach reply</p>
-                      </div>
-                    </div>
-                    <p><%= reply.body %></p>
-                  </div>
-                <% end %>
-              </div>
-            <% end %>
-
-            <% if @can_reply %>
-              <%= form_with model: [@lesson, Comment.new], local: true, class: "comment-form" do |f| %>
-                <%= f.hidden_field :parent_id, value: comment.id %>
-                <div class="form-row">
-                  <%= f.label :body, "Reply" %>
-                  <%= f.text_area :body, rows: 2, required: true, class: "textarea" %>
+      <% if @root_comments.any? %>
+        <div class="comment-list">
+          <% @root_comments.each do |comment| %>
+            <div class="comment-card" id="comment-<%= comment.id %>">
+              <div class="comment-header">
+                <div class="avatar"><%= comment.user.email.first.upcase %></div>
+                <div>
+                  <p class="comment-author"><%= comment.user.email %></p>
+                  <p class="muted">Student comment</p>
                 </div>
-                <div class="card-actions" style="justify-content: flex-end;">
-                  <%= f.submit "Reply", class: "btn btn-secondary" %>
+              </div>
+              <p><%= comment.body %></p>
+
+              <% if comment.replies.any? %>
+                <div class="reply-list">
+                  <% comment.replies.each do |reply| %>
+                    <div class="comment-card reply-card">
+                      <div class="comment-header">
+                        <div class="avatar coach-avatar"><%= reply.user.email.first.upcase %></div>
+                        <div>
+                          <p class="comment-author"><%= reply.user.email %></p>
+                          <p class="muted">Coach reply</p>
+                        </div>
+                      </div>
+                      <p><%= reply.body %></p>
+                    </div>
+                  <% end %>
                 </div>
               <% end %>
-            <% end %>
-          </div>
-        <% end %>
-      </div>
-    <% else %>
-      <div class="empty-state">No comments yet.</div>
-    <% end %>
 
-    <% if @can_comment %>
-      <div class="card comment-form-card">
-        <h3 class="card-title">Leave a comment</h3>
-        <%= form_with model: [@lesson, Comment.new], local: true do |f| %>
-          <div class="form-row">
-            <%= f.label :body, "Your comment" %>
-            <%= f.text_area :body, rows: 3, required: true, class: "textarea" %>
-          </div>
-          <div class="card-actions" style="justify-content: flex-end;">
-            <%= f.submit "Post comment", class: "btn btn-primary" %>
-          </div>
-        <% end %>
-      </div>
-    <% elsif logged_in? %>
-      <div class="empty-state">You must be subscribed to comment on this lesson.</div>
-    <% end %>
-  </section>
+              <% if @can_reply %>
+                <%= form_with model: [@lesson, Comment.new], local: true, class: "comment-form" do |f| %>
+                  <%= f.hidden_field :parent_id, value: comment.id %>
+                  <div class="form-row">
+                    <%= f.label :body, "Reply" %>
+                    <%= f.text_area :body, rows: 2, required: true, class: "textarea" %>
+                  </div>
+                  <div class="card-actions" style="justify-content: flex-end;">
+                    <%= f.submit "Reply", class: "btn btn-secondary" %>
+                  </div>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="empty-state">No comments yet.</div>
+      <% end %>
+
+      <% if @can_comment %>
+        <div class="card comment-form-card">
+          <h3 class="card-title">Leave a comment</h3>
+          <%= form_with model: [@lesson, Comment.new], local: true do |f| %>
+            <div class="form-row">
+              <%= f.label :body, "Your comment" %>
+              <%= f.text_area :body, rows: 3, required: true, class: "textarea" %>
+            </div>
+            <div class="card-actions" style="justify-content: flex-end;">
+              <%= f.submit "Post comment", class: "btn btn-primary" %>
+            </div>
+          <% end %>
+        </div>
+      <% elsif logged_in? %>
+        <div class="empty-state">You must be subscribed to comment on this lesson.</div>
+      <% end %>
+    </section>
+  <% end %>
 </div>

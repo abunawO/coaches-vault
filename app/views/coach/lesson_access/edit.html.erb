@@ -1,0 +1,81 @@
+<div class="container">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Manage Access</h1>
+      <p class="page-subtitle"><%= @lesson.title %></p>
+    </div>
+    <%= link_to "Back to lessons", lessons_path, class: "btn btn-secondary" %>
+  </div>
+
+  <div class="card">
+    <%= form_with model: @lesson, url: access_coach_lesson_path(@lesson), method: :patch, local: true do |f| %>
+      <div class="form-row">
+        <strong>Visibility</strong>
+        <label class="radio-row">
+          <%= f.radio_button :visibility, "free", checked: @lesson.visibility == "free" %>
+          <span>Free - visible to all logged-in users</span>
+        </label>
+        <label class="radio-row">
+          <%= f.radio_button :visibility, "subscribers", checked: @lesson.visibility == "subscribers" %>
+          <span>All active subscribers can view</span>
+        </label>
+        <label class="radio-row">
+          <%= f.radio_button :visibility, "restricted", checked: @lesson.visibility == "restricted" %>
+          <span>Only selected subscribers can view</span>
+        </label>
+      </div>
+
+      <div id="selected-wrapper" style="<%= @lesson.restricted? ? '' : 'display:none;' %>">
+        <div class="section-header">
+          <h3 class="section-title">Select subscribers</h3>
+        </div>
+        <div class="filter-row">
+          <input type="text" id="subscriber-search" class="input" placeholder="Search subscribers..." />
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <div class="stack" id="subscriber-list-access">
+              <% @subscribers.each do |sub| %>
+                <label class="card subscriber-card subscriber-access" data-email="<%= sub.email.downcase %>">
+                  <input type="checkbox" name="selected_user_ids[]" value="<%= sub.id %>" <%= "checked" if @selected_user_ids.include?(sub.id) %> />
+                  <span class="avatar"><%= sub.email.first&.upcase %></span>
+                  <span class="subscriber-name"><%= sub.email %></span>
+                </label>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-actions" style="margin-top: 16px;">
+        <%= f.submit "Save changes", class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("turbo:load", () => {
+    const radios = document.querySelectorAll("input[name='lesson[visibility]']");
+    const selectedWrapper = document.getElementById("selected-wrapper");
+    const search = document.getElementById("subscriber-search");
+    const rows = Array.from(document.querySelectorAll(".subscriber-access"));
+
+    function toggleVisibility() {
+      const val = document.querySelector("input[name='lesson[visibility]']:checked")?.value;
+      selectedWrapper.style.display = val === "selected_subscribers" ? "" : "none";
+    }
+
+    radios.forEach((r) => r.addEventListener("change", toggleVisibility));
+    toggleVisibility();
+
+    search?.addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase();
+      rows.forEach((row) => {
+        const email = row.dataset.email || "";
+        row.style.display = email.includes(q) ? "" : "none";
+      });
+    });
+  });
+</script>

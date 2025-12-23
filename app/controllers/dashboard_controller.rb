@@ -13,8 +13,9 @@ class DashboardController < ApplicationController
         @subscription_count = @subscription_coach_ids.size
       end
 
-      @feed_lessons = Lesson.includes(coach: :coach_profile)
-                            .order(Arel.sql("RANDOM()"))
+      @feed_lessons = Lesson.includes(:lesson_shares, coach: :coach_profile)
+                            .where.not(visibility: Lesson.visibilities[:restricted])
+                            .order(created_at: :desc)
                             .limit(20)
     end
   end

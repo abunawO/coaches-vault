@@ -50,7 +50,14 @@
               <div class="card-actions">
                 <%= link_to "View", lesson_path(lesson), class: "btn btn-secondary" %>
                 <%= link_to "Edit", edit_coach_lesson_path(lesson), class: "btn btn-secondary" %>
-                <%= button_to "Delete", coach_lesson_path(lesson), method: :delete, form: { data: { turbo_confirm: "Delete this lesson?" } }, class: "btn btn-danger" %>
+                <button type="button"
+                        class="btn btn-danger"
+                        data-action="confirm-modal#open"
+                        data-confirm-title="Delete lesson?"
+                        data-confirm-body="This will permanently delete this lesson. This cannot be undone."
+                        data-confirm-action="<%= coach_lesson_path(lesson) %>"
+                        data-confirm-method="delete"
+                        data-confirm-label="Delete">Delete</button>
               </div>
             </div>
           <% end %>
@@ -92,11 +99,11 @@
         </div>
       </div>
 
-      <div class="feed">
+      <div class="video-grid">
         <% @feed_lessons.each do |lesson| %>
           <% coach_profile = lesson.coach&.coach_profile %>
           <% coach_name = coach_profile&.display_name || lesson.coach&.email || "Coach" %>
-          <% unlocked = @subscription_coach_ids.include?(lesson.coach_id) %>
+          <% access_level = lesson.viewer_access_level(current_user) %>
           <% open_path = if coach_profile&.slug && lesson.respond_to?(:slug) && lesson.slug.present?
                            public_coach_lesson_path(coach_profile.slug, lesson.slug)
                          elsif coach_profile&.slug
@@ -105,35 +112,42 @@
                            lesson_path(lesson)
                          end %>
           <% locked_path = coach_profile&.slug ? coach_path(coach_profile.slug) : coaches_path %>
-          <article class="feed-item card">
-            <div class="feed-media">
-              <% if unlocked %>
-                <% if lesson.video_url&.include?("youtube") || lesson.video_url&.include?("youtu.be") %>
-                  <iframe src="<%= lesson.video_url.sub("watch?v=", "embed/") %>" title="Video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                <% elsif lesson.video_url&.include?("vimeo") %>
-                  <iframe src="<%= lesson.video_url.sub("vimeo.com/", "player.vimeo.com/video/") %>" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
-                <% else %>
-                  <div class="feed-media-fallback">Watch lesson</div>
-                <% end %>
-                <%= link_to open_path, class: "feed-media-link" do %>
-                  <span class="sr-only">Open lesson</span>
-                <% end %>
-              <% else %>
-                <div class="feed-media-fallback"></div>
-                <div class="feed-lock-overlay">
-                  <div class="feed-lock-cta">
-                    <span class="badge badge-warning">Locked</span>
-                    <p>Subscribe to unlock</p>
-                    <%= link_to "View coach", locked_path, class: "btn btn-primary" %>
-                  </div>
+          <% thumb = lesson_thumbnail_url(lesson) %>
+          <%= link_to open_path, class: "video-card #{'video-card-locked' if access_level == :locked}" do %>
+            <div class="video-thumb" style="background-image: url('<%= thumb || '' %>');">
+              <% unless thumb.present? %>
+                <div class="thumb-placeholder">
+                  <span class="play-icon">▶</span>
                 </div>
               <% end %>
+              <div class="thumb-overlay">
+                <span class="badge badge-neutral"><%= lesson.visibility == "restricted" ? "Private" : lesson.visibility.capitalize %></span>
+                <% if access_level == :preview %>
+                  <span class="badge badge-warning">Preview</span>
+                <% end %>
+                <% if access_level == :locked %>
+                  <span class="badge badge-warning">Locked</span>
+                <% end %>
+              </div>
             </div>
-            <div class="feed-meta">
-              <h3><%= lesson.title %></h3>
-              <p class="muted">by <%= coach_name %></p>
+            <div class="video-meta">
+              <div class="video-title"><%= truncate(lesson.title, length: 70) %></div>
+              <div class="video-subtitle">by <%= coach_name %></div>
+              <div class="video-info">
+                <% if access_level == :preview %>
+                  Preview available
+                <% elsif lesson.visibility == "free" %>
+                  Free
+                <% else %>
+                  Subscribers
+                <% end %>
+                <span class="muted">• <%= time_ago_in_words(lesson.created_at) %> ago</span>
+              </div>
+              <% if access_level == :preview && lesson.preview_text.present? %>
+                <div class="video-snippet"><%= truncate(lesson.preview_text, length: 90) %></div>
+              <% end %>
             </div>
-          </article>
+          <% end %>
         <% end %>
       </div>
     </section>

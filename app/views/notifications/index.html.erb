@@ -12,16 +12,25 @@
       <% @notifications.each do |notification| %>
         <div class="card <%= "notification-unread" if notification.read_at.nil? %>">
           <div class="card-header">
-            <strong><%= notification.message %></strong>
+            <div class="notification-header-row">
+              <div class="notification-actor">
+                <% if notification.actor %>
+                  <strong><%= notification.actor.email %></strong>
+                <% else %>
+                  <strong>System</strong>
+                <% end %>
+                <span class="muted"><%= notification.message %></span>
+              </div>
+              <% if notification.read_at.nil? %>
+                <span class="badge badge-warning">Unread</span>
+              <% else %>
+                <span class="badge badge-neutral">Read</span>
+              <% end %>
+            </div>
           </div>
-          <p class="muted"><%= notification.created_at.strftime("%b %d, %Y %H:%M") %></p>
+          <p class="muted">Received <%= time_ago_in_words(notification.created_at) %> ago</p>
           <div class="card-actions">
             <%= link_to "Open", notification_path(notification), class: "btn btn-secondary" %>
-            <% if notification.read_at.nil? %>
-              <span class="badge badge-warning">Unread</span>
-            <% else %>
-              <span class="badge badge-neutral">Read</span>
-            <% end %>
           </div>
         </div>
       <% end %>

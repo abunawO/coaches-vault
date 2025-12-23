@@ -23,7 +23,13 @@ Rails.application.routes.draw do
   resources :lessons, only: %i[index show]
 
   namespace :coach do
-    resources :lessons
+    get "content", to: "content#index", as: :content
+    resources :lessons do
+      member do
+        get :access, to: "lesson_access#edit"
+        patch :access, to: "lesson_access#update"
+      end
+    end
   end
 
   post "/coaches/:coach_id/subscription", to: "subscriptions#create", as: :coach_subscription
@@ -42,9 +48,13 @@ Rails.application.routes.draw do
 
   resources :conversations, only: [:index, :show, :create] do
     resources :messages, only: [:create]
+    collection do
+      post :mark_all_read
+    end
   end
 
   get "/subscribers", to: "subscribers#index", as: :subscribers
+  post "/subscribers/bulk_message", to: "subscribers#bulk_message", as: :bulk_message_subscribers
 
   get "/notifications", to: "notifications#index", as: :notifications
   get "/notifications/:id", to: "notifications#show", as: :notification

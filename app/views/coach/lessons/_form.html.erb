@@ -15,8 +15,64 @@
     <span class="muted">YouTube or Vimeo link recommended.</span>
   </div>
 
+  <div class="card" style="margin: 12px 0; padding: 12px;">
+    <strong>Visibility</strong>
+    <div class="form-row">
+      <label class="radio-row">
+        <%= form.radio_button :visibility, "free", checked: @lesson.visibility == "free" %>
+        <span>Free (visible to all logged-in users)</span>
+      </label>
+      <label class="radio-row">
+        <%= form.radio_button :visibility, "subscribers", checked: @lesson.visibility == "subscribers" %>
+        <span>Subscribers only</span>
+      </label>
+      <label class="radio-row">
+        <%= form.radio_button :visibility, "restricted", checked: @lesson.visibility == "restricted" %>
+        <span>Private (select subscribers)</span>
+      </label>
+    </div>
+
+    <div id="preview-fields" style="<%= (@lesson.visibility == "subscribers") ? '' : 'display:none;' %>">
+      <label class="radio-row">
+        <%= form.check_box :preview, { checked: @lesson.preview?, data: { action: "change->preview-toggle#toggle" } }, true, false %>
+        <span>Enable preview (teaser for unsubscribed viewers)</span>
+      </label>
+      <div class="form-row" id="preview-text-row" style="<%= (@lesson.preview? && @lesson.visibility == "subscribers") ? '' : 'display:none;' %>">
+        <%= form.label :preview_text, "Preview text" %>
+        <%= form.text_area :preview_text, rows: 3, class: "textarea", placeholder: "Short teaser shown to unsubscribed viewers." %>
+      </div>
+    </div>
+  </div>
+
   <div class="card-actions">
     <%= form.submit(@lesson.persisted? ? "Update lesson" : "Create lesson", class: "btn btn-primary") %>
     <%= link_to "Cancel", coach_lessons_path, class: "btn btn-ghost" %>
   </div>
 <% end %>
+
+<script>
+  document.addEventListener("turbo:load", () => {
+    const visibilityRadios = document.querySelectorAll("input[name='lesson[visibility]']");
+    const previewWrap = document.getElementById("preview-fields");
+    const previewCheckbox = document.querySelector("input[name='lesson[preview]']");
+    const previewTextRow = document.getElementById("preview-text-row");
+
+    function togglePreviewVisibility() {
+      const val = document.querySelector("input[name='lesson[visibility]']:checked")?.value;
+      if (val === "subscribers") {
+        previewWrap.style.display = "";
+      } else {
+        previewWrap.style.display = "none";
+      }
+    }
+
+    function togglePreviewText() {
+      previewTextRow.style.display = (previewCheckbox && previewCheckbox.checked) ? "" : "none";
+    }
+
+    visibilityRadios.forEach((r) => r.addEventListener("change", togglePreviewVisibility));
+    previewCheckbox?.addEventListener("change", togglePreviewText);
+    togglePreviewVisibility();
+    togglePreviewText();
+  });
+</script>

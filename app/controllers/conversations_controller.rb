@@ -2,8 +2,40 @@ class ConversationsController < ApplicationController
   before_action :set_conversation, only: :show
 
   def index
-    @conversations = current_user.student? ? Conversation.where(student_id: current_user.id) : Conversation.where(coach_id: current_user.id)
-    @conversations = @conversations.includes(:student, :coach, :messages).order(updated_at: :desc)
+    @tab = params[:tab].presence_in(%w[all unread]) || "all"
+    @q = params[:q].to_s.strip
+    base = current_user.student? ? Conversation.where(student_id: current_user.id) : Conversation.where(coach_id: current_user.id)
+    @conversations = base
+                      .includes(:student, :coach, :messages)
+                      .order(updated_at: :desc)
+
+    if @tab == "unread"
+      @conversations = @conversations
+                         .joins(:messages)
+                         .where(messages: { read_at: nil })
+                         .where.not(messages: { sender_id: current_user.id })
+                         .distinct
+    end
+
+    if @q.present?
+      qlike = "%#{ActiveRecord::Base.sanitize_sql_like(@q)}%"
+      @conversations = @conversations
+                         .left_joins(:messages)
+                         .left_joins(:student)
+                         .where("users.email ILIKE :q OR messages.body ILIKE :q", q: qlike)
+                         .distinct
+    end
+  end
+
+  def mark_all_read
+    Message
+      .joins(:conversation)
+      .where(read_at: nil)
+      .where.not(sender_id: current_user.id)
+      .where("conversations.student_id = :id OR conversations.coach_id = :id", id: current_user.id)
+      .update_all(read_at: Time.current)
+
+    redirect_to conversations_path(tab: params[:tab], q: params[:q]), notice: "All messages marked as read."
   end
 
   def create

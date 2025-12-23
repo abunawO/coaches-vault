@@ -56,7 +56,15 @@
           <div class="card-actions">
             <%= link_to "View", lesson_path(lesson), class: "btn btn-secondary" %>
             <%= link_to "Edit", edit_coach_lesson_path(lesson), class: "btn btn-secondary" %>
-            <%= button_to "Delete", coach_lesson_path(lesson), method: :delete, form: { data: { turbo_confirm: "Delete this lesson?" } }, class: "btn btn-danger" %>
+            <%= link_to "Manage Access", access_coach_lesson_path(lesson), class: "btn btn-secondary" %>
+            <button type="button"
+                    class="btn btn-danger"
+                    data-action="confirm-modal#open"
+                    data-confirm-title="Delete lesson?"
+                    data-confirm-body="This will permanently delete this lesson. This cannot be undone."
+                    data-confirm-action="<%= coach_lesson_path(lesson) %>"
+                    data-confirm-method="delete"
+                    data-confirm-label="Delete">Delete</button>
           </div>
         <% elsif @coach %>
           <div class="card-actions">

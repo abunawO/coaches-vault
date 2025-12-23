@@ -42,7 +42,7 @@ module Coach
     end
 
     def lesson_params
-      params.require(:lesson).permit(:title, :description, :video_url)
+      params.require(:lesson).permit(:title, :description, :video_url, :visibility, :preview, :preview_text)
     end
 
     def require_coach

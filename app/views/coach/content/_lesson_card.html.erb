@@ -1,0 +1,26 @@
+<div class="card lesson-card <%= 'lesson-card--restricted' if lesson.restricted? %>">
+  <div class="card-header">
+    <div>
+      <h3 class="card-title" style="margin:0; font-size:1.05rem;"><%= lesson.title %></h3>
+      <% if lesson.description.present? %>
+        <p class="muted" style="margin: 6px 0 0 0;"><%= truncate(lesson.description, length: 120) %></p>
+      <% end %>
+    </div>
+    <span class="visibility-pill visibility-pill--<%= lesson.visibility %>">
+      <span class="pill-dot"></span>
+      <%= lesson.visibility == "restricted" ? "Private" : lesson.visibility.capitalize %>
+    </span>
+  </div>
+  <div class="card-body">
+    <p class="muted" style="margin-bottom: 6px;">Created <%= l(lesson.created_at.to_date, format: :long) %></p>
+    <% if lesson.restricted? %>
+      <p class="muted">Shared with: <%= lesson.lesson_shares.size %></p>
+    <% end %>
+  </div>
+  <div class="card-actions">
+    <%= link_to "Edit", edit_coach_lesson_path(lesson), class: "btn btn-secondary btn-small" %>
+    <% if lesson.restricted? %>
+      <%= link_to "Manage access", access_coach_lesson_path(lesson), class: "btn btn-primary btn-small manage-access-btn" %>
+    <% end %>
+  </div>
+</div>
