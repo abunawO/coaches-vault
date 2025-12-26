@@ -1,9 +1,11 @@
+<% back_path = safe_return_path(lessons_path) %>
+
 <div class="lesson-form-page">
   <%= render "shared/page_header",
-        breadcrumbs: [["Dashboard", root_path], ["My Lessons", coach_lessons_path], ["New Lesson", new_coach_lesson_path]],
+        breadcrumbs: [["Dashboard", root_path], ["Lessons", back_path], ["New Lesson", new_coach_lesson_path]],
         title: content_tag(:span, "🎬", class: "page-title-icon") + " New Lesson",
         subtitle: "Create a lesson, set visibility, and share with subscribers.",
-        primary_action: { label: "Back to lessons", url: coach_lessons_path } %>
+        primary_action: { label: "Back to lessons", url: back_path } %>
 
   <%= render "form" %>
 </div>

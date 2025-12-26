@@ -4,7 +4,7 @@
           breadcrumbs: [["Dashboard", root_path], ["Content", coach_content_path]],
           title: content_tag(:span, "🗂️", class: "page-title-icon") + " Manage Content",
           subtitle: "Control who can access your lessons.",
-          primary_action: { label: "+ New Lesson", url: new_coach_lesson_path } %>
+          primary_action: { label: "New Lesson", url: new_coach_lesson_path(return_to: request.fullpath) } %>
 
     <div class="inbox-toolbar" style="justify-content: space-between; margin-bottom: 12px;">
       <div class="inbox-tabs" style="margin: 0;">
@@ -52,7 +52,7 @@
           <% if @q.present? %>
             <%= link_to "Clear search", coach_content_path(tab: @tab, sort: @sort), class: "btn btn-primary" %>
           <% else %>
-            <%= link_to "Create your first lesson", new_coach_lesson_path, class: "btn btn-primary" %>
+            <%= link_to "Create your first lesson", new_coach_lesson_path(return_to: request.fullpath), class: "btn btn-primary" %>
           <% end %>
         </div>
       </div>

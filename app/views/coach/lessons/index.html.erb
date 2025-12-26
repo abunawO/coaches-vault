@@ -1,26 +1,26 @@
 <div class="container">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Your Lessons</h1>
-      <p class="page-subtitle">Create, edit, and manage your vault.</p>
-    </div>
-  </div>
+  <%= render "shared/page_header",
+        breadcrumbs: [["Dashboard", root_path], ["My Lessons", coach_lessons_path]],
+        title: content_tag(:span, "🎓", class: "page-title-icon") + " Your Lessons",
+        subtitle: "Create, edit, and manage your vault.",
+        primary_action: { label: "New Lesson", url: new_coach_lesson_path(return_to: request.fullpath) } %>
 
-  <div class="card-actions" style="margin-bottom: 12px;">
-    <%= link_to "New Lesson", new_coach_lesson_path, class: "btn btn-primary" %>
-  </div>
-
-  <div class="grid">
+  <div class="lesson-grid">
     <% @lessons.each do |lesson| %>
-      <div class="card">
-        <h3 class="card-title"><%= lesson.title %></h3>
-        <% if lesson.description.present? %>
-          <p class="muted"><%= truncate(lesson.description, length: 140) %></p>
-        <% end %>
-        <div class="card-actions">
-          <%= link_to "Edit", edit_coach_lesson_path(lesson), class: "btn btn-secondary" %>
+      <div class="mv-card">
+        <div class="mv-card__header">
+          <div>
+            <h3 class="mv-card__title"><%= lesson.title %></h3>
+            <% if lesson.description.present? %>
+              <p class="mv-card__subtitle"><%= truncate(lesson.description, length: 140) %></p>
+            <% end %>
+          </div>
+        </div>
+        <div class="mv-card__actions">
+          <%= link_to "View", lesson_path(lesson), class: "btn btn-primary btn-small" %>
+          <%= link_to "Edit", edit_coach_lesson_path(lesson), class: "btn btn-secondary btn-small" %>
           <button type="button"
-                  class="btn btn-danger"
+                  class="btn btn-danger btn-small"
                   data-action="confirm-modal#open"
                   data-confirm-title="Delete lesson?"
                   data-confirm-body="This will permanently delete this lesson. This cannot be undone."

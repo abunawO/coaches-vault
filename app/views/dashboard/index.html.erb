@@ -4,7 +4,7 @@
           breadcrumbs: [["Dashboard", root_path]],
           title: content_tag(:span, "📊", class: "page-title-icon") + " Coach dashboard",
           subtitle: current_user.coach_profile&.display_name || "Overview of your vault.",
-          primary_action: { label: "Create new lesson", url: new_coach_lesson_path },
+          primary_action: { label: "New Lesson", url: new_coach_lesson_path(return_to: request.fullpath) },
           secondary_actions: [
             { label: "Manage content", url: coach_content_path },
             (current_user.coach_profile.present? ? { label: "View public page", url: coach_path(current_user.coach_profile.slug), class: "btn btn-ghost" } : nil)
@@ -80,7 +80,7 @@
         <div class="card">
           <p class="muted">No lessons yet.</p>
           <div class="card-actions">
-            <%= link_to "Create your first lesson", new_coach_lesson_path, class: "btn btn-primary" %>
+            <%= link_to "Create your first lesson", new_coach_lesson_path(return_to: request.fullpath), class: "btn btn-primary" %>
           </div>
         </div>
       <% end %>

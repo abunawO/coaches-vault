@@ -1,9 +1,10 @@
 <div class="container">
   <% if current_user&.coach? %>
     <%= render "shared/page_header",
+          breadcrumbs: [["Dashboard", root_path], ["Lessons", lessons_path]],
           title: content_tag(:span, "🎓", class: "page-title-icon") + " My Lessons",
           subtitle: "Manage your library, edit content, and publish updates.",
-          primary_action: { label: "Create lesson", url: new_coach_lesson_path },
+          primary_action: { label: "New Lesson", url: new_coach_lesson_path(return_to: request.fullpath) },
           meta: [{ label: "Total lessons", value: @lessons.size }] do %>
       <div class="lessons-hero__filter">
         <label class="sr-only" for="lesson-filter">Filter lessons</label>
