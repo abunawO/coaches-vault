@@ -1,12 +1,10 @@
 <div class="container">
   <div class="mx-auto max-w-6xl px-4">
-    <div class="page-header" style="margin-bottom: 12px;">
-      <div>
-        <h1 class="page-title">Manage Content</h1>
-        <p class="page-subtitle">Control who can access your lessons.</p>
-      </div>
-      <%= link_to "+ New Lesson", new_coach_lesson_path, class: "btn btn-primary" %>
-    </div>
+    <%= render "shared/page_header",
+          breadcrumbs: [["Dashboard", root_path], ["Content", coach_content_path]],
+          title: content_tag(:span, "🗂️", class: "page-title-icon") + " Manage Content",
+          subtitle: "Control who can access your lessons.",
+          primary_action: { label: "+ New Lesson", url: new_coach_lesson_path } %>
 
     <div class="inbox-toolbar" style="justify-content: space-between; margin-bottom: 12px;">
       <div class="inbox-tabs" style="margin: 0;">

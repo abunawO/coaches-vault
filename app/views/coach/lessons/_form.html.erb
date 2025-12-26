@@ -1,54 +1,145 @@
-<%= form_with model: [:coach, @lesson], local: true do |form| %>
-  <div class="form-row">
-    <%= form.label :title %>
-    <%= form.text_field :title, required: true, class: "input", placeholder: "e.g., Distance & Angles 101" %>
-  </div>
+<div class="lesson-form-page">
+  <%= form_with model: [:coach, @lesson], local: true do |form| %>
+    <div class="lesson-form-layout">
+      <div class="lesson-form-main">
+        <div class="card lesson-form-card">
+          <section class="form-section">
+            <div class="section-header">
+              <div>
+                <h3 class="section-title">Basics</h3>
+                <p class="muted small-text">Give your lesson a clear title and description.</p>
+              </div>
+            </div>
+            <div class="form-row">
+              <%= form.label :title %>
+              <%= form.text_field :title, required: true, class: "input", placeholder: "e.g., Distance & Angles 101" %>
+            </div>
+            <div class="form-row">
+              <%= form.label :description %>
+              <%= form.text_area :description, rows: 4, class: "textarea", placeholder: "What students will learn in this lesson..." %>
+            </div>
+          </section>
 
-  <div class="form-row">
-    <%= form.label :description %>
-    <%= form.text_area :description, rows: 4, class: "textarea", placeholder: "What students will learn in this lesson..." %>
-  </div>
+          <section class="form-section">
+            <div class="section-header">
+              <div>
+                <h3 class="section-title">Video</h3>
+                <p class="muted small-text">Use a YouTube or Vimeo link for best results.</p>
+              </div>
+            </div>
+            <div class="form-row">
+              <%= form.label :video_url, "Video URL" %>
+              <%= form.text_field :video_url, required: true, class: "input", placeholder: "https://www.youtube.com/watch?v=..." %>
+            </div>
+          </section>
 
-  <div class="form-row">
-    <%= form.label :video_url, "Video URL" %>
-    <%= form.text_field :video_url, required: true, class: "input", placeholder: "https://www.youtube.com/watch?v=..." %>
-    <span class="muted">YouTube or Vimeo link recommended.</span>
-  </div>
+          <section class="form-section">
+            <div class="section-header">
+              <div>
+                <h3 class="section-title">Preview</h3>
+                <p class="muted small-text">Add a teaser for unsubscribed viewers (Subscribers visibility only).</p>
+              </div>
+            </div>
+            <div id="preview-fields" style="<%= (@lesson.visibility == "subscribers") ? '' : 'display:none;' %>">
+              <label class="radio-row">
+                <%= form.check_box :preview, { checked: @lesson.preview?, data: { action: "change->preview-toggle#toggle" } }, true, false %>
+                <span>Enable preview (teaser for unsubscribed viewers)</span>
+              </label>
+              <div class="form-row" id="preview-text-row" style="<%= (@lesson.preview? && @lesson.visibility == "subscribers") ? '' : 'display:none;' %>">
+                <%= form.label :preview_text, "Preview text" %>
+                <%= form.text_area :preview_text, rows: 3, class: "textarea", placeholder: "Short teaser shown to unsubscribed viewers." %>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
 
-  <div class="card" style="margin: 12px 0; padding: 12px;">
-    <strong>Visibility</strong>
-    <div class="form-row">
-      <label class="radio-row">
-        <%= form.radio_button :visibility, "free", checked: @lesson.visibility == "free" %>
-        <span>Free (visible to all logged-in users)</span>
-      </label>
-      <label class="radio-row">
-        <%= form.radio_button :visibility, "subscribers", checked: @lesson.visibility == "subscribers" %>
-        <span>Subscribers only</span>
-      </label>
-      <label class="radio-row">
-        <%= form.radio_button :visibility, "restricted", checked: @lesson.visibility == "restricted" %>
-        <span>Private (select subscribers)</span>
-      </label>
+      <aside class="lesson-form-sidebar sticky-sidebar">
+        <div class="card lesson-form-card">
+          <div class="section-header">
+            <div>
+              <h3 class="section-title">Visibility</h3>
+              <p class="muted small-text">Choose who can view this lesson.</p>
+            </div>
+          </div>
+          <div class="visibility-options">
+            <label class="visibility-card">
+              <%= form.radio_button :visibility, "free", checked: @lesson.visibility == "free", class: "vis-radio" %>
+              <div class="visibility-card__body">
+                <div class="visibility-card__title">Free</div>
+                <div class="muted small-text">Visible to all logged-in users.</div>
+              </div>
+              <span class="checkmark" aria-hidden="true">✓</span>
+            </label>
+            <label class="visibility-card">
+              <%= form.radio_button :visibility, "subscribers", checked: @lesson.visibility == "subscribers", class: "vis-radio" %>
+              <div class="visibility-card__body">
+                <div class="visibility-card__title">Subscribers</div>
+                <div class="muted small-text">All active subscribers can view.</div>
+              </div>
+              <span class="checkmark" aria-hidden="true">✓</span>
+            </label>
+            <label class="visibility-card">
+              <%= form.radio_button :visibility, "restricted", checked: @lesson.visibility == "restricted", class: "vis-radio" %>
+              <div class="visibility-card__body">
+                <div class="visibility-card__title">Private</div>
+                <div class="muted small-text">Only selected subscribers can view.</div>
+              </div>
+              <span class="checkmark" aria-hidden="true">✓</span>
+            </label>
+          </div>
+          <p class="muted small-text" id="private-note-new" style="<%= @lesson.restricted? ? '' : 'display:none;' %>">Only selected subscribers can watch this lesson.</p>
+
+          <div class="subscriber-picker" id="selected-wrapper-new" style="<%= @lesson.restricted? ? '' : 'display:none;' %>">
+            <div class="section-header">
+              <div>
+                <h4 class="section-title">Allowed subscribers</h4>
+                <p class="muted small-text">Choose which active subscribers can view this private lesson.</p>
+              </div>
+              <span class="pill-soft" id="selected-count-new"></span>
+            </div>
+            <div class="access-filter">
+              <input type="text" id="subscriber-search-new" class="input" placeholder="Search subscribers..." />
+              <div class="card-actions" style="margin:0;">
+                <button type="button" class="btn btn-ghost btn-small" id="select-all-btn-new">Select all</button>
+                <button type="button" class="btn btn-ghost btn-small" id="clear-all-btn-new">Clear</button>
+              </div>
+            </div>
+            <div class="subscriber-list">
+              <% if @subscribers.empty? %>
+                <div class="empty-state">No active subscribers to share with.</div>
+              <% else %>
+                <% preselected = @preselected_allowed_ids || [] %>
+                <% @subscribers.each do |sub| %>
+                  <label class="subscriber-card subscriber-access-new" data-email="<%= sub.email.downcase %>">
+                    <input type="checkbox" name="lesson[allowed_subscriber_ids][]" value="<%= sub.id %>" <%= "checked" if preselected.include?(sub.id) %> />
+                    <span class="avatar"><%= sub.email.first&.upcase %></span>
+                    <div class="subscriber-meta">
+                      <div class="subscriber-name"><%= sub.email %></div>
+                      <div class="muted small-text">Active subscriber</div>
+                    </div>
+                    <span class="pill-soft selected-pill">Selected</span>
+                  </label>
+                <% end %>
+              <% end %>
+            </div>
+            <div class="access-disabled-overlay" id="access-disabled-overlay-new" style="<%= @lesson.restricted? ? 'display:none;' : '' %>">
+              <p class="muted">Subscriber selection is available when “Private” is chosen.</p>
+            </div>
+          </div>
+        </div>
+      </aside>
     </div>
 
-    <div id="preview-fields" style="<%= (@lesson.visibility == "subscribers") ? '' : 'display:none;' %>">
-      <label class="radio-row">
-        <%= form.check_box :preview, { checked: @lesson.preview?, data: { action: "change->preview-toggle#toggle" } }, true, false %>
-        <span>Enable preview (teaser for unsubscribed viewers)</span>
-      </label>
-      <div class="form-row" id="preview-text-row" style="<%= (@lesson.preview? && @lesson.visibility == "subscribers") ? '' : 'display:none;' %>">
-        <%= form.label :preview_text, "Preview text" %>
-        <%= form.text_area :preview_text, rows: 3, class: "textarea", placeholder: "Short teaser shown to unsubscribed viewers." %>
+    <div class="access-footer card sticky-save lesson-form-actions">
+      <div class="muted small-text" id="dirty-indicator-new">Changes are saved when you click Save.</div>
+      <div class="card-actions">
+        <%= form.submit(@lesson.persisted? ? "Update lesson" : "Create lesson", class: "btn btn-primary") %>
+        <%= link_to "Cancel", coach_lessons_path, class: "btn btn-ghost" %>
       </div>
     </div>
-  </div>
-
-  <div class="card-actions">
-    <%= form.submit(@lesson.persisted? ? "Update lesson" : "Create lesson", class: "btn btn-primary") %>
-    <%= link_to "Cancel", coach_lessons_path, class: "btn btn-ghost" %>
-  </div>
-<% end %>
+  <% end %>
+</div>
 
 <script>
   document.addEventListener("turbo:load", () => {
@@ -56,6 +147,16 @@
     const previewWrap = document.getElementById("preview-fields");
     const previewCheckbox = document.querySelector("input[name='lesson[preview]']");
     const previewTextRow = document.getElementById("preview-text-row");
+    const privateNote = document.getElementById("private-note-new");
+    const selectedWrapper = document.getElementById("selected-wrapper-new");
+    const disabledOverlay = document.getElementById("access-disabled-overlay-new");
+    const search = document.getElementById("subscriber-search-new");
+    const rows = Array.from(document.querySelectorAll(".subscriber-access-new"));
+    const selectAllBtn = document.getElementById("select-all-btn-new");
+    const clearAllBtn = document.getElementById("clear-all-btn-new");
+    const selectedCount = document.getElementById("selected-count-new");
+    const form = document.querySelector(".lesson-form-page form");
+    const dirtyIndicator = document.getElementById("dirty-indicator-new");
 
     function togglePreviewVisibility() {
       const val = document.querySelector("input[name='lesson[visibility]']:checked")?.value;
@@ -70,9 +171,83 @@
       previewTextRow.style.display = (previewCheckbox && previewCheckbox.checked) ? "" : "none";
     }
 
-    visibilityRadios.forEach((r) => r.addEventListener("change", togglePreviewVisibility));
-    previewCheckbox?.addEventListener("change", togglePreviewText);
+    function toggleVisibility() {
+      const val = document.querySelector("input[name='lesson[visibility]']:checked")?.value;
+      const isRestricted = val === "restricted";
+      selectedWrapper.style.display = isRestricted ? "" : "none";
+      disabledOverlay.style.display = isRestricted ? "none" : "";
+      if (privateNote) privateNote.style.display = isRestricted ? "" : "none";
+      const disabled = !isRestricted;
+      rows.forEach((row) => {
+        const cb = row.querySelector("input[type='checkbox']");
+        if (cb) cb.disabled = disabled;
+        row.classList.toggle("disabled", disabled);
+      });
+      updateCount();
+    }
+
+    visibilityRadios.forEach((r) => r.addEventListener("change", () => { toggleVisibility(); togglePreviewVisibility(); markDirty(); }));
+    previewCheckbox?.addEventListener("change", () => { togglePreviewText(); markDirty(); });
+
+    search?.addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase();
+      rows.forEach((row) => {
+        const email = row.dataset.email || "";
+        row.style.display = email.includes(q) ? "" : "none";
+      });
+    });
+
+    function updateCount() {
+      const checked = rows.filter((row) => row.querySelector("input[type='checkbox']")?.checked);
+      if (selectedCount) selectedCount.textContent = `${checked.length} selected`;
+      if (clearAllBtn) clearAllBtn.style.visibility = checked.length > 0 ? "visible" : "hidden";
+    }
+
+    rows.forEach((row) => {
+      const cb = row.querySelector("input[type='checkbox']");
+      cb?.addEventListener("change", () => { updateCount(); markDirty(); });
+    });
+
+    selectAllBtn?.addEventListener("click", () => {
+      rows.forEach((row) => {
+        const cb = row.querySelector("input[type='checkbox']");
+        if (cb) cb.checked = true;
+      });
+      updateCount();
+      markDirty();
+    });
+
+    clearAllBtn?.addEventListener("click", () => {
+      rows.forEach((row) => {
+        const cb = row.querySelector("input[type='checkbox']");
+        if (cb) cb.checked = false;
+      });
+      updateCount();
+      markDirty();
+    });
+
+    // dirty state
+    let initialSnapshot = form ? new FormData(form) : null;
+    function isDirty() {
+      if (!form || !initialSnapshot) return false;
+      const current = new FormData(form);
+      const keys = Array.from(new Set([...initialSnapshot.keys(), ...current.keys()]));
+      for (const k of keys) {
+        if (current.getAll(k).sort().join(",") !== initialSnapshot.getAll(k).sort().join(",")) return true;
+      }
+      return false;
+    }
+
+    function markDirty() {
+      if (!dirtyIndicator) return;
+      dirtyIndicator.textContent = isDirty() ? "Unsaved changes" : "Changes are saved when you click Save.";
+    }
+
+    toggleVisibility();
     togglePreviewVisibility();
     togglePreviewText();
+    updateCount();
+    markDirty();
+    form?.addEventListener("change", markDirty);
   });
 </script>

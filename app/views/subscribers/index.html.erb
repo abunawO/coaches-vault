@@ -1,14 +1,9 @@
 <div class="container">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Subscribers</h1>
-      <p class="page-subtitle">Students currently subscribed to your vault.</p>
-    </div>
-    <div class="chip">
-      <span class="chip__label">Total subscribers</span>
-      <span class="chip__value"><%= @subscriber_count %></span>
-    </div>
-  </div>
+  <%= render "shared/page_header",
+        breadcrumbs: [["Dashboard", root_path], ["Subscribers", subscribers_path]],
+        title: content_tag(:span, "👥", class: "page-title-icon") + " Subscribers",
+        subtitle: "Students currently subscribed to your vault.",
+        meta: [{ label: "Total", value: @subscriber_count }] %>
 
   <% if @subscriptions.any? %>
     <div class="subscriber-actions">

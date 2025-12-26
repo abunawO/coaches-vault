@@ -1,36 +1,42 @@
 <div class="container">
   <% if current_user.coach? %>
-    <header class="page-header">
-      <div>
-        <h1 class="page-title">Coach dashboard</h1>
-        <p class="page-subtitle"><%= current_user.coach_profile&.display_name || current_user.email %></p>
-      </div>
-      <div class="actions-row">
-        <%= link_to "Create new lesson", new_coach_lesson_path, class: "btn btn-primary" %>
-        <%= link_to "Manage my lessons", lessons_path, class: "btn btn-secondary" %>
-        <% if current_user.coach_profile.present? %>
-          <%= link_to "View my public page", coach_path(current_user.coach_profile.slug), class: "btn btn-ghost" %>
-        <% end %>
-      </div>
-    </header>
+    <%= render "shared/page_header",
+          breadcrumbs: [["Dashboard", root_path]],
+          title: content_tag(:span, "📊", class: "page-title-icon") + " Coach dashboard",
+          subtitle: current_user.coach_profile&.display_name || "Overview of your vault.",
+          primary_action: { label: "Create new lesson", url: new_coach_lesson_path },
+          secondary_actions: [
+            { label: "Manage content", url: coach_content_path },
+            (current_user.coach_profile.present? ? { label: "View public page", url: coach_path(current_user.coach_profile.slug), class: "btn btn-ghost" } : nil)
+          ].compact,
+          meta: [
+            { label: "Lessons", value: (@lesson_count || 0) },
+            { label: "Subscribers", value: (@subscriber_count || 0) }
+          ] %>
 
     <div class="grid-3">
-      <div class="card">
-        <div class="card-header">
-          <span class="muted">Total lessons</span>
-          <h3 class="card-title"><%= @lesson_count || 0 %></h3>
+      <div class="mv-card">
+        <div class="mv-card__header" style="align-items:flex-end;">
+          <div>
+            <span class="muted">Total lessons</span>
+            <h3 class="mv-card__title" style="font-size:1.4rem; margin-top:4px;"><%= @lesson_count || 0 %></h3>
+          </div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-header">
-          <span class="muted">Locked lessons</span>
-          <h3 class="card-title">—</h3>
+      <div class="mv-card">
+        <div class="mv-card__header" style="align-items:flex-end;">
+          <div>
+            <span class="muted">Locked lessons</span>
+            <h3 class="mv-card__title" style="font-size:1.4rem; margin-top:4px;">—</h3>
+          </div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-header">
-          <span class="muted">Subscribers</span>
-          <h3 class="card-title"><%= @subscriber_count || 0 %></h3>
+      <div class="mv-card">
+        <div class="mv-card__header" style="align-items:flex-end;">
+          <div>
+            <span class="muted">Subscribers</span>
+            <h3 class="mv-card__title" style="font-size:1.4rem; margin-top:4px;"><%= @subscriber_count || 0 %></h3>
+          </div>
         </div>
       </div>
     </div>
@@ -42,16 +48,24 @@
       <% if @recent_lessons.present? %>
         <div class="grid">
           <% @recent_lessons.each do |lesson| %>
-            <div class="card">
-              <h3 class="card-title"><%= lesson.title %></h3>
-              <% if lesson.description.present? %>
-                <p class="muted"><%= truncate(lesson.description, length: 140) %></p>
-                <% end %>
-              <div class="card-actions">
-                <%= link_to "View", lesson_path(lesson), class: "btn btn-secondary" %>
-                <%= link_to "Edit", edit_coach_lesson_path(lesson), class: "btn btn-secondary" %>
+            <div class="mv-card">
+              <div class="mv-card__header">
+                <div>
+                  <h3 class="mv-card__title"><%= lesson.title %></h3>
+                  <% if lesson.description.present? %>
+                    <p class="mv-card__subtitle"><%= truncate(lesson.description, length: 140) %></p>
+                  <% end %>
+                </div>
+              </div>
+              <div class="mv-card__meta">
+                <span>📅 <%= time_ago_in_words(lesson.created_at) %> ago</span>
+              </div>
+              <div style="height:1px; background:#edf2f7; margin: 10px 0;"></div>
+              <div class="mv-card__actions">
+                <%= link_to "View", lesson_path(lesson), class: "btn btn-primary btn-small" %>
+                <%= link_to "Edit", edit_coach_lesson_path(lesson), class: "btn btn-secondary btn-small" %>
                 <button type="button"
-                        class="btn btn-danger"
+                        class="btn btn-danger btn-small"
                         data-action="confirm-modal#open"
                         data-confirm-title="Delete lesson?"
                         data-confirm-body="This will permanently delete this lesson. This cannot be undone."

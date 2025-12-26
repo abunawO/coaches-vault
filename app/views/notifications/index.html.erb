@@ -1,39 +1,59 @@
 <div class="container">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Notifications</h1>
-      <p class="page-subtitle">Unread items appear first.</p>
-    </div>
-    <%= button_to "Mark all as read", mark_all_notifications_read_path, method: :post, class: "btn btn-secondary" %>
-  </div>
+  <%= render "shared/page_header",
+        breadcrumbs: [["Dashboard", root_path], ["Notifications", notifications_path]],
+        title: content_tag(:span, "🔔", class: "page-title-icon") + " Notifications",
+        subtitle: "Unread items appear first.",
+        primary_action: { label: "Mark all as read", url: mark_all_notifications_read_path, method: :post } %>
 
   <% if @notifications.any? %>
-    <div class="stack">
-      <% @notifications.each do |notification| %>
-        <div class="card <%= "notification-unread" if notification.read_at.nil? %>">
-          <div class="card-header">
-            <div class="notification-header-row">
-              <div class="notification-actor">
+    <div class="mv-card mv-inbox">
+      <div class="mv-inbox__filters">
+        <div class="inbox-tabs" style="margin:0;">
+          <%= link_to "All", notifications_path, class: inbox_tab_class(params[:filter] || "all", "all"), aria: { current: ("page" if (params[:filter] || "all") == "all") } %>
+          <%= link_to "Unread", notifications_path(filter: "unread"), class: inbox_tab_class(params[:filter], "unread"), aria: { current: ("page" if params[:filter] == "unread") } %>
+          <%= link_to "Read", notifications_path(filter: "read"), class: inbox_tab_class(params[:filter], "read"), aria: { current: ("page" if params[:filter] == "read") } %>
+        </div>
+      </div>
+
+      <div class="mv-inbox__list">
+        <% @notifications.each do |notification| %>
+          <% unread = notification.read_at.nil? %>
+          <% kind = if notification.respond_to?(:action)
+                      notification.action
+                    elsif notification.respond_to?(:notifiable_type)
+                      notification.notifiable_type&.underscore
+                    end %>
+          <% kind_symbol = (kind.to_s.include?("comment") ? :comment : :message) %>
+          <% kind_class = kind_symbol == :comment ? "mv-inbox__row--comment" : "mv-inbox__row--message" %>
+          <div class="mv-inbox__row <%= kind_class %> <%= 'mv-inbox__row--unread' if unread %>">
+            <div class="mv-inbox__icon">
+              <span class="mv-inbox__type-icon <%= kind_symbol == :comment ? 'mv-inbox__type-icon--comment' : 'mv-inbox__type-icon--message' %>">
+                <%= kind_symbol == :comment ? '🗨️' : '💬' %>
+              </span>
+            </div>
+            <div class="mv-inbox__main">
+              <div class="mv-inbox__title">
                 <% if notification.actor %>
                   <strong><%= notification.actor.email %></strong>
                 <% else %>
                   <strong>System</strong>
                 <% end %>
-                <span class="muted"><%= notification.message %></span>
+                <span class="mv-type-chip <%= kind_symbol == :comment ? 'mv-type-chip--comment' : 'mv-type-chip--message' %>"><%= kind_symbol == :comment ? 'Comment' : 'Message' %></span>
+                <span class="muted">· <%= notification.message %></span>
               </div>
-              <% if notification.read_at.nil? %>
-                <span class="badge badge-warning">Unread</span>
-              <% else %>
-                <span class="badge badge-neutral">Read</span>
-              <% end %>
+              <div class="mv-inbox__meta muted"></div>
+            </div>
+            <div class="mv-inbox__time muted"><%= time_ago_in_words(notification.created_at) %> ago</div>
+            <div class="mv-inbox__right">
+              <div class="mv-chip <%= unread ? 'mv-chip--subscribers' : 'mv-chip--free' %>">
+                <span class="mv-chip__dot"></span>
+                <%= unread ? "Unread" : "Read" %>
+              </div>
+              <%= link_to "Open", notification_path(notification), class: "btn btn-secondary btn-small mv-inbox__open" %>
             </div>
           </div>
-          <p class="muted">Received <%= time_ago_in_words(notification.created_at) %> ago</p>
-          <div class="card-actions">
-            <%= link_to "Open", notification_path(notification), class: "btn btn-secondary" %>
-          </div>
-        </div>
-      <% end %>
+        <% end %>
+      </div>
     </div>
   <% else %>
     <div class="card empty-state">

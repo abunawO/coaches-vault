@@ -1,0 +1,59 @@
+<%# locals:
+    breadcrumbs: array of [label, url] pairs (optional)
+    title: string (required)
+    subtitle: string (optional)
+    primary_action: { label:, url:, method: nil } (optional)
+    secondary_actions: array of { label:, url:, method: nil } (optional)
+    meta: array of { label:, value: } (optional)
+%>
+<div class="page-header card">
+  <div class="page-header__main">
+    <% if local_assigns[:breadcrumbs].present? %>
+      <nav class="page-header__breadcrumbs" aria-label="Breadcrumb">
+        <% breadcrumbs.each_with_index do |(label, url), idx| %>
+          <% if url.present? %>
+            <%= link_to label, url, class: "crumb" %>
+          <% else %>
+            <span class="crumb"><%= label %></span>
+          <% end %>
+          <% if idx < breadcrumbs.size - 1 %>
+            <span class="crumb-sep">›</span>
+          <% end %>
+        <% end %>
+      </nav>
+    <% end %>
+
+    <h1 class="page-header__title"><%= title %></h1>
+    <% if local_assigns[:subtitle].present? %>
+      <p class="page-header__subtitle"><%= subtitle %></p>
+    <% end %>
+
+    <% if local_assigns[:meta].present? %>
+      <div class="page-header__meta">
+        <% meta.each do |chip| %>
+          <span class="chip chip--neutral"><%= chip[:label] %>: <strong><%= chip[:value] %></strong></span>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <% if local_assigns[:primary_action].present? || local_assigns[:secondary_actions].present? %>
+    <div class="page-header__actions">
+      <% Array(local_assigns[:secondary_actions]).each do |action| %>
+        <% if action[:method].present? && action[:method].to_s.downcase != "get" %>
+          <%= button_to action[:label], action[:url], method: action[:method], form: { class: "inline-form" }, class: "btn btn-ghost" %>
+        <% else %>
+          <%= link_to action[:label], action[:url], method: action[:method], class: "btn btn-ghost" %>
+        <% end %>
+      <% end %>
+
+      <% if local_assigns[:primary_action].present? %>
+        <% if primary_action[:method].present? && primary_action[:method].to_s.downcase != "get" %>
+          <%= button_to primary_action[:label], primary_action[:url], method: primary_action[:method], form: { class: "inline-form" }, class: "btn btn-primary" %>
+        <% else %>
+          <%= link_to primary_action[:label], primary_action[:url], method: primary_action[:method], class: "btn btn-primary" %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

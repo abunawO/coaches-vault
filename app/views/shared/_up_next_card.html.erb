@@ -1,0 +1,41 @@
+<%# locals: lesson %>
+<% coach_profile = lesson.coach&.coach_profile %>
+
+<% path =
+  if coach_profile&.slug && lesson.respond_to?(:slug) && lesson.slug.present?
+    public_coach_lesson_path(coach_profile.slug, lesson.slug)
+  else
+    lesson_path(lesson)
+  end
+%>
+
+<% thumb = lesson_thumbnail_url(lesson) %>
+
+<%= link_to path, class: "up-next-card group flex gap-3 rounded-xl border bg-white p-3 shadow-sm hover:shadow-md transition" do %>
+  <div class="up-next-thumb w-36 shrink-0 overflow-hidden rounded-lg border bg-gray-100">
+    <% if thumb.present? %>
+      <div class="aspect-video bg-cover bg-center" style="background-image: url('<%= thumb %>')"></div>
+    <% else %>
+      <div class="aspect-video grid place-items-center bg-gradient-to-br from-gray-900 to-gray-700">
+        <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white">▶</span>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="min-w-0 flex-1">
+    <div class="flex items-start justify-between gap-2">
+      <div class="font-semibold text-sm leading-5 line-clamp-2">
+        <%= lesson.title %>
+      </div>
+      <%= render "shared/lesson_badge", visibility: lesson.visibility if lesson.respond_to?(:visibility) %>
+    </div>
+
+    <div class="mt-1 text-xs text-gray-500 flex items-center gap-1">
+      <%= coach_profile&.display_name || lesson.coach&.email || "Coach" %>
+      <% if lesson.respond_to?(:created_at) && lesson.created_at.present? %>
+        <span aria-hidden="true">•</span>
+        <%= time_ago_in_words(lesson.created_at) %> ago
+      <% end %>
+    </div>
+  </div>
+<% end %>

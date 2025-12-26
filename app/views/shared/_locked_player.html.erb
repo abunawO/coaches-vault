@@ -1,0 +1,20 @@
+<div class="locked-player">
+  <div class="locked-player__content">
+    <div class="locked-icon">🔒</div>
+    <% message = local_assigns.fetch(:message, "This lesson is locked.") %>
+    <p class="muted"><%= message %></p>
+    <div class="card-actions" style="justify-content:center; margin-top:10px;">
+      <% if local_assigns[:cta_path] %>
+        <% cta_label = local_assigns.fetch(:cta_label, "Subscribe") %>
+        <% if local_assigns[:cta_method].present? && local_assigns[:cta_method].to_s == "post" %>
+          <%= button_to cta_label, local_assigns[:cta_path], method: :post, class: "btn btn-primary" %>
+        <% else %>
+          <%= link_to cta_label, local_assigns[:cta_path], class: "btn btn-primary" %>
+        <% end %>
+      <% end %>
+      <% if local_assigns[:secondary_path] %>
+        <%= link_to "View coach", local_assigns[:secondary_path], class: "btn btn-secondary" %>
+      <% end %>
+    </div>
+  </div>
+</div>

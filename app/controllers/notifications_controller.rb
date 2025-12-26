@@ -3,6 +3,13 @@ class NotificationsController < ApplicationController
 
   def index
     @notifications = current_user.notifications.order(Arel.sql("read_at IS NOT NULL, created_at DESC"))
+
+    case params[:filter]
+    when "unread"
+      @notifications = @notifications.where(read_at: nil)
+    when "read"
+      @notifications = @notifications.where.not(read_at: nil)
+    end
   end
 
   def show

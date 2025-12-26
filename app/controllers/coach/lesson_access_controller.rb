@@ -32,6 +32,8 @@ class Coach::LessonAccessController < ApplicationController
         selected_ids.each do |sid|
           @lesson.lesson_shares.find_or_create_by!(user_id: sid)
         end
+      else
+        @lesson.lesson_shares.delete_all
       end
     end
 

@@ -1,23 +1,24 @@
-<div class="card lesson-card <%= 'lesson-card--restricted' if lesson.restricted? %>">
-  <div class="card-header">
+<div class="mv-card lesson-card <%= 'lesson-card--restricted' if lesson.restricted? %>">
+  <div class="mv-card__header">
     <div>
-      <h3 class="card-title" style="margin:0; font-size:1.05rem;"><%= lesson.title %></h3>
+      <h3 class="mv-card__title"><%= lesson.title %></h3>
       <% if lesson.description.present? %>
-        <p class="muted" style="margin: 6px 0 0 0;"><%= truncate(lesson.description, length: 120) %></p>
+        <p class="mv-card__subtitle"><%= truncate(lesson.description, length: 120) %></p>
       <% end %>
     </div>
-    <span class="visibility-pill visibility-pill--<%= lesson.visibility %>">
-      <span class="pill-dot"></span>
+    <span class="mv-chip mv-chip--<%= lesson.visibility == 'restricted' ? 'private' : (lesson.visibility == 'subscribers' ? 'subscribers' : 'free') %>">
+      <span class="mv-chip__dot"></span>
       <%= lesson.visibility == "restricted" ? "Private" : lesson.visibility.capitalize %>
     </span>
   </div>
-  <div class="card-body">
-    <p class="muted" style="margin-bottom: 6px;">Created <%= l(lesson.created_at.to_date, format: :long) %></p>
+  <div class="mv-card__meta">
+    <span>📅 Created <%= l(lesson.created_at.to_date, format: :long) %></span>
     <% if lesson.restricted? %>
-      <p class="muted">Shared with: <%= lesson.lesson_shares.size %></p>
+      <span>👥 Shared with: <%= lesson.lesson_shares.size %></span>
     <% end %>
   </div>
-  <div class="card-actions">
+  <div class="mv-card__actions">
+    <%= link_to "View", lesson_path(lesson), class: "btn btn-secondary btn-small" %>
     <%= link_to "Edit", edit_coach_lesson_path(lesson), class: "btn btn-secondary btn-small" %>
     <% if lesson.restricted? %>
       <%= link_to "Manage access", access_coach_lesson_path(lesson), class: "btn btn-primary btn-small manage-access-btn" %>

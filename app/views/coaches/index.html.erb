@@ -1,24 +1,65 @@
-<div class="container">
-  <div class="page-header">
+<div class="container coaches-page">
+  <div class="coaches-hero">
     <div>
       <h1 class="page-title">Coaches</h1>
       <p class="page-subtitle">Explore coach vaults and public profiles.</p>
     </div>
   </div>
 
-  <div class="grid">
-    <% @coach_profiles.each do |profile| %>
-      <div class="card">
-        <div class="card-header">
-          <strong><%= profile.display_name %></strong>
-        </div>
-        <% if profile.bio.present? %>
-          <p class="muted"><%= truncate(profile.bio, length: 140) %></p>
+  <div class="coaches-toolbar card">
+    <%= form_with url: coaches_path, method: :get, local: true, class: "coaches-search-form" do |f| %>
+      <div class="coaches-search-input">
+        <span class="muted">🔍</span>
+        <%= f.search_field :q, value: @q, placeholder: "Search coaches by name or bio…", class: "input" %>
+        <% if @q.present? %>
+          <%= link_to "Clear", coaches_path, class: "btn btn-ghost btn-small" %>
         <% end %>
-        <div class="card-actions">
-          <%= link_to "View profile", coach_path(profile.slug), class: "btn btn-secondary" %>
-        </div>
+      </div>
+      <div class="coaches-sort">
+        <select class="input" disabled>
+          <option>Sort: Most recent</option>
+        </select>
       </div>
     <% end %>
   </div>
+
+  <% if @coach_profiles.empty? %>
+    <div class="card empty-state-card">
+      <h3>No coaches found<%= @q.present? ? " for “#{@q}”" : "" %>.</h3>
+      <p class="muted">Try a different search or return to your dashboard.</p>
+      <div class="card-actions">
+        <%= link_to "Back to dashboard", dashboard_path, class: "btn btn-primary" %>
+        <%= link_to "Clear search", coaches_path, class: "btn btn-ghost" if @q.present? %>
+      </div>
+    </div>
+  <% else %>
+    <div class="coaches-grid">
+      <% @coach_profiles.each do |profile| %>
+        <% avatar_text = profile.display_name.to_s.first.presence || profile.slug.to_s.first.presence || "C" %>
+        <% lessons_count = profile.user&.respond_to?(:lessons) ? profile.user.lessons.size : nil %>
+        <div class="coach-card card">
+          <div class="coach-card__header">
+            <div class="avatar-circle"><%= avatar_text.upcase %></div>
+            <div class="coach-card__meta">
+              <div class="coach-name"><%= profile.display_name %></div>
+              <div class="muted">@<%= profile.slug %></div>
+            </div>
+          </div>
+          <% if profile.bio.present? %>
+            <p class="muted coach-bio-snippet"><%= truncate(profile.bio, length: 140) %></p>
+          <% else %>
+            <p class="muted coach-bio-snippet">No bio provided yet.</p>
+          <% end %>
+          <div class="coach-stats">
+            <% if lessons_count %>
+              <span class="pill pill-soft">Lessons: <strong><%= lessons_count %></strong></span>
+            <% end %>
+          </div>
+          <div class="card-actions">
+            <%= link_to "View profile", coach_path(profile.slug), class: "btn btn-primary" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 </div>
