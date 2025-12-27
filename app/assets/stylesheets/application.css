@@ -1706,6 +1706,7 @@ details[open] .vault-caret {
 .vault-main-card {
   display: grid;
   gap: 14px;
+  width: 119%;
 }
 
 .vault-main__header {
@@ -1753,6 +1754,108 @@ details[open] .vault-caret {
 
 .vault-list__item.is-hidden {
   display: none;
+}
+
+.vault-addlessons {
+  display: grid;
+  gap: 10px;
+  background: #f8fbff;
+  padding: 12px;
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  position: relative;
+}
+
+.vault-addlessons__top {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: #f8fbff;
+  padding-bottom: 6px;
+}
+
+.vault-addlessons__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.vault-addlessons__search {
+  padding-left: 34px;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='8' cy='8' r='6'/%3E%3Cline x1='13' y1='13' x2='16' y2='16'/%3E%3C/svg%3E") 10px center no-repeat;
+  background-size: 16px;
+}
+
+.vault-addlessons__actions .link-btn {
+  padding: 4px 8px;
+  color: #475467;
+  text-decoration: underline;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.vault-addlessons__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vault-addlessons__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vault-pill {
+  border: 1px solid #e7ecf4;
+  background: #fff;
+  padding: 8px 10px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+
+.vault-pill input {
+  margin: 0;
+}
+
+.vault-pill__text {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.vault-pill:hover {
+  background: #eef2ff;
+  border-color: #dbeafe;
+  box-shadow: 0 8px 18px rgba(47, 91, 234, 0.07);
+}
+
+.vault-addlessons__empty {
+  margin: 0;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.vault-addlessons__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  position: sticky;
+  bottom: 0;
+  padding-top: 8px;
+  border-top: 1px solid #e5e9f1;
+  background: #f8fbff;
+}
+
+.is-hidden {
+  display: none !important;
 }
 
 .vault-list__title-row {

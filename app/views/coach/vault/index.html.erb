@@ -108,16 +108,17 @@
                     <div class="vault-lesson-row">
                       <div>
                         <strong><%= lesson.title %></strong>
-                        <% if lesson.description.present? %>
-                          <div class="muted"><%= truncate(lesson.description, length: 90) %></div>
-                        <% end %>
-                      </div>
-                      <div class="vault-lesson-actions">
-                        <%= link_to lesson_path(lesson), class: "icon-btn", aria: { label: "Open" }, data: { tooltip: "Open" } do %>
+                      <% if lesson.description.present? %>
+                        <div class="muted"><%= truncate(lesson.description, length: 90) %></div>
+                      <% end %>
+                    </div>
+                    <div class="vault-lesson-actions">
+                        <%= link_to lesson_path(lesson), class: "icon-btn", aria: { label: "Open" }, data: { tooltip: "Open", turbo: false } do %>
                           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 9s3-6 11-6 11 6 11 6-3 6-11 6S1 9 1 9Z"/><circle cx="12" cy="9" r="2.5"/></svg>
                         <% end %>
-                        <%= link_to coach_category_remove_lesson_path(@selected_category, lesson_id: lesson.id),
+                        <%= button_to coach_category_remove_lesson_path(@selected_category, lesson_id: lesson.id),
                               method: :delete,
+                              form: { class: "inline-form", data: { turbo: false } },
                               data: { turbo_confirm: "Remove lesson from category?", tooltip: "Remove" },
                               class: "icon-btn icon-btn--danger",
                               aria: { label: "Remove" } do %>
@@ -137,22 +138,50 @@
                   <p class="muted small-text">Select lessons to include.</p>
                 </div>
               </div>
-              <%= form_with url: coach_category_lessons_path(@selected_category), method: :post, local: true, data: { controller: "vault-picker" } do |f| %>
-                <div class="vault-chip-picker" data-vault-picker-target="chips">
-                  <% @lessons.each do |lesson| %>
-                    <% next if @selected_category.lesson_ids.include?(lesson.id) %>
-                    <button type="button"
-                            class="vault-chip"
-                            data-action="vault-picker#toggle"
-                            data-id="<%= lesson.id %>">
-                      <span><%= lesson.title %></span>
-                    </button>
-                  <% end %>
+              <% category_lesson_ids = @selected_category.lesson_ids %>
+              <% available_lessons = @lessons.where.not(id: category_lesson_ids) %>
+              <% if available_lessons.empty? %>
+                <div class="vault-empty mv-card">
+                  <p class="muted">All lessons are already in this category.</p>
                 </div>
-                <div data-vault-picker-target="inputs"></div>
-                <div class="vault-add-actions">
-                  <%= submit_tag "Add selected", class: "btn btn-primary btn-small", data: { vault_picker_target: "submit" }, disabled: true %>
-                </div>
+              <% else %>
+                <%= form_with url: coach_category_lessons_path(@selected_category), method: :post, local: true, data: { controller: "vault-picker" } do |f| %>
+                  <div class="vault-addlessons">
+                    <div class="vault-addlessons__top">
+                      <input type="search"
+                             placeholder="Filter lessons…"
+                             class="input vault-addlessons__search"
+                             data-vault-picker-target="search"
+                             data-action="input->vault-picker#filter">
+                      <div class="vault-addlessons__actions">
+                        <button type="button" class="link-btn" data-action="vault-picker#selectAll">Select all</button>
+                        <button type="button" class="link-btn" data-action="vault-picker#clear">Clear</button>
+                      </div>
+                    </div>
+
+                    <div class="vault-addlessons__list" data-vault-picker-target="list">
+                      <% available_lessons.each do |lesson| %>
+                        <% searchable = [lesson.title, lesson.description].compact.join(" ") %>
+                        <label class="vault-pill"
+                               data-vault-picker-target="option"
+                               data-search="<%= searchable.downcase %>">
+                          <input type="checkbox"
+                                 name="lesson_ids[]"
+                                 value="<%= lesson.id %>"
+                                 data-action="change->vault-picker#updateSubmit"
+                                 data-vault-picker-target="checkbox">
+                          <span class="vault-pill__text"><%= lesson.title %></span>
+                        </label>
+                      <% end %>
+                    </div>
+                    <p class="vault-addlessons__empty is-hidden" data-vault-picker-target="empty">No matches.</p>
+
+                    <div class="vault-add-actions vault-addlessons__footer">
+                      <%= submit_tag "Add selected", class: "btn btn-primary btn-small", data: { vault_picker_target: "submit" }, disabled: true %>
+                      <span class="vault-addlessons__count" data-vault-picker-target="count"></span>
+                    </div>
+                  </div>
+                <% end %>
               <% end %>
             </div>
           </div>
