@@ -1,0 +1,38 @@
+<div class="container">
+  <%= render "shared/page_header",
+        breadcrumbs: [["Vault", public_vault_path]],
+        title: content_tag(:span, "📚", class: "page-title-icon") + " Coach Vaults",
+        subtitle: "Browse lessons by category." %>
+
+  <% @categories.each do |category| %>
+    <details class="mv-card" style="margin-bottom:10px;">
+      <summary class="vault-summary">
+        <div class="vault-summary__left">
+          <span class="vault-name"><%= category.name %></span>
+          <span class="muted"><%= pluralize(category.lessons.count, "lesson") %></span>
+        </div>
+      </summary>
+      <div class="vault-body">
+        <% if category.description.present? %>
+          <p class="muted"><%= category.description %></p>
+        <% end %>
+        <div class="vault-lessons">
+          <% category.lessons.each do |lesson| %>
+            <% next unless lesson.viewable_by?(current_user) %>
+            <div class="vault-lesson-row">
+              <div>
+                <strong><%= lesson.title %></strong>
+                <% if lesson.description.present? %>
+                  <div class="muted"><%= truncate(lesson.description, length: 120) %></div>
+                <% end %>
+              </div>
+              <div class="vault-lesson-actions">
+                <%= link_to "Open", lesson_path(lesson), class: "btn btn-secondary btn-small" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </details>
+  <% end %>
+</div>

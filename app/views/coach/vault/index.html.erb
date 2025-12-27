@@ -1,0 +1,167 @@
+<div class="container">
+  <%= render "shared/page_header",
+        breadcrumbs: [["Dashboard", root_path], ["Vault", coach_vault_path]],
+        title: content_tag(:span, "📚", class: "page-title-icon") + " Vault",
+        subtitle: "Organize lessons into categories for students.",
+        primary_action: nil %>
+
+  <div class="vault-explorer" data-controller="vault-explorer" data-vault-explorer-selected-id-value="<%= @selected_category&.id %>">
+    <aside class="vault-explorer__sidebar">
+      <div class="mv-card vault-sidebar-card">
+        <div class="vault-sidebar__header">
+          <input type="search" placeholder="Search categories..." class="input"
+                 data-vault-explorer-target="searchInput"
+                 data-action="input->vault-explorer#filter">
+          <button type="button"
+                  class="btn btn-primary btn-small"
+                  data-action="vault-explorer#toggleCreatePanel"
+                  data-vault-explorer-target="createButton">
+            + New Category
+          </button>
+        </div>
+
+        <div id="new-category-card" class="vault-sidebar__create is-hidden" data-vault-explorer-target="createPanel">
+          <%= form_with model: [:coach, Category.new], url: coach_categories_path, local: true, id: "new-category-form", class: "inline-form" do |f| %>
+            <div class="vault-form">
+              <div class="field">
+                <%= f.label :name, "Category name" %>
+                <%= f.text_field :name, required: true, class: "input", placeholder: "e.g., Guard Passing", data: { vault_explorer_target: "categoryNameInput" } %>
+                <p class="muted small-text vault-hint">Give your category a short, clear name.</p>
+              </div>
+              <div class="field">
+                <%= f.label :description, "Description (optional)" %>
+                <%= f.text_field :description, class: "input", placeholder: "Optional short note" %>
+                <p class="muted small-text vault-hint">Add a hint for students about what’s inside.</p>
+              </div>
+              <div class="vault-form__actions">
+                <button type="button" class="btn btn-link" data-action="vault-explorer#closeCreatePanel">Cancel</button>
+                <%= f.submit "Create", class: "btn btn-primary vault-submit" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="mv-card vault-sidebar-card">
+        <% if @categories.empty? %>
+          <p class="muted">No categories yet. Create one to get started.</p>
+        <% else %>
+          <div class="vault-list" data-vault-explorer-target="list">
+            <% @categories.each do |category| %>
+              <% selected = @selected_category&.id == category.id %>
+              <%= link_to coach_vault_path(category_id: category.id),
+                          class: ["vault-list__item", ("is-selected" if selected)].compact.join(" "),
+                          data: {
+                            turbo_frame: "vault_category",
+                            action: "click->vault-explorer#pushState",
+                            vault_explorer_target: "categoryItem",
+                            category_id: category.id,
+                            search: "#{category.name} #{category.description}"
+                          },
+                          aria: { current: selected ? "true" : "false" } do %>
+                <div class="vault-list__title-row">
+                  <span class="vault-name"><%= category.name %></span>
+                  <span class="pill-soft"><%= pluralize(category.lessons.count, "lesson") %></span>
+                </div>
+                <% if category.description.present? %>
+                  <div class="muted vault-desc-preview"><%= truncate(category.description, length: 80) %></div>
+                <% end %>
+              <% end %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </aside>
+
+    <turbo-frame id="vault_category" class="vault-explorer__main">
+      <% if @selected_category.present? %>
+        <div class="mv-card vault-main-card">
+          <div class="vault-main__header">
+            <div>
+              <h3 class="vault-name"><%= @selected_category.name %></h3>
+              <div class="muted"><%= @selected_category.description.presence || "No description provided." %></div>
+            </div>
+            <div class="vault-main__meta">
+              <span class="pill-soft"><%= pluralize(@selected_category.lessons.count, "lesson") %></span>
+              <%= link_to coach_category_path(@selected_category),
+                    method: :delete,
+                    data: { turbo_confirm: "Delete category?", tooltip: "Delete" },
+                    class: "icon-btn icon-btn--danger",
+                    aria: { label: "Delete category" } do %>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M15 6V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v2"/></svg>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="vault-body-grid">
+            <div class="vault-panel">
+              <div class="vault-panel__header">
+                <h4 class="vault-name">In this category</h4>
+              </div>
+              <% if @selected_category.lessons.empty? %>
+                <div class="vault-empty mv-card">
+                  <p class="muted">No lessons yet. Add a few below.</p>
+                </div>
+              <% else %>
+                <div class="vault-lessons">
+                  <% @selected_category.lessons.each do |lesson| %>
+                    <div class="vault-lesson-row">
+                      <div>
+                        <strong><%= lesson.title %></strong>
+                        <% if lesson.description.present? %>
+                          <div class="muted"><%= truncate(lesson.description, length: 90) %></div>
+                        <% end %>
+                      </div>
+                      <div class="vault-lesson-actions">
+                        <%= link_to lesson_path(lesson), class: "icon-btn", aria: { label: "Open" }, data: { tooltip: "Open" } do %>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 9s3-6 11-6 11 6 11 6-3 6-11 6S1 9 1 9Z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                        <% end %>
+                        <%= link_to coach_category_remove_lesson_path(@selected_category, lesson_id: lesson.id),
+                              method: :delete,
+                              data: { turbo_confirm: "Remove lesson from category?", tooltip: "Remove" },
+                              class: "icon-btn icon-btn--danger",
+                              aria: { label: "Remove" } do %>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M15 6V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v2"/></svg>
+                        <% end %>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+
+            <div class="vault-panel">
+              <div class="vault-panel__header">
+                <div>
+                  <h4 class="vault-name">Add lessons</h4>
+                  <p class="muted small-text">Select lessons to include.</p>
+                </div>
+              </div>
+              <%= form_with url: coach_category_lessons_path(@selected_category), method: :post, local: true, data: { controller: "vault-picker" } do |f| %>
+                <div class="vault-chip-picker" data-vault-picker-target="chips">
+                  <% @lessons.each do |lesson| %>
+                    <% next if @selected_category.lesson_ids.include?(lesson.id) %>
+                    <button type="button"
+                            class="vault-chip"
+                            data-action="vault-picker#toggle"
+                            data-id="<%= lesson.id %>">
+                      <span><%= lesson.title %></span>
+                    </button>
+                  <% end %>
+                </div>
+                <div data-vault-picker-target="inputs"></div>
+                <div class="vault-add-actions">
+                  <%= submit_tag "Add selected", class: "btn btn-primary btn-small", data: { vault_picker_target: "submit" }, disabled: true %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% else %>
+        <div class="mv-card vault-main-card">
+          <p class="muted">No categories yet. Create one to start building your vault.</p>
+        </div>
+      <% end %>
+    </turbo-frame>
+  </div>
+</div>

@@ -53,6 +53,16 @@ Rails.application.routes.draw do
     end
   end
 
+  namespace :coach do
+    get "vault", to: "vault#index", as: :vault
+    resources :categories, only: [:create, :update, :destroy] do
+      resources :lessons, only: [:create], controller: "category_lessons"
+      delete "lessons/:lesson_id", to: "category_lessons#destroy", as: :remove_lesson
+    end
+  end
+
+  get "/vault", to: "vault#index", as: :public_vault
+
   get "/subscribers", to: "subscribers#index", as: :subscribers
   post "/subscribers/bulk_message", to: "subscribers#bulk_message", as: :bulk_message_subscribers
 

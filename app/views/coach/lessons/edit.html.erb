@@ -1,12 +1,11 @@
-<div class="container">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Edit Lesson</h1>
-      <p class="page-subtitle">Update your lesson details.</p>
-    </div>
-  </div>
+<% back_path = safe_return_path(lessons_path) %>
 
-  <div class="card" style="max-width: 640px;">
-    <%= render "form" %>
-  </div>
+<div class="lesson-form-page">
+  <%= render "shared/page_header",
+        breadcrumbs: [["Dashboard", root_path], ["Lessons", back_path], ["Edit Lesson", edit_coach_lesson_path(@lesson)]],
+        title: content_tag(:span, "✏️", class: "page-title-icon") + " Edit Lesson",
+        subtitle: "Update your lesson details.",
+        primary_action: { label: "Back to lessons", url: back_path } %>
+
+  <%= render "form" %>
 </div>

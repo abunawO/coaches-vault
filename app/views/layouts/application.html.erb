@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
-  <head>
+
+<head>
     <title><%= content_for(:title) || "Myvault" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -21,83 +22,85 @@
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
-  </head>
+</head>
 
-  <body>
+<body>
     <header class="topnav">
-      <div class="topnav__inner">
-        <div class="topnav__left">
-          <%= link_to "MyVault", root_path, class: "topnav__brand" %>
-          <nav class="topnav__links" aria-label="Primary">
-            <% if logged_in? %>
-              <% if current_user.student? %>
-                <%= link_to "Coaches", coaches_path, class: nav_link_class(coaches_path) %>
-                <%= link_to "Dashboard", root_path, class: nav_link_class(root_path) %>
-                <%= link_to "Search", search_path, class: nav_link_class(search_path) %>
-                <%= link_to "Subscriptions", subscriptions_path, class: nav_link_class(subscriptions_path) %>
-                <%= link_to "Favorites", favorites_path, class: nav_link_class(favorites_path) %>
-                <%= link_to conversations_path, class: nav_link_class(conversations_path) do %>
-                  Messages
-                  <% if current_user.unread_messages_count.positive? %>
+        <div class="topnav__inner">
+            <div class="topnav__left">
+                <% brand_path = (logged_in? && current_user.coach?) ? coach_vault_path : root_path %>
+                <%= link_to "MyVault", brand_path, class: "topnav__brand" %>
+                <nav class="topnav__links" aria-label="Primary">
+                    <% if logged_in? %>
+                    <% if current_user.student? %>
+                    <%= link_to "Coaches", coaches_path, class: nav_link_class(coaches_path) %>
+                    <%= link_to "Dashboard", root_path, class: nav_link_class(root_path) %>
+                    <%= link_to "Search", search_path, class: nav_link_class(search_path) %>
+                    <%= link_to "Subscriptions", subscriptions_path, class: nav_link_class(subscriptions_path) %>
+                    <%= link_to "Favorites", favorites_path, class: nav_link_class(favorites_path) %>
+                    <%= link_to conversations_path, class: nav_link_class(conversations_path) do %>
+                    Messages
+                    <% if current_user.unread_messages_count.positive? %>
                     <span class="topnav__badge"><%= current_user.unread_messages_count %></span>
-                  <% end %>
-                <% end %>
-                <%= link_to notifications_path, class: nav_link_class(notifications_path) do %>
-                  Notifications
-                  <% if current_user.unread_notifications_count.positive? %>
+                    <% end %>
+                    <% end %>
+                    <%= link_to notifications_path, class: nav_link_class(notifications_path) do %>
+                    Notifications
+                    <% if current_user.unread_notifications_count.positive? %>
                     <span class="topnav__badge"><%= current_user.unread_notifications_count %></span>
-                  <% end %>
-                <% end %>
-          <% elsif current_user.coach? %>
-            <%= link_to "Dashboard", root_path, class: nav_link_class(root_path) %>
-            <%= link_to "My Lessons", lessons_path, class: nav_link_class(lessons_path) %>
-            <%= link_to "Content", coach_content_path, class: nav_link_class(coach_content_path) %>
-            <%= link_to conversations_path, class: nav_link_class(conversations_path) do %>
-              Messages
-              <% if current_user.unread_messages_count.positive? %>
-                <span class="topnav__badge"><%= current_user.unread_messages_count %></span>
-              <% end %>
-                <% end %>
-                <%= link_to notifications_path, class: nav_link_class(notifications_path) do %>
-                  Notifications
-              <% if current_user.unread_notifications_count.positive? %>
-                <span class="topnav__badge"><%= current_user.unread_notifications_count %></span>
-              <% end %>
-            <% end %>
-            <%= link_to "Subscribers", subscribers_path, class: nav_link_class(subscribers_path) %>
-          <% end %>
-        <% else %>
-          <%= link_to "Coaches", coaches_path, class: nav_link_class(coaches_path) %>
-          <%= link_to "Search", search_path, class: nav_link_class(search_path) %>
-          <%= link_to "Login", login_path, class: nav_link_class(login_path) %>
-            <% end %>
-          </nav>
-        </div>
-
-        <div class="topnav__right">
-          <% if logged_in? %>
-            <div class="topnav__user">
-              <span class="topnav__signedin">Signed in as</span>
-              <span class="topnav__email"><%= current_user.email %></span>
+                    <% end %>
+                    <% end %>
+                    <% elsif current_user.coach? %>
+                    <%= link_to "Dashboard", root_path, class: nav_link_class(root_path) %>
+                    <%= link_to "My Lessons", lessons_path, class: nav_link_class(lessons_path) %>
+                    <%= link_to "Content", coach_content_path, class: nav_link_class(coach_content_path) %>
+                    <%= link_to conversations_path, class: nav_link_class(conversations_path) do %>
+                    Messages
+                    <% if current_user.unread_messages_count.positive? %>
+                    <span class="topnav__badge"><%= current_user.unread_messages_count %></span>
+                    <% end %>
+                    <% end %>
+                    <%= link_to notifications_path, class: nav_link_class(notifications_path) do %>
+                    Notifications
+                    <% if current_user.unread_notifications_count.positive? %>
+                    <span class="topnav__badge"><%= current_user.unread_notifications_count %></span>
+                    <% end %>
+                    <% end %>
+                    <%= link_to "Subscribers", subscribers_path, class: nav_link_class(subscribers_path) %>
+                    <% end %>
+                    <% else %>
+                    <%= link_to "Coaches", coaches_path, class: nav_link_class(coaches_path) %>
+                    <%= link_to "Search", search_path, class: nav_link_class(search_path) %>
+                    <%= link_to "Login", login_path, class: nav_link_class(login_path) %>
+                    <% end %>
+                </nav>
             </div>
-            <%= button_to "Logout", logout_path, method: :delete, form: { class: "inline-form" }, class: "btn btn-secondary" %>
-          <% end %>
+
+            <div class="topnav__right">
+                <% if logged_in? %>
+                <div class="topnav__user">
+                    <span class="topnav__signedin">Signed in as</span>
+                    <span class="topnav__email"><%= current_user.email %></span>
+                </div>
+                <%= button_to "Logout", logout_path, method: :delete, form: { class: "inline-form" }, class: "btn btn-secondary" %>
+                <% end %>
+            </div>
         </div>
-      </div>
     </header>
 
     <% flash.each do |type, message| %>
-      <div class="flash flash-<%= type %>">
+    <div class="flash flash-<%= type %>">
         <div class="flash-row">
-          <span><%= message %></span>
-          <button class="flash-close" type="button" onclick="this.closest('.flash').remove()">×</button>
+            <span><%= message %></span>
+            <button class="flash-close" type="button" onclick="this.closest('.flash').remove()">×</button>
         </div>
-      </div>
+    </div>
     <% end %>
 
     <main class="page" data-controller="confirm-modal">
-      <%= render "shared/confirm_modal" %>
-      <%= yield %>
+        <%= render "shared/confirm_modal" %>
+        <%= yield %>
     </main>
-  </body>
+</body>
+
 </html>

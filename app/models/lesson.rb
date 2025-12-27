@@ -5,6 +5,8 @@ class Lesson < ApplicationRecord
   has_many :favorites, dependent: :destroy
   has_many :lesson_shares, dependent: :destroy
   has_many :shared_users, through: :lesson_shares, source: :user
+  has_many :category_lessons, dependent: :destroy
+  has_many :categories, through: :category_lessons
 
   validates :title, presence: true
   validates :video_url, presence: true

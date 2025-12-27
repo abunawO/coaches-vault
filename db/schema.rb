@@ -10,9 +10,32 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_20_140000) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_21_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "categories", force: :cascade do |t|
+    t.bigint "coach_id", null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.string "visibility", default: "visible", null: false
+    t.index ["coach_id", "position"], name: "index_categories_on_coach_id_and_position"
+    t.index ["coach_id"], name: "index_categories_on_coach_id"
+  end
+
+  create_table "category_lessons", force: :cascade do |t|
+    t.bigint "category_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "lesson_id", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id", "lesson_id"], name: "index_category_lessons_on_category_id_and_lesson_id", unique: true
+    t.index ["category_id"], name: "index_category_lessons_on_category_id"
+    t.index ["lesson_id"], name: "index_category_lessons_on_lesson_id"
+  end
 
   create_table "coach_profiles", force: :cascade do |t|
     t.string "avatar_url"
@@ -138,6 +161,9 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_20_140000) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "categories", "users", column: "coach_id"
+  add_foreign_key "category_lessons", "categories"
+  add_foreign_key "category_lessons", "lessons"
   add_foreign_key "coach_profiles", "users"
   add_foreign_key "comments", "lessons"
   add_foreign_key "comments", "users"
