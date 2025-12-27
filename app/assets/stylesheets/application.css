@@ -1006,30 +1006,6 @@ a:hover {
   text-align: center;
 }
 
-.subscriber-list {
-  display: grid;
-  gap: 10px;
-  max-height: 320px;
-  overflow: auto;
-  padding: 6px 0;
-}
-
-.subscriber-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-}
-
-.subscriber-card input[type="checkbox"] {
-  margin-right: 6px;
-}
-
-.subscriber-card.disabled {
-  opacity: 0.55;
-  pointer-events: none;
-}
-
 .access-page {
   max-width: 980px;
   margin: 24px auto 48px;
@@ -1043,6 +1019,119 @@ a:hover {
 
 .access-card {
   margin-top: 16px;
+}
+
+/* Subscribers */
+.subscribers-layout {
+  display: grid;
+  gap: 12px;
+}
+
+.subscribers-command {
+  position: sticky;
+  top: 16px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e5e9f1;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(16, 24, 40, 0.04);
+}
+
+.subscribers-command__left {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.subscribers-command__left .input {
+  flex: 1;
+}
+
+.subscribers-command__right {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.select-all-row {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.subscribers-list {
+  border: 1px solid #e5e9f1;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(16, 24, 40, 0.04);
+  max-height: calc(100vh - 360px);
+  overflow: auto;
+  padding: 4px 0;
+}
+
+.subscriber-row {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.subscriber-row:last-child {
+  border-bottom: none;
+}
+
+.subscriber-row:hover {
+  background: #f8fbff;
+}
+
+.subscriber-row.selected {
+  background: #eef2ff;
+}
+
+.subscriber-row .avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e5e9f1;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #475467;
+}
+
+.subscriber-meta {
+  min-width: 0;
+}
+
+.subscriber-name {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subscriber-date {
+  font-size: 12px;
+}
+
+.subscriber-actions-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.subscribers-layout .is-hidden {
+  display: none !important;
 }
 
 .segmented {

@@ -2,3 +2,5 @@
 import { application } from "controllers/application"
 import { eagerLoadControllersFrom } from "@hotwired/stimulus-loading"
 eagerLoadControllersFrom("controllers", application)
+import SubscribersController from "controllers/subscribers_controller"
+application.register("subscribers", SubscribersController)
