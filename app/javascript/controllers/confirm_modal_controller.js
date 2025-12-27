@@ -14,10 +14,12 @@ export default class extends Controller {
   }
 
   open(event) {
+    event.preventDefault()
+    event.stopPropagation()
     const trigger = event.currentTarget
     const title = trigger.dataset.confirmTitle || "Are you sure?"
     const body = trigger.dataset.confirmBody || ""
-    const action = trigger.dataset.confirmAction || "#"
+    const action = trigger.dataset.confirmUrl || trigger.dataset.confirmAction || "#"
     const method = (trigger.dataset.confirmMethod || "post").toLowerCase()
     const label = trigger.dataset.confirmLabel || "Confirm"
 
