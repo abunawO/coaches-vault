@@ -36,49 +36,52 @@
         <% media_slides = [OpenStruct.new(kind: "video", video_url: @lesson.video_url, image_file: nil)] %>
       <% end %>
 
-      <div class="player-card card">
+      <div class="player-card card ig-carousel">
         <% if @access_level == :full %>
           <div class="carousel" data-carousel>
-            <div class="carousel-track" data-carousel-track>
-              <% media_slides.each_with_index do |slide, idx| %>
-                <div class="carousel-slide <%= 'is-active' if idx.zero? %>" data-carousel-index="<%= idx %>">
-                  <% if slide.kind.to_s == "image" && slide.respond_to?(:image_file) && slide.image_file.attached? %>
-                    <div class="carousel-media image">
-                      <%= image_tag(slide.image_file, alt: "#{@lesson.title} slide #{idx + 1}") %>
-                    </div>
-                  <% elsif slide.video_url.present? %>
-                    <% url = slide.video_url %>
-                    <% if url.include?("youtube") || url.include?("youtu.be") %>
-                      <div class="player-frame">
-                        <iframe src="<%= url.sub("watch?v=", "embed/") %>" title="Video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            <div class="ig-frame">
+              <div class="ig-counter" data-carousel-counter><span>1</span>/<span><%= media_slides.size %></span></div>
+              <div class="carousel-track" data-carousel-track>
+                <% media_slides.each_with_index do |slide, idx| %>
+                  <div class="carousel-slide <%= 'is-active' if idx.zero? %>" data-carousel-index="<%= idx %>">
+                    <% if slide.kind.to_s == "image" && slide.respond_to?(:image_file) && slide.image_file.attached? %>
+                      <div class="carousel-media image">
+                        <%= image_tag(slide.image_file, alt: "#{@lesson.title} slide #{idx + 1}") %>
                       </div>
-                    <% elsif url.include?("vimeo") %>
-                      <div class="player-frame">
-                        <iframe src="<%= url.sub("vimeo.com/", "player.vimeo.com/video/") %>" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
-                      </div>
+                    <% elsif slide.video_url.present? %>
+                      <% url = slide.video_url %>
+                      <% if url.include?("youtube") || url.include?("youtu.be") %>
+                        <div class="player-frame">
+                          <iframe src="<%= url.sub("watch?v=", "embed/") %>" title="Video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                        </div>
+                      <% elsif url.include?("vimeo") %>
+                        <div class="player-frame">
+                          <iframe src="<%= url.sub("vimeo.com/", "player.vimeo.com/video/") %>" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+                        </div>
+                      <% else %>
+                        <div class="player-frame" style="display:grid; place-items:center;">
+                          <%= link_to "Watch video", url, class: "btn btn-primary", target: "_blank", rel: "noopener" %>
+                        </div>
+                      <% end %>
                     <% else %>
                       <div class="player-frame" style="display:grid; place-items:center;">
-                        <%= link_to "Watch video", url, class: "btn btn-primary", target: "_blank", rel: "noopener" %>
+                        <p class="muted">Slide unavailable</p>
                       </div>
                     <% end %>
-                  <% else %>
-                    <div class="player-frame" style="display:grid; place-items:center;">
-                      <p class="muted">Slide unavailable</p>
-                    </div>
+                  </div>
+                <% end %>
+              </div>
+
+              <% if media_slides.size > 1 %>
+                <button class="ig-arrow left" data-carousel-prev aria-label="Previous slide">‹</button>
+                <button class="ig-arrow right" data-carousel-next aria-label="Next slide">›</button>
+                <div class="ig-dots" data-carousel-dots>
+                  <% media_slides.each_with_index do |_, idx| %>
+                    <button class="ig-dot <%= 'active' if idx.zero? %>" data-carousel-dot="<%= idx %>" aria-label="Go to slide <%= idx + 1 %>" aria-current="<%= idx.zero? %>"></button>
                   <% end %>
                 </div>
               <% end %>
             </div>
-
-            <% if media_slides.size > 1 %>
-              <button class="carousel-arrow left" data-carousel-prev aria-label="Previous slide">‹</button>
-              <button class="carousel-arrow right" data-carousel-next aria-label="Next slide">›</button>
-              <div class="carousel-dots" data-carousel-dots>
-                <% media_slides.each_with_index do |_, idx| %>
-                  <button class="carousel-dot <%= 'active' if idx.zero? %>" data-carousel-dot="<%= idx %>" aria-label="Go to slide <%= idx + 1 %>"></button>
-                <% end %>
-              </div>
-            <% end %>
           </div>
         <% elsif @access_level == :preview %>
           <%= render "shared/locked_player",
@@ -241,35 +244,80 @@
       const prevBtn = carousel.querySelector("[data-carousel-prev]");
       const nextBtn = carousel.querySelector("[data-carousel-next]");
       const dots = Array.from(carousel.querySelectorAll("[data-carousel-dot]"));
+      const counter = carousel.querySelector("[data-carousel-counter]");
       let index = 0;
+      let startX = 0;
+      let currentX = 0;
+      let isDown = false;
+      const threshold = 50;
 
-      const update = () => {
-        slides.forEach((slide, i) => {
-          slide.classList.toggle("is-active", i === index);
-          slide.style.transform = `translateX(-${index * 100}%)`;
-        });
-        dots.forEach((dot, i) => dot.classList.toggle("active", i === index));
+      const updateCounter = () => {
+        if (!counter) return;
+        const parts = counter.querySelectorAll("span");
+        if (parts[0]) parts[0].textContent = String(index + 1);
+        if (parts[1]) parts[1].textContent = String(slides.length);
       };
 
-      prevBtn?.addEventListener("click", () => {
-        index = (index - 1 + slides.length) % slides.length;
-        update();
-      });
+      const update = () => {
+        track.style.transform = `translateX(-${index * 100}%)`;
+        slides.forEach((slide, i) => slide.classList.toggle("is-active", i === index));
+        dots.forEach((dot, i) => {
+          dot.classList.toggle("active", i === index);
+          dot.setAttribute("aria-current", i === index);
+        });
+        updateCounter();
+      };
 
-      nextBtn?.addEventListener("click", () => {
-        index = (index + 1) % slides.length;
+      const goTo = (i) => {
+        index = (i + slides.length) % slides.length;
         update();
-      });
+      };
+
+      prevBtn?.addEventListener("click", () => goTo(index - 1));
+      nextBtn?.addEventListener("click", () => goTo(index + 1));
 
       dots.forEach((dot) => {
         dot.addEventListener("click", () => {
           const targetIdx = parseInt(dot.dataset.carouselDot, 10);
-          if (Number.isInteger(targetIdx)) {
-            index = targetIdx;
-            update();
-          }
+          if (Number.isInteger(targetIdx)) goTo(targetIdx);
         });
       });
+
+      const onPointerDown = (e) => {
+        isDown = true;
+        startX = e.clientX || e.touches?.[0]?.clientX || 0;
+        currentX = startX;
+        track.style.transition = "none";
+      };
+
+      const onPointerMove = (e) => {
+        if (!isDown) return;
+        const x = e.clientX || e.touches?.[0]?.clientX || 0;
+        currentX = x;
+        const delta = currentX - startX;
+        track.style.transform = `translateX(calc(-${index * 100}% + ${delta}px))`;
+      };
+
+      const onPointerUp = () => {
+        if (!isDown) return;
+        isDown = false;
+        const delta = currentX - startX;
+        track.style.transition = "";
+        if (Math.abs(delta) > threshold) {
+          if (delta < 0) goTo(index + 1);
+          else goTo(index - 1);
+        } else {
+          update();
+        }
+      };
+
+      track.addEventListener("pointerdown", onPointerDown);
+      track.addEventListener("pointermove", onPointerMove);
+      track.addEventListener("pointerup", onPointerUp);
+      track.addEventListener("pointerleave", onPointerUp);
+      track.addEventListener("touchstart", onPointerDown, { passive: true });
+      track.addEventListener("touchmove", onPointerMove, { passive: true });
+      track.addEventListener("touchend", onPointerUp);
 
       update();
     }

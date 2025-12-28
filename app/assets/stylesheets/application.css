@@ -337,6 +337,79 @@ a:hover {
   border-color: #2563eb;
 }
 
+.ig-carousel .ig-frame {
+  position: relative;
+  background: #0f172a;
+  min-height: 320px;
+  max-height: min(60vh, 520px);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.ig-carousel .player-frame,
+.ig-carousel iframe {
+  border-radius: 14px;
+}
+
+.ig-counter {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 6px 10px;
+  background: rgba(15, 23, 42, 0.55);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 12px;
+  backdrop-filter: blur(6px);
+}
+
+.ig-dots {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 10px 0 12px;
+}
+
+.ig-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ig-dot.active {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.ig-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 999px;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 20px rgba(17, 24, 39, 0.12);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ig-arrow:hover {
+  background: #fff;
+  transform: translateY(-50%) translateY(-1px);
+}
+
+.ig-arrow.left { left: 12px; }
+.ig-arrow.right { right: 12px; }
+
 .player-frame {
   position: relative;
   width: 100%;
@@ -2896,6 +2969,76 @@ details[open] .vault-caret {
   max-width: 140px;
   border-radius: 8px;
   border: 1px solid #e5e7eb;
+}
+
+.slide-card {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.slide-thumb {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  background: #f8fafc;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.slide-thumb img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.thumb-video {
+  font-size: 13px;
+  color: #475467;
+}
+
+.slide-badge {
+  margin-bottom: 4px;
+}
+
+.slide-fields {
+  display: grid;
+  gap: 6px;
+}
+
+.slide-controls {
+  display: grid;
+  gap: 6px;
+  justify-items: center;
+}
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.icon-btn:hover {
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.icon-btn--danger {
+  color: #dc2626;
 }
 
 @media (max-width: 960px) {

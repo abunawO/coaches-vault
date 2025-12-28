@@ -31,36 +31,42 @@
             <div class="lesson-media-list" id="lesson-media-list">
               <%= form.fields_for :lesson_media do |mf| %>
                 <% media = mf.object %>
-                <div class="lesson-media-row card">
-                  <div class="lesson-media-row__header">
-                    <span class="pill-soft"><%= media.kind.capitalize %> slide</span>
-                    <div class="lesson-media-actions">
-                      <label class="muted small-text">Position</label>
-                      <%= mf.number_field :position, class: "input input-xs", value: media.position || 0 %>
-                      <label class="muted small-text">
-                        Remove
-                        <%= mf.check_box :_destroy %>
-                      </label>
+                <div class="slide-card" data-slide-row>
+                  <div class="slide-thumb">
+                    <% if media.image? %>
+                      <% if media.image_file.attached? %>
+                        <%= image_tag(media.image_file.variant(resize_to_limit: [200, 200])) rescue image_tag(media.image_file, style: "max-width: 80px;") %>
+                      <% else %>
+                        <span class="muted small-text">Image</span>
+                      <% end %>
+                    <% else %>
+                      <div class="thumb-video">Video</div>
+                    <% end %>
+                  </div>
+
+                  <div class="slide-body">
+                    <div class="slide-badge">
+                      <span class="pill-soft"><%= media.kind.capitalize %> slide</span>
+                    </div>
+                    <div class="slide-fields">
+                      <%= mf.hidden_field :kind %>
+                      <%= mf.hidden_field :position, class: "position-field", value: media.position || 0 %>
+                      <% if media.image? %>
+                        <label class="muted small-text">Image file</label>
+                        <%= mf.file_field :image_file, class: "input" %>
+                      <% else %>
+                        <label class="muted small-text">Video URL</label>
+                        <%= mf.text_field :video_url, class: "input", placeholder: "https://www.youtube.com/watch?v=..." %>
+                      <% end %>
                     </div>
                   </div>
 
-                  <%= mf.hidden_field :kind %>
-                  <% if media.image? %>
-                    <div class="form-row">
-                      <label class="muted small-text">Image file</label>
-                      <% if media.image_file.attached? %>
-                        <div class="media-thumb">
-                          <%= image_tag(media.image_file.variant(resize_to_limit: [300, 300])) rescue image_tag(media.image_file, style: "max-width: 120px;") %>
-                        </div>
-                      <% end %>
-                      <%= mf.file_field :image_file, class: "input" %>
-                    </div>
-                  <% else %>
-                    <div class="form-row">
-                      <label class="muted small-text">Video URL</label>
-                      <%= mf.text_field :video_url, class: "input", placeholder: "https://www.youtube.com/watch?v=..." %>
-                    </div>
-                  <% end %>
+                  <div class="slide-controls">
+                    <button type="button" class="icon-btn" data-move="up" aria-label="Move up">↑</button>
+                    <button type="button" class="icon-btn" data-move="down" aria-label="Move down">↓</button>
+                    <button type="button" class="icon-btn icon-btn--danger" data-remove-row aria-label="Remove slide">🗑</button>
+                    <%= mf.check_box :_destroy, style: "display:none;", data: { destroy_field: true } %>
+                  </div>
                 </div>
               <% end %>
             </div>
@@ -344,14 +350,71 @@
       `;
     };
 
+    const reindexPositions = () => {
+      if (!mediaList) return;
+      const rows = Array.from(mediaList.querySelectorAll("[data-slide-row]"));
+      rows.forEach((row, idx) => {
+        const posField = row.querySelector(".position-field");
+        if (posField) posField.value = idx;
+      });
+    };
+
+    const attachRowHandlers = (row, isNew = false) => {
+      const up = row.querySelector("[data-move='up']");
+      const down = row.querySelector("[data-move='down']");
+      const removeBtn = row.querySelector("[data-remove-row]");
+      const destroyField = row.querySelector("[data-destroy_field]");
+
+      up?.addEventListener("click", () => {
+        const prev = row.previousElementSibling;
+        if (prev) {
+          mediaList.insertBefore(row, prev);
+          reindexPositions();
+          markDirty();
+        }
+      });
+
+      down?.addEventListener("click", () => {
+        const next = row.nextElementSibling;
+        if (next) {
+          mediaList.insertBefore(next, row);
+          reindexPositions();
+          markDirty();
+        }
+      });
+
+      removeBtn?.addEventListener("click", () => {
+        if (destroyField) {
+          destroyField.checked = true;
+          row.style.display = "none";
+        } else if (isNew) {
+          row.remove();
+        } else {
+          row.style.display = "none";
+        }
+        reindexPositions();
+        markDirty();
+      });
+    };
+
+    // attach to existing rows
+    Array.from(mediaList?.querySelectorAll("[data-slide-row]") || []).forEach((row) => attachRowHandlers(row));
+
     addButtons.forEach((btn) => {
       btn.addEventListener("click", () => {
         if (!mediaList) return;
         const kind = btn.dataset.addMedia;
         const index = Date.now();
         mediaList.insertAdjacentHTML("beforeend", mediaTemplate(kind, index));
+        const newRow = mediaList.lastElementChild;
+        attachRowHandlers(newRow, true);
+        reindexPositions();
+        const focusInput = newRow.querySelector("input[type='file'], input[type='text']");
+        focusInput?.focus();
         markDirty();
       });
     });
+
+    reindexPositions();
   });
 </script>
