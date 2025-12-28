@@ -44,7 +44,16 @@ module Coach
     end
 
     def lesson_params
-      params.require(:lesson).permit(:title, :description, :video_url, :visibility, :preview, :preview_text, allowed_subscriber_ids: [])
+      params.require(:lesson).permit(
+        :title,
+        :description,
+        :video_url,
+        :visibility,
+        :preview,
+        :preview_text,
+        allowed_subscriber_ids: [],
+        lesson_media_attributes: %i[id kind video_url position _destroy image_file]
+      )
     end
 
     def require_coach

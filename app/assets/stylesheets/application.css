@@ -250,6 +250,93 @@ a:hover {
   border-radius: 14px;
 }
 
+.carousel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.carousel-track {
+  display: flex;
+  transition: transform 0.35s ease;
+}
+
+.carousel-slide {
+  min-width: 100%;
+  flex-shrink: 0;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.carousel-slide.is-active {
+  opacity: 1;
+}
+
+.carousel-media.image {
+  display: grid;
+  place-items: center;
+}
+
+.carousel-media.image img {
+  max-width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(17, 24, 39, 0.08);
+}
+
+.carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 999px;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 20px rgba(17, 24, 39, 0.12);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.carousel-arrow:hover {
+  background: #fff;
+  transform: translateY(-50%) translateY(-1px);
+}
+
+.carousel-arrow.left {
+  left: 12px;
+}
+
+.carousel-arrow.right {
+  right: 12px;
+}
+
+.carousel-dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 12px;
+  padding-bottom: 8px;
+}
+
+.carousel-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.carousel-dot.active {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
 .player-frame {
   position: relative;
   width: 100%;
@@ -2762,6 +2849,53 @@ details[open] .vault-caret {
   position: sticky;
   bottom: 12px;
   z-index: 10;
+}
+
+.lesson-media-list {
+  display: grid;
+  gap: 10px;
+}
+
+.lesson-media-row {
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.lesson-media-row__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.lesson-media-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.lesson-media-actions .input-xs {
+  width: 70px;
+  padding: 6px 8px;
+}
+
+.lesson-media-actions label {
+  white-space: nowrap;
+}
+
+.lesson-media-actions-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.media-thumb img {
+  max-width: 140px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
 }
 
 @media (max-width: 960px) {

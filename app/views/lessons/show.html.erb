@@ -31,21 +31,55 @@
         </div>
       </header>
 
+      <% media_slides = @lesson.lesson_media.order(:position) %>
+      <% if media_slides.blank? && @lesson.video_url.present? %>
+        <% media_slides = [OpenStruct.new(kind: "video", video_url: @lesson.video_url, image_file: nil)] %>
+      <% end %>
+
       <div class="player-card card">
         <% if @access_level == :full %>
-          <% if @lesson.video_url&.include?("youtube") || @lesson.video_url&.include?("youtu.be") %>
-            <div class="player-frame">
-              <iframe src="<%= @lesson.video_url.sub("watch?v=", "embed/") %>" title="Video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+          <div class="carousel" data-carousel>
+            <div class="carousel-track" data-carousel-track>
+              <% media_slides.each_with_index do |slide, idx| %>
+                <div class="carousel-slide <%= 'is-active' if idx.zero? %>" data-carousel-index="<%= idx %>">
+                  <% if slide.kind.to_s == "image" && slide.respond_to?(:image_file) && slide.image_file.attached? %>
+                    <div class="carousel-media image">
+                      <%= image_tag(slide.image_file, alt: "#{@lesson.title} slide #{idx + 1}") %>
+                    </div>
+                  <% elsif slide.video_url.present? %>
+                    <% url = slide.video_url %>
+                    <% if url.include?("youtube") || url.include?("youtu.be") %>
+                      <div class="player-frame">
+                        <iframe src="<%= url.sub("watch?v=", "embed/") %>" title="Video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                      </div>
+                    <% elsif url.include?("vimeo") %>
+                      <div class="player-frame">
+                        <iframe src="<%= url.sub("vimeo.com/", "player.vimeo.com/video/") %>" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+                      </div>
+                    <% else %>
+                      <div class="player-frame" style="display:grid; place-items:center;">
+                        <%= link_to "Watch video", url, class: "btn btn-primary", target: "_blank", rel: "noopener" %>
+                      </div>
+                    <% end %>
+                  <% else %>
+                    <div class="player-frame" style="display:grid; place-items:center;">
+                      <p class="muted">Slide unavailable</p>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
             </div>
-          <% elsif @lesson.video_url&.include?("vimeo") %>
-            <div class="player-frame">
-              <iframe src="<%= @lesson.video_url.sub("vimeo.com/", "player.vimeo.com/video/") %>" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
-            </div>
-          <% else %>
-            <div class="player-frame" style="display:grid; place-items:center;">
-              <%= link_to "Watch video", @lesson.video_url, class: "btn btn-primary", target: "_blank", rel: "noopener" %>
-            </div>
-          <% end %>
+
+            <% if media_slides.size > 1 %>
+              <button class="carousel-arrow left" data-carousel-prev aria-label="Previous slide">‹</button>
+              <button class="carousel-arrow right" data-carousel-next aria-label="Next slide">›</button>
+              <div class="carousel-dots" data-carousel-dots>
+                <% media_slides.each_with_index do |_, idx| %>
+                  <button class="carousel-dot <%= 'active' if idx.zero? %>" data-carousel-dot="<%= idx %>" aria-label="Go to slide <%= idx + 1 %>"></button>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
         <% elsif @access_level == :preview %>
           <%= render "shared/locked_player",
                     message: "Preview available. Subscribe to unlock full lesson.",
@@ -199,5 +233,45 @@
         btn.textContent = isCollapsed ? "Show more" : "Show less";
       });
     });
+
+    const carousel = document.querySelector("[data-carousel]");
+    if (carousel) {
+      const track = carousel.querySelector("[data-carousel-track]");
+      const slides = Array.from(track.querySelectorAll(".carousel-slide"));
+      const prevBtn = carousel.querySelector("[data-carousel-prev]");
+      const nextBtn = carousel.querySelector("[data-carousel-next]");
+      const dots = Array.from(carousel.querySelectorAll("[data-carousel-dot]"));
+      let index = 0;
+
+      const update = () => {
+        slides.forEach((slide, i) => {
+          slide.classList.toggle("is-active", i === index);
+          slide.style.transform = `translateX(-${index * 100}%)`;
+        });
+        dots.forEach((dot, i) => dot.classList.toggle("active", i === index));
+      };
+
+      prevBtn?.addEventListener("click", () => {
+        index = (index - 1 + slides.length) % slides.length;
+        update();
+      });
+
+      nextBtn?.addEventListener("click", () => {
+        index = (index + 1) % slides.length;
+        update();
+      });
+
+      dots.forEach((dot) => {
+        dot.addEventListener("click", () => {
+          const targetIdx = parseInt(dot.dataset.carouselDot, 10);
+          if (Number.isInteger(targetIdx)) {
+            index = targetIdx;
+            update();
+          }
+        });
+      });
+
+      update();
+    }
   });
 </script>
