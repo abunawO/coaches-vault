@@ -2971,6 +2971,32 @@ details[open] .vault-caret {
   border: 1px solid #e5e7eb;
 }
 
+.draft-slide {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.draft-slide__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.draft-slide__body {
+  display: grid;
+  gap: 10px;
+}
+
+.draft-slide__footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .slide-card {
   display: grid;
   grid-template-columns: 90px 1fr auto;

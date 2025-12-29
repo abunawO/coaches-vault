@@ -88,14 +88,11 @@
         </div>
     </header>
 
-    <% flash.each do |type, message| %>
-    <div class="flash flash-<%= type %>">
-        <div class="flash-row">
-            <span><%= message %></span>
-            <button class="flash-close" type="button" onclick="this.closest('.flash').remove()">×</button>
-        </div>
+    <div id="flash-messages">
+      <% flash.each do |type, message| %>
+        <%= render "shared/flash", type: type, message: message %>
+      <% end %>
     </div>
-    <% end %>
 
     <main class="page" data-controller="confirm-modal">
         <%= render "shared/confirm_modal" %>

@@ -49,7 +49,7 @@
                 <span class="mv-chip__dot"></span>
                 <%= unread ? "Unread" : "Read" %>
               </div>
-              <%= link_to "Open", notification_path(notification), class: "btn btn-secondary btn-small mv-inbox__open" %>
+              <%= link_to "Open", notification_path(notification), class: "btn btn-secondary btn-small mv-inbox__open", data: { turbo_prefetch: false } %>
             </div>
           </div>
         <% end %>

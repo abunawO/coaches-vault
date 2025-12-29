@@ -14,6 +14,8 @@ class LessonMedium < ApplicationRecord
 
   def image_attached_for_image
     return unless image?
-    errors.add(:image_file, "must be attached") unless image_file.attached?
+    return if image_file.attached? || image_file_blob.present?
+
+    errors.add(:image_file, "must be attached")
   end
 end
