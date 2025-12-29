@@ -24,14 +24,14 @@
       </div>
 
       <% if @conversations.any? %>
-        <div class="mv-inbox__list">
+        <div class="mv-inbox__list" data-controller="notification-rows">
           <% @conversations.each do |conversation| %>
             <% other_user = conversation.other_party(current_user) %>
             <% last_message = conversation.messages.max_by(&:created_at) %>
             <% unread = last_message.present? && last_message.read_at.nil? && last_message.sender_id != current_user.id %>
             <% preview_prefix = last_message&.sender_id == current_user.id ? "You: " : "" %>
             <% preview_text = last_message ? truncate(last_message.body, length: 140) : nil %>
-            <div class="mv-inbox__row <%= 'mv-inbox__row--unread' if unread %>">
+            <div class="mv-inbox__row <%= 'mv-inbox__row--unread' if unread %>" id="<%= dom_id(conversation) %>">
               <div class="mv-inbox__icon">
                 <div class="mv-inbox__avatar"><%= other_user&.email.to_s.first&.upcase %></div>
               </div>
@@ -50,7 +50,28 @@
                   <span class="mv-chip__dot"></span>
                   <%= unread ? "Unread" : "Read" %>
                 </div>
-                <%= link_to "Open", conversation_path(conversation), class: "btn btn-secondary btn-small mv-inbox__open" %>
+                <div class="mv-inbox__actions">
+                  <%= link_to "Open", conversation_path(conversation), class: "btn btn-secondary btn-small mv-inbox__open" %>
+                  <button type="button"
+                          class="icon-btn icon-btn--danger notification-delete"
+                          data-action="click->notification-rows#confirm"
+                          data-notification-id="<%= conversation.id %>"
+                          aria-label="Delete conversation"
+                          data-tooltip="Delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M15 6V4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v2"/></svg>
+                  </button>
+                </div>
+                <div class="notification-confirm" data-notification-id="<%= conversation.id %>" data-notification-rows-target="confirm">
+                  <span class="muted small-text">Delete this conversation?</span>
+                  <div class="notification-confirm__actions">
+                    <button type="button" class="btn btn-secondary btn-small" data-action="click->notification-rows#cancel">Cancel</button>
+                    <%= button_to "Delete",
+                          conversation_path(conversation),
+                          method: :delete,
+                          form: { data: { turbo_stream: true }, class: "inline-form" },
+                          class: "btn btn-primary btn-small" %>
+                  </div>
+                </div>
               </div>
             </div>
           <% end %>

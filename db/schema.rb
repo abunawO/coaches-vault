@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_21_000000) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_21_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -98,9 +98,13 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_21_000000) do
   create_table "conversations", force: :cascade do |t|
     t.bigint "coach_id", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_by_coach_at"
+    t.datetime "deleted_by_student_at"
     t.bigint "student_id", null: false
     t.datetime "updated_at", null: false
     t.index ["coach_id"], name: "index_conversations_on_coach_id"
+    t.index ["deleted_by_coach_at"], name: "index_conversations_on_deleted_by_coach_at"
+    t.index ["deleted_by_student_at"], name: "index_conversations_on_deleted_by_student_at"
     t.index ["student_id", "coach_id"], name: "index_conversations_on_student_id_and_coach_id", unique: true
     t.index ["student_id"], name: "index_conversations_on_student_id"
   end

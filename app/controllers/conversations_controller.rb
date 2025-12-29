@@ -1,10 +1,16 @@
 class ConversationsController < ApplicationController
-  before_action :set_conversation, only: :show
+  before_action :set_conversation, only: [:show, :destroy]
+  before_action :authorize_conversation!, only: [:show, :destroy]
 
   def index
     @tab = params[:tab].presence_in(%w[all unread]) || "all"
     @q = params[:q].to_s.strip
-    base = current_user.student? ? Conversation.where(student_id: current_user.id) : Conversation.where(coach_id: current_user.id)
+    base =
+      if current_user.student?
+        Conversation.where(student_id: current_user.id, deleted_by_student_at: nil)
+      else
+        Conversation.where(coach_id: current_user.id, deleted_by_coach_at: nil)
+      end
     @conversations = base
                       .includes(:student, :coach, :messages)
                       .order(updated_at: :desc)
@@ -64,14 +70,23 @@ class ConversationsController < ApplicationController
     @allow_messaging = current_user.coach? || (current_user.student? && current_user.subscribed_to?(@conversation.coach))
   end
 
+  def destroy
+    @conversation.mark_deleted_for!(current_user)
+    @conversation.destroy! if @conversation.both_deleted?
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to conversations_path, notice: "Conversation deleted." }
+    end
+  end
+
   private
 
   def set_conversation
     @conversation = Conversation.find(params[:id])
   end
 
-  def authorize_conversation!(conversation)
-    return if conversation.student_id == current_user.id || conversation.coach_id == current_user.id
+  def authorize_conversation!(conversation = @conversation)
+    return if conversation.present? && (conversation.student_id == current_user.id || conversation.coach_id == current_user.id)
 
     redirect_to conversations_path, alert: "Not authorized to view this conversation."
   end

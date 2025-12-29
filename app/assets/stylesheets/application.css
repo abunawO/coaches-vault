@@ -2592,6 +2592,11 @@ details[open] .vault-caret {
   transition: opacity 0.15s ease;
 }
 
+.mv-inbox__row:hover .mv-inbox__actions,
+.mv-inbox__row .notification-confirm {
+  opacity: 1;
+}
+
 .mv-inbox__icon {
   display: flex;
   justify-content: center;
@@ -2608,11 +2613,6 @@ details[open] .vault-caret {
 
 .mv-inbox__open {
   margin: 0;
-}
-
-.mv-inbox__row:hover .mv-inbox__actions,
-.mv-inbox__row .notification-confirm {
-  opacity: 1;
 }
 
 .notification-confirm {

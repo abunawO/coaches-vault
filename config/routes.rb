@@ -46,7 +46,7 @@ Rails.application.routes.draw do
     resources :comments, only: [:create]
   end
 
-  resources :conversations, only: [:index, :show, :create] do
+  resources :conversations, only: [:index, :show, :create, :destroy] do
     resources :messages, only: [:create]
     collection do
       post :mark_all_read
