@@ -1,0 +1,3 @@
+<%= turbo_stream.remove dom_id(@notification) %>
+<%= turbo_stream.update "nav_notifications_badge", render(partial: "shared/nav_badge", locals: { id: "nav_notifications_badge", count: current_user.unread_notifications_count }) %>
+<%= turbo_stream.append "flash-messages", render(partial: "shared/flash", locals: { type: :notice, message: "Notification deleted." }) %>

@@ -66,7 +66,8 @@ Rails.application.routes.draw do
   get "/subscribers", to: "subscribers#index", as: :subscribers
   post "/subscribers/bulk_message", to: "subscribers#bulk_message", as: :bulk_message_subscribers
 
-  get "/notifications", to: "notifications#index", as: :notifications
-  get "/notifications/:id", to: "notifications#show", as: :notification
-  post "/notifications/mark_all_read", to: "notifications#mark_all_read", as: :mark_all_notifications_read
+get "/notifications", to: "notifications#index", as: :notifications
+get "/notifications/:id", to: "notifications#show", as: :notification
+delete "/notifications/:id", to: "notifications#destroy", as: :delete_notification
+post "/notifications/mark_all_read", to: "notifications#mark_all_read", as: :mark_all_notifications_read
 end

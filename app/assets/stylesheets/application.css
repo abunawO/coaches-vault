@@ -2586,8 +2586,10 @@ details[open] .vault-caret {
 
 .mv-inbox__actions {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
 }
 
 .mv-inbox__icon {
@@ -2601,10 +2603,34 @@ details[open] .vault-caret {
   align-items: center;
   justify-content: flex-end;
   white-space: nowrap;
+  position: relative;
 }
 
 .mv-inbox__open {
   margin: 0;
+}
+
+.mv-inbox__row:hover .mv-inbox__actions,
+.mv-inbox__row .notification-confirm {
+  opacity: 1;
+}
+
+.notification-confirm {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+  text-align: right;
+  padding: 8px 0 0;
+}
+
+.notification-confirm.is-active {
+  display: flex;
+}
+
+.notification-confirm__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 @media (max-width: 768px) {
@@ -2614,6 +2640,7 @@ details[open] .vault-caret {
   }
   .mv-inbox__actions {
     justify-content: flex-start;
+    opacity: 1;
   }
 }
 

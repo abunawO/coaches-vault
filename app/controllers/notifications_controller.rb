@@ -22,4 +22,20 @@ class NotificationsController < ApplicationController
     current_user.notifications.where(read_at: nil).update_all(read_at: Time.current)
     redirect_back fallback_location: notifications_path, notice: "Notifications marked as read."
   end
+
+  def destroy
+    @notification = current_user.notifications.find(params[:id])
+    @notification.destroy
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to notifications_path, notice: "Notification deleted." }
+    end
+  end
+
+  private
+
+  def badge_count
+    count = current_user.unread_notifications_count
+    view_context.render(partial: "shared/nav_badge", locals: { count:, id: "nav_notifications_badge" })
+  end
 end

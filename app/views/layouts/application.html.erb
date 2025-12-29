@@ -46,9 +46,7 @@
                     <% end %>
                     <%= link_to notifications_path, class: nav_link_class(notifications_path) do %>
                     Notifications
-                    <% if current_user.unread_notifications_count.positive? %>
-                    <span class="topnav__badge"><%= current_user.unread_notifications_count %></span>
-                    <% end %>
+                    <span id="nav_notifications_badge" class="topnav__badge <%= 'is-hidden' unless current_user.unread_notifications_count.positive? %>"><%= current_user.unread_notifications_count %></span>
                     <% end %>
                     <% elsif current_user.coach? %>
                     <%= link_to "Dashboard", root_path, class: nav_link_class(root_path) %>
@@ -62,9 +60,7 @@
                     <% end %>
                     <%= link_to notifications_path, class: nav_link_class(notifications_path) do %>
                     Notifications
-                    <% if current_user.unread_notifications_count.positive? %>
-                    <span class="topnav__badge"><%= current_user.unread_notifications_count %></span>
-                    <% end %>
+                    <span id="nav_notifications_badge" class="topnav__badge <%= 'is-hidden' unless current_user.unread_notifications_count.positive? %>"><%= current_user.unread_notifications_count %></span>
                     <% end %>
                     <%= link_to "Subscribers", subscribers_path, class: nav_link_class(subscribers_path) %>
                     <% end %>
