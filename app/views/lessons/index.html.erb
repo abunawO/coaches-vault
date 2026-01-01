@@ -107,7 +107,11 @@
     <% end %>
   </div>
 
-  <p id="lessons-empty-state" class="empty-state" style="display:none;">
-    No lessons match your search.
-  </p>
+  <% if @lessons.empty? %>
+    <%= render "shared/empty_state",
+        icon: "🎓",
+        title: "No lessons yet",
+        body: "Create your first lesson to begin building your teaching library.",
+        primary_action: { label: "Create your first lesson", url: new_coach_lesson_path(return_to: request.fullpath) } %>
+  <% end %>
 </div>

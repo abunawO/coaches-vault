@@ -1,26 +1,47 @@
-<div class="container auth-page">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Log in</h1>
-      <p class="page-subtitle">Access your vault and subscriptions.</p>
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-brand">
+            <span class="auth-brand__mark"></span>
+            <span class="auth-brand__name">MyVault</span>
+        </div>
+        <h1 class="auth-title">Welcome back</h1>
+        <p class="auth-subtitle">Access your vault and subscriptions.</p>
+        <p class="auth-helper">Log in to continue.</p>
+
+        <%= form_with url: login_path, method: :post, local: true, html: { class: "auth-form" } do |form| %>
+        <div class="form-row">
+            <%= form.label :email %>
+            <%= form.email_field :email, required: true, autofocus: true, class: "input" %>
+        </div>
+
+        <div class="form-row">
+            <%= form.label :password %>
+            <%= form.password_field :password, required: true, class: "input" %>
+        </div>
+
+        <div class="auth-actions">
+            <%= form.submit "Log in", class: "btn btn-primary auth-submit" %>
+        </div>
+        <% end %>
+
+        <% url_helpers = Rails.application.routes.url_helpers %>
+        <% forgot_password_helper = [:forgot_password_path, :new_password_reset_path, :password_reset_path, :new_password_path].find { |name| url_helpers.respond_to?(name) } %>
+        <% signup_helper = [:signup_path, :new_user_registration_path, :new_registration_path].find { |name| url_helpers.respond_to?(name) } %>
+
+        <div class="auth-footer">
+            <% if forgot_password_helper %>
+            <%= link_to "Forgot password?", url_helpers.send(forgot_password_helper) %>
+            <% end %>
+            <% if forgot_password_helper && signup_helper %>
+            <span class="auth-divider">•</span>
+            <% end %>
+            <% if signup_helper %>
+            <%= link_to "Create an account", url_helpers.send(signup_helper) %>
+            <% end %>
+            <% if forgot_password_helper.nil? && signup_helper.nil? %>
+            <% fallback_path = respond_to?(:coaches_path) ? coaches_path : root_path %>
+            <%= link_to "Browse coaches", fallback_path %>
+            <% end %>
+        </div>
     </div>
-  </div>
-
-  <div class="card auth-card">
-    <%= form_with url: login_path, method: :post, local: true do |form| %>
-      <div class="form-row">
-        <%= form.label :email %>
-        <%= form.email_field :email, required: true, autofocus: true, class: "input" %>
-      </div>
-
-      <div class="form-row">
-        <%= form.label :password %>
-        <%= form.password_field :password, required: true, class: "input" %>
-      </div>
-
-      <div class="card-actions">
-        <%= form.submit "Log in", class: "btn btn-primary" %>
-      </div>
-    <% end %>
-  </div>
 </div>

@@ -5,7 +5,7 @@
       subtitle: "Students currently subscribed to your vault.",
       meta: [{ label: "Total", value: @subscriber_count }] %>
 
-    <% if @subscriptions.any? %>
+  <% if @subscriptions.any? %>
     <div class="subscribers-layout-legacy">
       <section class="subscribers-panel">
         <div class="subscribers-toolbar">
@@ -61,10 +61,13 @@
       </aside>
     </div>
   <% else %>
-    <div class="card empty-state">
-      <p>No subscribers yet. Share your public page to grow your vault.</p>
-    </div>
-    <% end %>
+    <%= render "shared/empty_state",
+        icon: "👥",
+        title: "No subscribers yet",
+        body: "Share your public page to invite students to subscribe to your vault.",
+        primary_action: { label: "Copy public link", url: public_vault_path, method: :get, data: { copy_text: public_vault_path } },
+        secondary_action: { label: "View public page", url: public_vault_path } %>
+  <% end %>
 </div>
 
 <div class="modal-backdrop" id="bulk-modal" hidden>

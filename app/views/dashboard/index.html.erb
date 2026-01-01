@@ -84,12 +84,12 @@
           <% end %>
         </div>
       <% else %>
-        <div class="card">
-          <p class="muted">No lessons yet.</p>
-          <div class="card-actions">
-            <%= link_to "Create your first lesson", new_coach_lesson_path(return_to: request.fullpath), class: "btn btn-primary" %>
-          </div>
-        </div>
+        <%= render "shared/empty_state",
+            icon: "📚",
+            title: "Your vault is ready — let’s build it",
+            body: "Start by creating your first lesson. Once published, students can subscribe and begin learning from you.",
+            primary_action: { label: "Create your first lesson", url: new_coach_lesson_path(return_to: request.fullpath) },
+            secondary_action: { label: "View public page", url: public_vault_path } %>
       <% end %>
     </section>
 

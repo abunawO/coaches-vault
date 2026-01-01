@@ -115,7 +115,9 @@
     </div>
   </div>
 <% else %>
-  <div class="mv-card vault-main-card">
-    <p class="muted">No categories yet. Create one to start building your vault.</p>
-  </div>
+  <%= render "shared/empty_state",
+      icon: "🧠",
+      title: "Organize your knowledge",
+      body: "Create categories to structure your lessons for students.",
+      primary_action: { label: "Create your first category", url: coach_vault_path(anchor: "new-category-card") } %>
 <% end %>

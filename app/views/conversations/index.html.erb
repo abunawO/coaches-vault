@@ -78,43 +78,21 @@
         </div>
       <% else %>
         <% if @tab == "unread" %>
-          <div class="card empty-state">
-            <h3><%= @q.present? ? "No results" : "No unread messages" %></h3>
-            <p class="muted">
-              <% if @q.present? %>
-                No conversations match “<%= @q %>”.
-              <% else %>
-                You’re all caught up. When someone messages you, it’ll appear here.
-              <% end %>
-            </p>
-            <div class="card-actions" style="justify-content: center;">
-              <% if @q.present? %>
-                <%= link_to "Clear search", conversations_path(tab: @tab), class: "btn btn-primary" %>
-              <% else %>
-                <%= link_to "View all messages", conversations_path(tab: "all"), class: "btn btn-primary" %>
-              <% end %>
-              <%= link_to "Go to dashboard", root_path, class: "btn btn-secondary" %>
-            </div>
-          </div>
+          <%= render "shared/empty_state",
+              icon: "💬",
+              title: (@q.present? ? "No results" : "No unread messages"),
+              body: (@q.present? ? "No conversations match “#{@q}”." : "You’re all caught up. When someone messages you, it’ll appear here."),
+              primary_action: (@q.present? ? { label: "Clear search", url: conversations_path(tab: @tab) } : { label: "View all messages", url: conversations_path(tab: "all") }),
+              secondary_action: { label: "Go to dashboard", url: root_path },
+              size: :sm %>
         <% else %>
-          <div class="card empty-state">
-            <h3><%= @q.present? ? "No results" : "No messages yet" %></h3>
-            <p class="muted">
-              <% if @q.present? %>
-                No conversations match “<%= @q %>”.
-              <% else %>
-                When a conversation starts, it will show up here.
-              <% end %>
-            </p>
-            <div class="card-actions" style="justify-content: center;">
-              <% if @q.present? %>
-                <%= link_to "Clear search", conversations_path(tab: @tab), class: "btn btn-primary" %>
-              <% else %>
-                <%= link_to "Browse coaches", coaches_path, class: "btn btn-primary" %>
-              <% end %>
-              <%= link_to "Go to dashboard", root_path, class: "btn btn-secondary" %>
-            </div>
-          </div>
+          <%= render "shared/empty_state",
+              icon: "💬",
+              title: (@q.present? ? "No results" : "No conversations yet"),
+              body: (@q.present? ? "No conversations match “#{@q}”." : "Messages between you and your students will appear here."),
+              primary_action: (@q.present? ? { label: "Clear search", url: conversations_path(tab: @tab) } : { label: "View subscribers", url: subscribers_path }),
+              secondary_action: { label: "Go to dashboard", url: root_path },
+              size: :sm %>
         <% end %>
       <% end %>
     </div>
