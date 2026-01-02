@@ -549,13 +549,10 @@ a:hover {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  background: #0f172a;
-  overflow: hidden;
-  border-radius: 16px;
-}
-
-.ig-carousel .player-frame {
   min-height: 320px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #000;
 }
 
 .player-frame iframe {
