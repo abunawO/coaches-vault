@@ -35,52 +35,85 @@
 
       <div class="player-card card ig-carousel">
         <% if @access_level == :full %>
-          <div class="carousel" data-carousel>
-            <div class="ig-frame">
-              <div class="ig-counter" data-carousel-counter><span>1</span>/<span><%= media_slides.size %></span></div>
-              <div class="carousel-track" data-carousel-track>
-                <% media_slides.each_with_index do |slide, idx| %>
-                  <div class="carousel-slide <%= 'is-active' if idx.zero? %>" data-carousel-index="<%= idx %>">
-                    <% kind = slide.respond_to?(:kind) ? slide.kind : slide[:kind] %>
-                    <% video_url = slide.respond_to?(:video_url) ? slide.video_url : slide[:video_url] %>
-                    <% image_file = slide.respond_to?(:image_file) ? slide.image_file : slide[:image_file] %>
-                    <% image_attached = image_file.respond_to?(:attached?) ? image_file.attached? : false %>
+          <% if media_slides.any? %>
+            <div class="carousel" data-carousel>
+              <div class="ig-frame">
+                <% if media_slides.size > 1 %>
+                  <div class="ig-counter" data-carousel-counter><span>1</span>/<span><%= media_slides.size %></span></div>
+                <% end %>
+                <div class="carousel-track" data-carousel-track>
+                  <% media_slides.each_with_index do |slide, idx| %>
+                    <div class="carousel-slide <%= 'is-active' if idx.zero? %>" data-carousel-index="<%= idx %>">
+                      <% kind = slide.respond_to?(:kind) ? slide.kind : slide[:kind] %>
+                      <% video_url = slide.respond_to?(:video_url) ? slide.video_url : slide[:video_url] %>
+                      <% image_file = slide.respond_to?(:image_file) ? slide.image_file : slide[:image_file] %>
+                      <% image_attached = image_file.respond_to?(:attached?) ? image_file.attached? : false %>
 
-                    <% if kind.to_s == "image" && image_attached %>
-                      <div class="carousel-media image">
-                        <%= image_tag(image_file, alt: "#{@lesson.title} slide #{idx + 1}") %>
-                      </div>
-                    <% elsif video_url.present? %>
-                      <% embed = embed_url_for(video_url) %>
-                      <% if embed %>
-                        <div class="player-frame">
-                          <iframe src="<%= embed %>" title="Video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                      <% if kind.to_s == "image" && image_attached %>
+                        <div class="carousel-media image">
+                          <%= image_tag(image_file, alt: "#{@lesson.title} slide #{idx + 1}") %>
                         </div>
+                      <% elsif video_url.present? %>
+                        <% embed = embed_url_for(video_url) %>
+                        <% if embed %>
+                          <% youtube_id = embed[%r{youtube\.com/embed/([^/?]+)}, 1] %>
+                          <% poster = youtube_id ? "https://i.ytimg.com/vi/#{youtube_id}/hqdefault.jpg" : nil %>
+                          <div class="player-frame">
+                            <button class="video-poster" type="button" data-video-embed="<%= embed %>" data-video-provider="<%= youtube_id ? "youtube" : "vimeo" %>" aria-label="Play video">
+                              <% if poster %>
+                                <img src="<%= poster %>" alt="Video thumbnail" loading="lazy" decoding="async">
+                              <% end %>
+                              <span class="video-play-icon" aria-hidden="true"></span>
+                            </button>
+                          </div>
+                        <% else %>
+                          <div class="player-frame" style="display:grid; place-items:center;">
+                            <%= link_to "Watch video", video_url, class: "btn btn-primary", target: "_blank", rel: "noopener" %>
+                          </div>
+                        <% end %>
                       <% else %>
                         <div class="player-frame" style="display:grid; place-items:center;">
-                          <%= link_to "Watch video", video_url, class: "btn btn-primary", target: "_blank", rel: "noopener" %>
+                          <p class="muted">Slide unavailable</p>
                         </div>
                       <% end %>
-                    <% else %>
-                      <div class="player-frame" style="display:grid; place-items:center;">
-                        <p class="muted">Slide unavailable</p>
-                      </div>
+                    </div>
+                  <% end %>
+                </div>
+
+                <% if media_slides.size > 1 %>
+                  <button class="ig-arrow left" data-carousel-prev aria-label="Previous slide">‹</button>
+                  <button class="ig-arrow right" data-carousel-next aria-label="Next slide">›</button>
+                  <div class="ig-dots" data-carousel-dots>
+                    <% media_slides.each_with_index do |_, idx| %>
+                      <button class="ig-dot <%= 'active' if idx.zero? %>" data-carousel-dot="<%= idx %>" aria-label="Go to slide <%= idx + 1 %>" aria-current="<%= idx.zero? %>"></button>
                     <% end %>
                   </div>
                 <% end %>
               </div>
-
-              <% if media_slides.size > 1 %>
-                <button class="ig-arrow left" data-carousel-prev aria-label="Previous slide">‹</button>
-                <button class="ig-arrow right" data-carousel-next aria-label="Next slide">›</button>
-                <div class="ig-dots" data-carousel-dots>
-                  <% media_slides.each_with_index do |_, idx| %>
-                    <button class="ig-dot <%= 'active' if idx.zero? %>" data-carousel-dot="<%= idx %>" aria-label="Go to slide <%= idx + 1 %>" aria-current="<%= idx.zero? %>"></button>
-                  <% end %>
-                </div>
-              <% end %>
             </div>
-          </div>
+          <% elsif @lesson.video_url.present? %>
+            <% embed = embed_url_for(@lesson.video_url) %>
+            <% if embed %>
+              <% youtube_id = embed[%r{youtube\.com/embed/([^/?]+)}, 1] %>
+              <% poster = youtube_id ? "https://i.ytimg.com/vi/#{youtube_id}/hqdefault.jpg" : nil %>
+              <div class="player-frame">
+                <button class="video-poster" type="button" data-video-embed="<%= embed %>" data-video-provider="<%= youtube_id ? "youtube" : "vimeo" %>" aria-label="Play video">
+                  <% if poster %>
+                    <img src="<%= poster %>" alt="Video thumbnail" loading="lazy" decoding="async">
+                  <% end %>
+                  <span class="video-play-icon" aria-hidden="true"></span>
+                </button>
+              </div>
+            <% else %>
+              <div class="player-frame" style="display:grid; place-items:center;">
+                <%= link_to "Watch video", @lesson.video_url, class: "btn btn-primary", target: "_blank", rel: "noopener" %>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="player-frame" style="display:grid; place-items:center;">
+              <p class="muted">No media yet.</p>
+            </div>
+          <% end %>
         <% elsif @access_level == :preview %>
           <%= render "shared/locked_player",
                     message: "Preview available. Subscribe to unlock full lesson.",
@@ -224,6 +257,52 @@
 
 <script>
   document.addEventListener("turbo:load", () => {
+    const loadVideo = (button) => {
+      if (!button || button.dataset.loaded === "true") return;
+      const embed = button.dataset.videoEmbed;
+      if (!embed) return;
+      const frame = button.closest(".player-frame");
+      if (!frame) return;
+
+      const iframe = document.createElement("iframe");
+      const separator = embed.includes("?") ? "&" : "?";
+      const provider = button.dataset.videoProvider || "";
+      const params = provider === "youtube" ? "autoplay=1&playsinline=1&rel=0" : "autoplay=1";
+      iframe.src = `${embed}${separator}${params}`;
+      iframe.title = "Video player";
+      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+      iframe.allowFullscreen = true;
+      iframe.setAttribute("frameborder", "0");
+      iframe.loading = "lazy";
+      iframe.referrerPolicy = "strict-origin-when-cross-origin";
+
+      if (!frame.dataset.posterHtml) {
+        frame.dataset.posterHtml = frame.innerHTML;
+      }
+
+      button.dataset.loaded = "true";
+      frame.replaceChildren(iframe);
+    };
+
+    const unloadVideosExcept = (activeIndex) => {
+      document.querySelectorAll(".carousel-slide").forEach((slide, idx) => {
+        if (idx === activeIndex) return;
+        const frame = slide.querySelector(".player-frame");
+        if (!frame) return;
+        const iframe = frame.querySelector("iframe");
+        if (iframe && frame.dataset.posterHtml) {
+          frame.innerHTML = frame.dataset.posterHtml;
+          const btn = frame.querySelector(".video-poster");
+          if (btn) btn.dataset.loaded = "false";
+        }
+      });
+    };
+
+    document.addEventListener("click", (event) => {
+      const btn = event.target.closest(".video-poster");
+      if (btn) loadVideo(btn);
+    });
+
     document.querySelectorAll("[data-about-toggle]").forEach((btn) => {
       const target = document.getElementById(btn.dataset.target);
       if (!target) return;
@@ -234,15 +313,20 @@
       };
 
       const evaluateOverflow = () => {
+        const wasCollapsed = target.classList.contains("about-collapsed");
+        if (!wasCollapsed) target.classList.add("about-collapsed");
         const needsToggle = target.scrollHeight > target.clientHeight + 1;
+        if (!wasCollapsed) target.classList.remove("about-collapsed");
+
         if (!needsToggle) {
           target.classList.remove("about-collapsed");
           btn.classList.add("is-hidden");
           btn.textContent = "";
-        } else {
-          btn.classList.remove("is-hidden");
-          updateLabel();
+          return;
         }
+
+        btn.classList.remove("is-hidden");
+        updateLabel();
       };
 
       evaluateOverflow();
@@ -260,6 +344,7 @@
     const carousel = document.querySelector("[data-carousel]");
     if (carousel) {
       const track = carousel.querySelector("[data-carousel-track]");
+      if (!track) return;
       const slides = Array.from(track.querySelectorAll(".carousel-slide"));
       const prevBtn = carousel.querySelector("[data-carousel-prev]");
       const nextBtn = carousel.querySelector("[data-carousel-next]");
@@ -286,6 +371,7 @@
           dot.setAttribute("aria-current", i === index);
         });
         updateCounter();
+        unloadVideosExcept(index);
       };
 
       const goTo = (i) => {
@@ -340,6 +426,7 @@
       track.addEventListener("touchend", onPointerUp);
 
       update();
+      unloadVideosExcept(index);
     }
   });
 </script>
