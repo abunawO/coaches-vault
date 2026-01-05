@@ -3130,6 +3130,10 @@ details[open] .vault-caret {
   gap: 10px;
 }
 
+.slide-card.is-destroyed {
+  display: none;
+}
+
 .lesson-media-row {
   padding: 12px;
   border: 1px solid #e5e7eb;

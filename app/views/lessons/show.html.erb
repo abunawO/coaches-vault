@@ -91,24 +91,6 @@
                 <% end %>
               </div>
             </div>
-          <% elsif @lesson.video_url.present? %>
-            <% embed = embed_url_for(@lesson.video_url) %>
-            <% if embed %>
-              <% youtube_id = embed[%r{youtube\.com/embed/([^/?]+)}, 1] %>
-              <% poster = youtube_id ? "https://i.ytimg.com/vi/#{youtube_id}/hqdefault.jpg" : nil %>
-              <div class="player-frame">
-                <button class="video-poster" type="button" data-video-embed="<%= embed %>" data-video-provider="<%= youtube_id ? "youtube" : "vimeo" %>" aria-label="Play video">
-                  <% if poster %>
-                    <img src="<%= poster %>" alt="Video thumbnail" loading="lazy" decoding="async">
-                  <% end %>
-                  <span class="video-play-icon" aria-hidden="true"></span>
-                </button>
-              </div>
-            <% else %>
-              <div class="player-frame" style="display:grid; place-items:center;">
-                <%= link_to "Watch video", @lesson.video_url, class: "btn btn-primary", target: "_blank", rel: "noopener" %>
-              </div>
-            <% end %>
           <% else %>
             <div class="player-frame" style="display:grid; place-items:center;">
               <p class="muted">No media yet.</p>

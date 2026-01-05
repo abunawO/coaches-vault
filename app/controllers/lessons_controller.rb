@@ -29,9 +29,6 @@ class LessonsController < ApplicationController
     @can_comment = @authorized && current_user&.student? && current_user.subscribed_to?(@lesson.coach)
     @can_reply = @authorized && current_user&.coach? && current_user.id == @lesson.coach_id
     @media_slides = @lesson.lesson_media.order(:position)
-    if @media_slides.blank? && @lesson.video_url.present?
-      @media_slides = [{ kind: "video", video_url: @lesson.video_url, image_file: nil }]
-    end
 
     # Up next: other lessons from the same coach that the viewer can at least preview/full
     @up_next = Lesson

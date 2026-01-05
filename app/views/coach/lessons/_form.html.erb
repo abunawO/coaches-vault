@@ -59,6 +59,7 @@
                                     <span class="pill-soft"><%= media.kind.capitalize %> slide</span>
                                 </div>
                                 <div class="slide-fields">
+                                    <%= mf.hidden_field :id if media.persisted? %>
                                     <%= mf.hidden_field :kind %>
                                     <%= mf.hidden_field :position, class: "position-field", value: media.position || 0 %>
                                     <% if media.image? %>
@@ -105,19 +106,6 @@
                             <button type="button" class="btn btn-ghost btn-small" id="draft-cancel">Cancel</button>
                             <button type="button" class="btn btn-primary btn-small" id="draft-add">Add slide</button>
                         </div>
-                    </div>
-                </section>
-
-                <section class="form-section">
-                    <div class="section-header">
-                        <div>
-                            <h3 class="section-title">Video URL</h3>
-                            <p class="muted small-text">You can add a single video URL</p>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <%= form.label :video_url, "Video URL" %>
-                        <%= form.text_field :video_url, required: false, class: "input", placeholder: "https://www.youtube.com/watch?v=..." %>
                     </div>
                 </section>
 
@@ -231,6 +219,10 @@
 
 <script>
     document.addEventListener("turbo:load", () => {
+        const root = document.querySelector(".lesson-form-page");
+        if (!root) return;
+        if (root.dataset.mediaInit === "true") return;
+        root.dataset.mediaInit = "true";
         const visibilityRadios = document.querySelectorAll("input[name='lesson[visibility]']");
         const previewWrap = document.getElementById("preview-fields");
         const previewCheckbox = document.querySelector("input[name='lesson[preview]']");
@@ -385,7 +377,7 @@
               <button type=\"button\" class=\"icon-btn\" data-move=\"up\" aria-label=\"Move up\">↑</button>
               <button type=\"button\" class=\"icon-btn\" data-move=\"down\" aria-label=\"Move down\">↓</button>
               <button type=\"button\" class=\"icon-btn icon-btn--danger\" data-remove-row aria-label=\"Remove slide\">🗑</button>
-              <input type=\"checkbox\" name=\"lesson[lesson_media_attributes][${index}][_destroy]\" style=\"display:none;\" data-destroy_field=\"true\" />
+              <input type=\"checkbox\" name=\"lesson[lesson_media_attributes][${index}][_destroy]\" style=\"display:none;\" data-destroy-field=\"true\" />
             </div>
           </div>
         `;
@@ -410,7 +402,7 @@
             <button type=\"button\" class=\"icon-btn\" data-move=\"up\" aria-label=\"Move up\">↑</button>
             <button type=\"button\" class=\"icon-btn\" data-move=\"down\" aria-label=\"Move down\">↓</button>
             <button type=\"button\" class=\"icon-btn icon-btn--danger\" data-remove-row aria-label=\"Remove slide\">🗑</button>
-            <input type=\"checkbox\" name=\"lesson[lesson_media_attributes][${index}][_destroy]\" style=\"display:none;\" data-destroy_field=\"true\" />
+            <input type=\"checkbox\" name=\"lesson[lesson_media_attributes][${index}][_destroy]\" style=\"display:none;\" data-destroy-field=\"true\" />
           </div>
         </div>
       `;
@@ -429,7 +421,7 @@
             const up = row.querySelector("[data-move='up']");
             const down = row.querySelector("[data-move='down']");
             const removeBtn = row.querySelector("[data-remove-row]");
-            const destroyField = row.querySelector("[data-destroy_field]");
+            const destroyField = row.querySelector("[data-destroy-field]");
 
             up?.addEventListener("click", () => {
                 const prev = row.previousElementSibling;
@@ -452,11 +444,12 @@
             removeBtn?.addEventListener("click", () => {
                 if (destroyField) {
                     destroyField.checked = true;
-                    row.style.display = "none";
+                    destroyField.value = "1";
+                    row.classList.add("is-destroyed");
                 } else if (isNew) {
                     row.remove();
                 } else {
-                    row.style.display = "none";
+                    row.classList.add("is-destroyed");
                 }
                 reindexPositions();
                 markDirty();
@@ -500,9 +493,12 @@
         const closeDraft = () => resetDraft();
         draftClose?.addEventListener("click", closeDraft);
         draftCancel?.addEventListener("click", closeDraft);
-        document.addEventListener("keydown", (e) => {
-            if (e.key === "Escape" && !draft.hidden) closeDraft();
-        });
+        if (!window.__lessonDraftEscapeBound) {
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape" && draft && !draft.hidden) closeDraft();
+            });
+            window.__lessonDraftEscapeBound = true;
+        }
 
         draftAdd?.addEventListener("click", () => {
             if (!draftKind || !mediaList) return;

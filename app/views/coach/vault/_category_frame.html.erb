@@ -115,9 +115,16 @@
     </div>
   </div>
 <% else %>
-  <%= render "shared/empty_state",
-      icon: "🧠",
-      title: "Organize your knowledge",
-      body: "Create categories to structure your lessons for students.",
-      primary_action: { label: "Create your first category", url: coach_vault_path(anchor: "new-category-card") } %>
+  <div class="empty-state empty-state--md">
+    <div class="empty-state__icon">🧠</div>
+    <h3 class="empty-state__title">Organize your knowledge</h3>
+    <p class="empty-state__body">Create categories to structure your lessons for students.</p>
+    <div class="empty-state__actions">
+      <button type="button"
+              class="btn btn-primary"
+              data-action="vault-explorer#toggleCreatePanel">
+        Create your first category
+      </button>
+    </div>
+  </div>
 <% end %>

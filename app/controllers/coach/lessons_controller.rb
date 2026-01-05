@@ -24,12 +24,15 @@ module Coach
     def edit; end
 
     def update
-      @lesson.assign_attributes(lesson_params.except(:allowed_subscriber_ids))
-      if process_visibility_and_shares(@lesson, lesson_params[:allowed_subscriber_ids])
-        redirect_to coach_lessons_path, notice: "Lesson updated successfully."
-      else
-        render :edit, status: :unprocessable_entity
+      ActiveRecord::Base.transaction do
+        if @lesson.update(lesson_params.except(:allowed_subscriber_ids))
+          reconcile_shares!(@lesson, lesson_params[:allowed_subscriber_ids])
+          redirect_to coach_lessons_path, notice: "Lesson updated successfully."
+        else
+          raise ActiveRecord::Rollback
+        end
       end
+      render(:edit, status: :unprocessable_entity) if performed? == false && @lesson.errors.any?
     end
 
     def destroy
@@ -75,33 +78,28 @@ module Coach
         end
     end
 
-    def process_visibility_and_shares(lesson, allowed_ids)
-      selected_ids = Array(allowed_ids).reject(&:blank?).map(&:to_i).uniq
+    def reconcile_shares!(lesson, allowed_ids)
+      desired_ids = Array(allowed_ids).reject(&:blank?).map(&:to_i).uniq
 
-      if lesson.visibility == "restricted" && selected_ids.empty?
-        lesson.errors.add(:base, "Select at least one subscriber for private visibility.")
-        return false
-      end
-
-      active_ids = @subscribers.pluck(:id)
-      if lesson.visibility == "restricted" && (selected_ids - active_ids).any?
-        lesson.errors.add(:base, "You can only share with active subscribers.")
-        return false
-      end
-
-      Lesson.transaction do
-        lesson.save!
-        if lesson.visibility == "restricted"
-          lesson.lesson_shares.where.not(user_id: selected_ids).delete_all
-          selected_ids.each { |sid| lesson.lesson_shares.find_or_create_by!(user_id: sid) }
-        else
-          lesson.lesson_shares.delete_all
+      if lesson.visibility == "restricted"
+        active_ids = @subscribers.pluck(:id)
+        invalid_ids = desired_ids - active_ids
+        if desired_ids.empty?
+          lesson.errors.add(:base, "Select at least one subscriber for private visibility.")
+          raise ActiveRecord::Rollback
+        elsif invalid_ids.any?
+          lesson.errors.add(:base, "You can only share with active subscribers.")
+          raise ActiveRecord::Rollback
         end
+
+        existing_ids = lesson.lesson_shares.pluck(:user_id)
+        to_remove = existing_ids - desired_ids
+        to_add = desired_ids - existing_ids
+        lesson.lesson_shares.where(user_id: to_remove).delete_all if to_remove.any?
+        to_add.each { |sid| lesson.lesson_shares.create!(user_id: sid) }
+      else
+        lesson.lesson_shares.delete_all
       end
-      true
-    rescue ActiveRecord::RecordInvalid => e
-      lesson.errors.add(:base, e.record.errors.full_messages.to_sentence)
-      false
     end
   end
 end
