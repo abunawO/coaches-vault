@@ -1,60 +1,73 @@
-<div class="container">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Subscribers</h1>
-      <p class="page-subtitle">Students currently subscribed to your vault.</p>
-    </div>
-    <div class="chip">
-      <span class="chip__label">Total subscribers</span>
-      <span class="chip__value"><%= @subscriber_count %></span>
-    </div>
-  </div>
+<div class="container" data-controller="subscribers">
+    <%= render "shared/page_header",
+      breadcrumbs: [["Dashboard", root_path], ["Subscribers", subscribers_path]],
+      title: content_tag(:span, "👥", class: "page-title-icon") + " Subscribers",
+      subtitle: "Students currently subscribed to your vault.",
+      meta: [{ label: "Total", value: @subscriber_count }] %>
 
   <% if @subscriptions.any? %>
-    <div class="subscriber-actions">
-      <label class="select-all">
-        <input type="checkbox" id="select-all" />
-        <span>Select all</span>
-      </label>
-    </div>
-
-    <div class="stack" id="subscriber-list" data-total="<%= @subscriber_count %>">
-      <% @subscriptions.each do |subscription| %>
-        <% student = subscription.student %>
-        <div class="card subscriber-card" data-subscriber-id="<%= student.id %>">
-          <div class="subscriber-row">
-            <input type="checkbox"
-                   class="subscriber-checkbox"
-                   aria-label="Select <%= student.email %>"
-                   data-subscriber-id="<%= student.id %>" />
-            <div class="avatar"><%= student.email.to_s.first&.upcase %></div>
-            <div class="subscriber-meta">
-              <div class="subscriber-name"><%= student.email %></div>
-              <div class="subscriber-date muted">Subscribed since <%= subscription.created_at.strftime("%b %e, %Y") %></div>
+    <div class="subscribers-layout-legacy">
+      <section class="subscribers-panel">
+        <div class="subscribers-toolbar">
+          <input type="search" class="input" placeholder="Search subscribers…" />
+          <label class="select-all">
+            <input type="checkbox" id="select-all" />
+                    <span>Select all (filtered)</span>
+                </label>
+                <span class="pill-soft">Total: <%= @subscriber_count %></span>
             </div>
-            <div class="subscriber-actions-row">
-              <button class="btn btn-secondary btn-small subscriber-message" data-student-id="<%= student.id %>" data-student-email="<%= student.email %>">Message</button>
+
+            <div class="subscribers-list-scroll">
+                <div class="stack" id="subscriber-list" data-total="<%= @subscriber_count %>">
+                    <% @subscriptions.each do |subscription| %>
+                    <% student = subscription.student %>
+                    <div class="card subscriber-card" data-subscriber-id="<%= student.id %>">
+                        <div class="subscriber-row">
+                            <input type="checkbox" class="subscriber-checkbox" aria-label="Select <%= student.email %>" data-subscriber-id="<%= student.id %>" />
+                            <div class="avatar"><%= student.email.to_s.first&.upcase %></div>
+                            <div class="subscriber-meta">
+                                <div class="subscriber-name"><%= student.email %></div>
+                                <div class="subscriber-date muted">Subscribed since <%= subscription.created_at.strftime("%b %e, %Y") %></div>
+                            </div>
+                            <div class="subscriber-actions-row">
+                                <button class="btn btn-secondary btn-small subscriber-message" data-student-id="<%= student.id %>" data-student-email="<%= student.email %>">Message</button>
+                            </div>
+                        </div>
+                    </div>
+                    <% end %>
+                </div>
+            </div>
+        </section>
+
+      <aside class="subscribers-side">
+        <div class="mv-card">
+          <div class="actions-card">
+            <div class="actions-card__header">
+              <h4>Actions</h4>
+              <p class="muted small-text">Tip: Use search + select all to message groups quickly.</p>
+            </div>
+            <div class="actions-card__summary">
+              <span class="pill-soft" id="bulk-count">0 selected</span>
+            </div>
+            <div class="actions-card__primary">
+              <button class="btn btn-primary btn-small" id="open-bulk-modal" disabled>Message selected</button>
+            </div>
+            <div class="actions-card__secondary">
+              <button class="btn btn-secondary btn-small" id="select-all-button">Select all (<span id="bulk-total"><%= @subscriber_count %></span>)</button>
+              <button class="btn btn-secondary btn-small" id="clear-selection">Clear</button>
             </div>
           </div>
         </div>
-      <% end %>
+      </aside>
     </div>
   <% else %>
-    <div class="card empty-state">
-      <p>No subscribers yet. Share your public page to grow your vault.</p>
-    </div>
+    <%= render "shared/empty_state",
+        icon: "👥",
+        title: "No subscribers yet",
+        body: "Share your public page to invite students to subscribe to your vault.",
+        primary_action: { label: "Copy public link", url: public_vault_path, method: :get, data: { copy_text: public_vault_path } },
+        secondary_action: { label: "View public page", url: public_vault_path } %>
   <% end %>
-</div>
-
-<div class="bulk-bar" id="bulk-bar" hidden>
-  <div class="bulk-bar__left">
-    <span id="bulk-count">0 selected</span>
-    <button class="btn btn-secondary btn-small" id="select-all-button">Select all (<span id="bulk-total"><%= @subscriber_count %></span>)</button>
-    <button class="btn btn-secondary btn-small" id="clear-selection">Clear</button>
-  </div>
-  <div class="bulk-bar__right">
-    <button class="btn btn-primary" id="open-bulk-modal" disabled>Send message</button>
-  </div>
 </div>
 
 <div class="modal-backdrop" id="bulk-modal" hidden>
@@ -64,8 +77,19 @@
       <button type="button" class="modal-close" id="close-bulk-modal" aria-label="Close">×</button>
     </div>
     <div class="modal-body">
-      <div id="recipient-summary" class="recipient-summary"></div>
-      <div id="all-warning" class="muted" style="display:none;">This will message all <%= @subscriber_count %> subscribers.</div>
+      <div class="recipient-summary-row">
+        <div id="recipient-summary" class="recipient-summary"></div>
+        <button type="button"
+                class="btn btn-secondary btn-small recipient-toggle"
+                id="toggle-recipient-list"
+                aria-controls="recipient-list"
+                aria-expanded="false"
+                hidden>
+          View recipients
+        </button>
+      </div>
+      <div id="recipient-list" class="recipient-list" hidden></div>
+      <div id="all-warning" class="muted" hidden>This will message all <%= @subscriber_count %> subscribers.</div>
       <%= form_with url: bulk_message_subscribers_path, method: :post, local: true, id: "bulk-form" do |f| %>
         <div id="recipient-inputs"></div>
         <div class="form-row">
@@ -82,149 +106,197 @@
 </div>
 
 <script>
-  document.addEventListener("turbo:load", () => {
-    const list = document.getElementById("subscriber-list");
-    if (!list) return;
+    document.addEventListener("turbo:load", () => {
+        const list = document.getElementById("subscriber-list");
+        if (!list) return;
 
-    const checkboxes = Array.from(list.querySelectorAll(".subscriber-checkbox"));
-    const selectAll = document.getElementById("select-all");
-    const bulkBar = document.getElementById("bulk-bar");
-    const bulkCount = document.getElementById("bulk-count");
-    const openBulkModal = document.getElementById("open-bulk-modal");
-    const selectAllBtn = document.getElementById("select-all-button");
-    const clearBtn = document.getElementById("clear-selection");
-    const modal = document.getElementById("bulk-modal");
-    const closeModalBtn = document.getElementById("close-bulk-modal");
-    const cancelBulk = document.getElementById("cancel-bulk");
-    const bulkForm = document.getElementById("bulk-form");
-    const recipientInputs = document.getElementById("recipient-inputs");
-    const recipientSummary = document.getElementById("recipient-summary");
-    const bulkBody = document.getElementById("bulk-body");
-    const bulkSend = document.getElementById("bulk-send");
-    const allWarning = document.getElementById("all-warning");
-    const total = parseInt(list.dataset.total || "0", 10);
+        const checkboxes = Array.from(list.querySelectorAll(".subscriber-checkbox"));
+        const selectAll = document.getElementById("select-all");
+        const bulkCount = document.getElementById("bulk-count");
+        const openBulkModal = document.getElementById("open-bulk-modal");
+        const selectAllBtn = document.getElementById("select-all-button");
+        const clearBtn = document.getElementById("clear-selection");
+        const modal = document.getElementById("bulk-modal");
+        const closeModalBtn = document.getElementById("close-bulk-modal");
+        const cancelBulk = document.getElementById("cancel-bulk");
+        const bulkForm = document.getElementById("bulk-form");
+        const recipientInputs = document.getElementById("recipient-inputs");
+        const recipientSummary = document.getElementById("recipient-summary");
+        const toggleRecipientList = document.getElementById("toggle-recipient-list");
+        const recipientList = document.getElementById("recipient-list");
+        const recipientListId = "recipient-drawer";
+        const bulkBody = document.getElementById("bulk-body");
+        const bulkSend = document.getElementById("bulk-send");
+        const allWarning = document.getElementById("all-warning");
+        const total = parseInt(list.dataset.total || "0", 10);
 
-    const ensureClosed = () => {
-      modal.hidden = true;
-      document.body.style.overflow = "";
-    };
+        const resetRecipientList = () => {
+            if (recipientList) {
+                recipientList.innerHTML = "";
+                recipientList.hidden = true;
+            }
+            if (toggleRecipientList) {
+                toggleRecipientList.hidden = true;
+                toggleRecipientList.textContent = "View recipients";
+                toggleRecipientList.setAttribute("aria-expanded", "false");
+            }
+        };
 
-    ensureClosed();
+        const ensureClosed = () => {
+            modal.hidden = true;
+            document.body.style.overflow = "";
+            resetRecipientList();
+        };
 
-    const rowMessageButtons = Array.from(document.querySelectorAll(".subscriber-message"));
+        ensureClosed();
 
-    function selectedIds() {
-      return checkboxes.filter((cb) => cb.checked).map((cb) => parseInt(cb.dataset.subscriberId, 10));
-    }
+        const rowMessageButtons = Array.from(document.querySelectorAll(".subscriber-message"));
 
-    function updateUI() {
-      const ids = selectedIds();
-      const count = ids.length;
-      const allChecked = count === checkboxes.length && checkboxes.length > 0;
-      if (selectAll) selectAll.checked = allChecked;
-      bulkBar.hidden = count === 0;
-      bulkCount.textContent = `${count} selected`;
-      openBulkModal.disabled = count === 0;
-      checkboxes.forEach((cb) => {
-        const card = cb.closest(".subscriber-card");
-        if (!card) return;
-        card.classList.toggle("selected", cb.checked);
-      });
-    }
+        function selectedIds() {
+            return checkboxes.filter((cb) => cb.checked).map((cb) => parseInt(cb.dataset.subscriberId, 10));
+        }
 
-    // ensure initial state closed/hidden and select-all defaults
-    bulkBar.hidden = true;
-    ensureClosed();
-    if (selectAll && checkboxes.length === 0) selectAll.disabled = true;
+        function updateUI() {
+            const ids = selectedIds();
+            const count = ids.length;
+            const allChecked = count === checkboxes.length && checkboxes.length > 0;
+            if (selectAll) selectAll.checked = allChecked;
+            bulkCount.textContent = `${count} selected`;
+            openBulkModal.disabled = count === 0;
+            checkboxes.forEach((cb) => {
+                const card = cb.closest(".subscriber-card");
+                if (!card) return;
+                card.classList.toggle("selected", cb.checked);
+            });
+        }
 
-    checkboxes.forEach((cb) => {
-      cb.addEventListener("change", updateUI);
+        // ensure initial state closed/hidden and select-all defaults
+        ensureClosed();
+        if (selectAll && checkboxes.length === 0) selectAll.disabled = true;
+
+        checkboxes.forEach((cb) => {
+            cb.addEventListener("change", updateUI);
+        });
+
+        if (selectAll) {
+            selectAll.addEventListener("change", (e) => {
+                const checked = e.target.checked;
+                checkboxes.forEach((cb) => (cb.checked = checked));
+                updateUI();
+            });
+        }
+
+        selectAllBtn?.addEventListener("click", () => {
+            checkboxes.forEach((cb) => (cb.checked = true));
+            updateUI();
+        });
+
+        clearBtn?.addEventListener("click", () => {
+            checkboxes.forEach((cb) => (cb.checked = false));
+            updateUI();
+        });
+
+        function openModalWith(ids, emails) {
+            if (ids.length === 0) return;
+            modal.hidden = false;
+            document.body.style.overflow = "hidden";
+            recipientInputs.innerHTML = "";
+            ids.forEach((id) => {
+                const input = document.createElement("input");
+                input.type = "hidden";
+                input.name = "recipient_ids[]";
+                input.value = id;
+                recipientInputs.appendChild(input);
+            });
+            resetRecipientList();
+
+            const summaryLabel = ids.length === total ? `All ${total} subscribers` : `${ids.length} selected`;
+            recipientSummary.innerHTML = `<span class="chip">To: ${summaryLabel}</span>`;
+
+            if (emails.length > 0 && toggleRecipientList && recipientList) {
+                toggleRecipientList.hidden = false;
+                recipientList.innerHTML = `
+                  <div class="recipient-drawer">
+                    <input type="search" class="input recipient-filter" id="recipient-filter" placeholder="Filter recipients…" aria-controls="${recipientListId}-list">
+                    <ul class="recipient-drawer__list" id="${recipientListId}-list">
+                      ${emails.map((email) => `<li data-email="${email.toLowerCase()}">${email}</li>`).join("")}
+                    </ul>
+                  </div>
+                `;
+                recipientList.hidden = true;
+
+                const filterInput = recipientList.querySelector(".recipient-filter");
+                const items = Array.from(recipientList.querySelectorAll("li"));
+                filterInput?.addEventListener("input", () => {
+                    const q = filterInput.value.trim().toLowerCase();
+                    items.forEach((item) => {
+                        const match = item.dataset.email?.includes(q);
+                        item.style.display = match ? "" : "none";
+                    });
+                });
+            }
+
+            allWarning.style.display = ids.length === total ? "block" : "none";
+            bulkBody.value = "";
+            bulkSend.disabled = true;
+            bulkBody.focus();
+        }
+
+        openBulkModal?.addEventListener("click", () => {
+            const ids = selectedIds();
+            const emails = ids.map((id) => {
+                const card = list.querySelector(`[data-subscriber-id="${id}"]`);
+                return card?.querySelector(".subscriber-name")?.textContent?.trim() || "Subscriber";
+            });
+            openModalWith(ids, emails);
+        });
+
+        rowMessageButtons.forEach((btn) => {
+            btn.addEventListener("click", () => {
+                const id = parseInt(btn.dataset.studentId, 10);
+                const email = btn.dataset.studentEmail;
+                openModalWith([id], [email]);
+            });
+        });
+
+        function closeModal() {
+            ensureClosed();
+            bulkBody.value = "";
+            bulkSend.disabled = true;
+            resetRecipientList();
+        }
+
+        closeModalBtn?.addEventListener("click", closeModal);
+        cancelBulk?.addEventListener("click", closeModal);
+
+        modal?.addEventListener("click", (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape" && !modal.hidden) {
+                closeModal();
+            }
+        });
+
+        if (bulkSend) bulkSend.disabled = true;
+
+        bulkBody?.addEventListener("input", () => {
+            bulkSend.disabled = bulkBody.value.trim() === "";
+        });
+
+        toggleRecipientList?.addEventListener("click", () => {
+            if (!recipientList) return;
+            const newHidden = !recipientList.hidden;
+            recipientList.hidden = newHidden;
+            toggleRecipientList.textContent = newHidden ? "View recipients" : "Hide recipients";
+            toggleRecipientList.setAttribute("aria-expanded", String(!newHidden));
+            if (!newHidden) {
+                const filterInput = recipientList.querySelector(".recipient-filter");
+                filterInput?.focus();
+            }
+        });
+
+        document.addEventListener("turbo:before-cache", ensureClosed);
     });
-
-    if (selectAll) {
-      selectAll.addEventListener("change", (e) => {
-        const checked = e.target.checked;
-        checkboxes.forEach((cb) => (cb.checked = checked));
-        updateUI();
-      });
-    }
-
-    selectAllBtn?.addEventListener("click", () => {
-      checkboxes.forEach((cb) => (cb.checked = true));
-      updateUI();
-    });
-
-    clearBtn?.addEventListener("click", () => {
-      checkboxes.forEach((cb) => (cb.checked = false));
-      updateUI();
-    });
-
-    function openModalWith(ids, emails) {
-      if (ids.length === 0) return;
-      modal.hidden = false;
-      document.body.style.overflow = "hidden";
-      recipientInputs.innerHTML = "";
-      ids.forEach((id) => {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = "recipient_ids[]";
-        input.value = id;
-        recipientInputs.appendChild(input);
-      });
-      const summaryParts = [];
-      emails.slice(0, 2).forEach((email) => summaryParts.push(`<span class="chip">${email}</span>`));
-      if (emails.length > 2) {
-        summaryParts.push(`<span class="chip">+${emails.length - 2} more</span>`);
-      }
-      recipientSummary.innerHTML = summaryParts.join(" ");
-      allWarning.style.display = ids.length === total ? "block" : "none";
-      bulkBody.value = "";
-      bulkSend.disabled = true;
-      bulkBody.focus();
-    }
-
-    openBulkModal?.addEventListener("click", () => {
-      const ids = selectedIds();
-      const emails = ids.map((id) => {
-        const card = list.querySelector(`[data-subscriber-id="${id}"]`);
-        return card?.querySelector(".subscriber-name")?.textContent?.trim() || "Subscriber";
-      });
-      openModalWith(ids, emails);
-    });
-
-    rowMessageButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const id = parseInt(btn.dataset.studentId, 10);
-        const email = btn.dataset.studentEmail;
-        openModalWith([id], [email]);
-      });
-    });
-
-    function closeModal() {
-      ensureClosed();
-      bulkBody.value = "";
-      bulkSend.disabled = true;
-    }
-
-    closeModalBtn?.addEventListener("click", closeModal);
-    cancelBulk?.addEventListener("click", closeModal);
-
-    modal?.addEventListener("click", (e) => {
-      if (e.target === modal) closeModal();
-    });
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && !modal.hidden) {
-        closeModal();
-      }
-    });
-
-    if (bulkSend) bulkSend.disabled = true;
-
-    bulkBody?.addEventListener("input", () => {
-      bulkSend.disabled = bulkBody.value.trim() === "";
-    });
-
-    document.addEventListener("turbo:before-cache", ensureClosed);
-  });
 </script>

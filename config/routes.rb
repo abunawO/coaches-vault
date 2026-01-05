@@ -46,17 +46,28 @@ Rails.application.routes.draw do
     resources :comments, only: [:create]
   end
 
-  resources :conversations, only: [:index, :show, :create] do
+  resources :conversations, only: [:index, :show, :create, :destroy] do
     resources :messages, only: [:create]
     collection do
       post :mark_all_read
     end
   end
 
+  namespace :coach do
+    get "vault", to: "vault#index", as: :vault
+    resources :categories, only: [:create, :update, :destroy] do
+      resources :lessons, only: [:create], controller: "category_lessons"
+      delete "lessons/:lesson_id", to: "category_lessons#destroy", as: :remove_lesson
+    end
+  end
+
+  get "/vault", to: "vault#index", as: :public_vault
+
   get "/subscribers", to: "subscribers#index", as: :subscribers
   post "/subscribers/bulk_message", to: "subscribers#bulk_message", as: :bulk_message_subscribers
 
-  get "/notifications", to: "notifications#index", as: :notifications
-  get "/notifications/:id", to: "notifications#show", as: :notification
-  post "/notifications/mark_all_read", to: "notifications#mark_all_read", as: :mark_all_notifications_read
+get "/notifications", to: "notifications#index", as: :notifications
+get "/notifications/:id", to: "notifications#show", as: :notification
+delete "/notifications/:id", to: "notifications#destroy", as: :delete_notification
+post "/notifications/mark_all_read", to: "notifications#mark_all_read", as: :mark_all_notifications_read
 end

@@ -10,9 +10,60 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_20_140000) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_21_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "active_storage_attachments", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.bigint "record_id", null: false
+    t.string "record_type", null: false
+    t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+  end
+
+  create_table "active_storage_blobs", force: :cascade do |t|
+    t.string "analyzed", default: "f", null: false
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.string "content_type"
+    t.datetime "created_at", null: false
+    t.string "filename", null: false
+    t.string "identified", default: "f", null: false
+    t.string "key", null: false
+    t.text "metadata"
+    t.string "service_name", null: false
+  end
+
+  create_table "active_storage_variant_records", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.string "variation_digest", null: false
+    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "categories", force: :cascade do |t|
+    t.bigint "coach_id", null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.string "visibility", default: "visible", null: false
+    t.index ["coach_id", "position"], name: "index_categories_on_coach_id_and_position"
+    t.index ["coach_id"], name: "index_categories_on_coach_id"
+  end
+
+  create_table "category_lessons", force: :cascade do |t|
+    t.bigint "category_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "lesson_id", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id", "lesson_id"], name: "index_category_lessons_on_category_id_and_lesson_id", unique: true
+    t.index ["category_id"], name: "index_category_lessons_on_category_id"
+    t.index ["lesson_id"], name: "index_category_lessons_on_lesson_id"
+  end
 
   create_table "coach_profiles", force: :cascade do |t|
     t.string "avatar_url"
@@ -47,9 +98,13 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_20_140000) do
   create_table "conversations", force: :cascade do |t|
     t.bigint "coach_id", null: false
     t.datetime "created_at", null: false
+    t.datetime "deleted_by_coach_at"
+    t.datetime "deleted_by_student_at"
     t.bigint "student_id", null: false
     t.datetime "updated_at", null: false
     t.index ["coach_id"], name: "index_conversations_on_coach_id"
+    t.index ["deleted_by_coach_at"], name: "index_conversations_on_deleted_by_coach_at"
+    t.index ["deleted_by_student_at"], name: "index_conversations_on_deleted_by_student_at"
     t.index ["student_id", "coach_id"], name: "index_conversations_on_student_id_and_coach_id", unique: true
     t.index ["student_id"], name: "index_conversations_on_student_id"
   end
@@ -62,6 +117,17 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_20_140000) do
     t.index ["lesson_id"], name: "index_favorites_on_lesson_id"
     t.index ["student_id", "lesson_id"], name: "index_favorites_on_student_id_and_lesson_id", unique: true
     t.index ["student_id"], name: "index_favorites_on_student_id"
+  end
+
+  create_table "lesson_media", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "kind", default: 0, null: false
+    t.bigint "lesson_id", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.string "video_url"
+    t.index ["lesson_id", "position"], name: "index_lesson_media_on_lesson_id_and_position"
+    t.index ["lesson_id"], name: "index_lesson_media_on_lesson_id"
   end
 
   create_table "lesson_shares", force: :cascade do |t|
@@ -138,6 +204,11 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_20_140000) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "categories", "users", column: "coach_id"
+  add_foreign_key "category_lessons", "categories"
+  add_foreign_key "category_lessons", "lessons"
   add_foreign_key "coach_profiles", "users"
   add_foreign_key "comments", "lessons"
   add_foreign_key "comments", "users"
@@ -145,6 +216,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_20_140000) do
   add_foreign_key "conversations", "users", column: "student_id"
   add_foreign_key "favorites", "lessons"
   add_foreign_key "favorites", "users", column: "student_id"
+  add_foreign_key "lesson_media", "lessons"
   add_foreign_key "lesson_shares", "lessons"
   add_foreign_key "lesson_shares", "users"
   add_foreign_key "lessons", "users", column: "coach_id"

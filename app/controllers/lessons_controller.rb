@@ -28,6 +28,17 @@ class LessonsController < ApplicationController
     @root_comments = @lesson.comments.includes(:user, replies: :user).where(parent_id: nil)
     @can_comment = @authorized && current_user&.student? && current_user.subscribed_to?(@lesson.coach)
     @can_reply = @authorized && current_user&.coach? && current_user.id == @lesson.coach_id
+    @media_slides = @lesson.lesson_media.order(:position)
+
+    # Up next: other lessons from the same coach that the viewer can at least preview/full
+    @up_next = Lesson
+               .includes(:coach, :lesson_shares)
+               .where(coach_id: @lesson.coach_id)
+               .where.not(id: @lesson.id)
+               .order(created_at: :desc)
+               .limit(12)
+               .select { |l| [:full, :preview].include?(l.viewer_access_level(current_user)) }
+               .first(6)
   end
 
   private

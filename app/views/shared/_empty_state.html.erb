@@ -1,0 +1,25 @@
+<% size_class = local_assigns[:size] == :sm ? "empty-state--sm" : "empty-state--md" %>
+<div class="empty-state <%= size_class %>">
+  <% if local_assigns[:icon].present? %>
+    <div class="empty-state__icon"><%= icon %></div>
+  <% end %>
+  <% if local_assigns[:title].present? %>
+    <h3 class="empty-state__title"><%= title %></h3>
+  <% end %>
+  <% if local_assigns[:body].present? %>
+    <p class="empty-state__body"><%= body %></p>
+  <% end %>
+  <% if local_assigns[:primary_action].present? || local_assigns[:secondary_action].present? %>
+    <div class="empty-state__actions">
+      <% if local_assigns[:primary_action].present? %>
+        <%= link_to primary_action[:label],
+                    primary_action[:url],
+                    method: primary_action[:method] || :get,
+                    class: "btn btn-primary" %>
+      <% end %>
+      <% if local_assigns[:secondary_action].present? %>
+        <%= link_to secondary_action[:label], secondary_action[:url], class: "btn btn-secondary" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

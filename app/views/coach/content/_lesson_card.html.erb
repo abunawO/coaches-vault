@@ -1,26 +1,64 @@
-<div class="card lesson-card <%= 'lesson-card--restricted' if lesson.restricted? %>">
-  <div class="card-header">
-    <div>
-      <h3 class="card-title" style="margin:0; font-size:1.05rem;"><%= lesson.title %></h3>
-      <% if lesson.description.present? %>
-        <p class="muted" style="margin: 6px 0 0 0;"><%= truncate(lesson.description, length: 120) %></p>
-      <% end %>
+<div class="mv-card lesson-card <%= 'lesson-card--restricted' if lesson.restricted? %>" data-controller="lesson-card">
+    <div class="mv-card__header">
+        <div>
+            <h3 class="mv-card__title"><%= lesson.title %></h3>
+            <% if lesson.description.present? %>
+            <p class="mv-card__subtitle mv-card__desc" data-lesson-card-target="desc"><%= lesson.description %></p>
+            <% if lesson.description.length > 140 %>
+            <button type="button" class="mv-card__toggle" data-action="lesson-card#toggle" data-lesson-card-target="toggle" aria-expanded="false">Show more</button>
+            <% end %>
+            <% end %>
+        </div>
+        <span class="mv-chip mv-chip--<%= lesson.visibility == 'restricted' ? 'private' : (lesson.visibility == 'subscribers' ? 'subscribers' : 'free') %>">
+            <span class="mv-chip__dot"></span>
+            <%= lesson.visibility == "restricted" ? "Private" : lesson.visibility.capitalize %>
+        </span>
     </div>
-    <span class="visibility-pill visibility-pill--<%= lesson.visibility %>">
-      <span class="pill-dot"></span>
-      <%= lesson.visibility == "restricted" ? "Private" : lesson.visibility.capitalize %>
-    </span>
-  </div>
-  <div class="card-body">
-    <p class="muted" style="margin-bottom: 6px;">Created <%= l(lesson.created_at.to_date, format: :long) %></p>
-    <% if lesson.restricted? %>
-      <p class="muted">Shared with: <%= lesson.lesson_shares.size %></p>
+    <div class="mv-card__meta">
+        <span>📅 Created <%= l(lesson.created_at.to_date, format: :long) %></span>
+        <% if lesson.restricted? %>
+        <span>👥 Shared with: <%= lesson.lesson_shares.size %></span>
+        <% end %>
+    </div>
+    <div class="mv-card__actions">
+        <%= link_to lesson_path(lesson), class: "icon-btn", aria: { label: "View" }, data: { tooltip: "View" } do %>
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 9s3-6 11-6 11 6 11 6-3 6-11 6S1 9 1 9Z" />
+            <circle cx="12" cy="9" r="2.5" />
+        </svg>
+        <% end %>
+        <%= link_to edit_coach_lesson_path(lesson), class: "icon-btn", aria: { label: "Edit" }, data: { tooltip: "Edit" } do %>
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4Z" />
+        </svg>
+        <% end %>
+        <% if lesson.restricted? %>
+        <%= link_to access_coach_lesson_path(lesson), class: "icon-btn", aria: { label: "Manage access" }, data: { tooltip: "Manage access" } do %>
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M4 21v-2a4 4 0 0 1 4-4h1" />
+            <path d="M17 12a4 4 0 0 1 4 4v1.5" />
+        </svg>
+        <% end %>
+        <% end %>
+    </div>
+
+    <% if lesson.description.present? %>
+    <div class="mv-card__overlay" data-lesson-card-target="overlay">
+        <div class="mv-card__overlay-content">
+            <button type="button" class="icon-btn icon-btn--ghost mv-card__overlay-close" aria-label="Close" data-action="lesson-card#collapse">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m4 4 8 8" />
+                    <path d="m12 4-8 8" />
+                </svg>
+            </button>
+            <h4 class="mv-card__overlay-title"><%= lesson.title %></h4>
+            <div class="mv-card__overlay-body"><%= simple_format(lesson.description) %></div>
+            <button type="button" class="btn btn-secondary btn-small" data-action="lesson-card#collapse">
+                Show less
+            </button>
+        </div>
+    </div>
     <% end %>
-  </div>
-  <div class="card-actions">
-    <%= link_to "Edit", edit_coach_lesson_path(lesson), class: "btn btn-secondary btn-small" %>
-    <% if lesson.restricted? %>
-      <%= link_to "Manage access", access_coach_lesson_path(lesson), class: "btn btn-primary btn-small manage-access-btn" %>
-    <% end %>
-  </div>
 </div>

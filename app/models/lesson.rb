@@ -5,9 +5,14 @@ class Lesson < ApplicationRecord
   has_many :favorites, dependent: :destroy
   has_many :lesson_shares, dependent: :destroy
   has_many :shared_users, through: :lesson_shares, source: :user
+  has_many :lesson_media, class_name: "LessonMedium", dependent: :destroy
+  has_many :category_lessons, dependent: :destroy
+  has_many :categories, through: :category_lessons
+
+  accepts_nested_attributes_for :lesson_media, allow_destroy: true
 
   validates :title, presence: true
-  validates :video_url, presence: true
+  validate :content_presence
 
   enum :visibility, { free: 0, subscribers: 1, restricted: 2 }, default: :subscribers
 
@@ -67,5 +72,17 @@ class Lesson < ApplicationRecord
 
     self.preview = false
     self.preview_text = nil
+  end
+
+  def content_presence
+    media_ok = lesson_media.reject(&:marked_for_destruction?).any? do |m|
+      (m.video? && m.video_url.present?) ||
+        (m.image? && (m.image_file.attached? || m.image_file_blob.present?))
+    end
+
+    return if media_ok
+    return if video_url.present?
+
+    errors.add(:base, "Add at least one media item or a video URL")
   end
 end

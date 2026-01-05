@@ -17,6 +17,36 @@ class Conversation < ApplicationRecord
     messages.unread.where.not(sender_id: user.id).count
   end
 
+  def deleted_for?(user)
+    if user.student?
+      deleted_by_student_at.present?
+    elsif user.coach?
+      deleted_by_coach_at.present?
+    else
+      false
+    end
+  end
+
+  def mark_deleted_for!(user)
+    if user.student?
+      update!(deleted_by_student_at: Time.current)
+    elsif user.coach?
+      update!(deleted_by_coach_at: Time.current)
+    end
+  end
+
+  def restore_for!(user)
+    if user.student? && deleted_by_student_at.present?
+      update_column(:deleted_by_student_at, nil)
+    elsif user.coach? && deleted_by_coach_at.present?
+      update_column(:deleted_by_coach_at, nil)
+    end
+  end
+
+  def both_deleted?
+    deleted_by_student_at.present? && deleted_by_coach_at.present?
+  end
+
   private
 
   def roles_are_valid

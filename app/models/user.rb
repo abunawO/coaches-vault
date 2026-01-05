@@ -12,6 +12,7 @@ class User < ApplicationRecord
 
   has_many :lesson_shares, dependent: :destroy
   has_many :shared_lessons, through: :lesson_shares, source: :lesson
+  has_many :categories, foreign_key: :coach_id, dependent: :destroy
 
   VALID_ROLES = %w[coach student].freeze
 

@@ -1,78 +1,541 @@
-<%= form_with model: [:coach, @lesson], local: true do |form| %>
-  <div class="form-row">
-    <%= form.label :title %>
-    <%= form.text_field :title, required: true, class: "input", placeholder: "e.g., Distance & Angles 101" %>
-  </div>
+<div class="lesson-form-page">
+    <%= form_with model: [:coach, @lesson], local: true, html: { multipart: true } do |form| %>
+    <% if @lesson.errors.any? %>
+    <div class="alert alert-danger">
+        <p><strong><%= pluralize(@lesson.errors.count, "error") %> prevented this lesson from saving:</strong></p>
+        <ul>
+            <% @lesson.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+            <% end %>
+        </ul>
+    </div>
+    <% end %>
+    <div class="lesson-form-layout">
+        <div class="lesson-form-main">
+            <div class="card lesson-form-card">
+                <section class="form-section">
+                    <div class="section-header">
+                        <div>
+                            <h3 class="section-title">Basics</h3>
+                            <p class="muted small-text">Give your lesson a clear title and description.</p>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <%= form.label :title %>
+                        <%= form.text_field :title, required: true, class: "input", placeholder: "e.g., Distance & Angles 101" %>
+                    </div>
+                    <div class="form-row">
+                        <%= form.label :description %>
+                        <%= form.text_area :description, rows: 4, class: "textarea", placeholder: "What students will learn in this lesson..." %>
+                    </div>
+                </section>
 
-  <div class="form-row">
-    <%= form.label :description %>
-    <%= form.text_area :description, rows: 4, class: "textarea", placeholder: "What students will learn in this lesson..." %>
-  </div>
+                <section class="form-section">
+                    <div class="section-header">
+                        <div>
+                            <h3 class="section-title">Lesson Content (Carousel)</h3>
+                            <p class="muted small-text">Add images or videos as slides. Students will view them in a carousel.</p>
+                        </div>
+                    </div>
 
-  <div class="form-row">
-    <%= form.label :video_url, "Video URL" %>
-    <%= form.text_field :video_url, required: true, class: "input", placeholder: "https://www.youtube.com/watch?v=..." %>
-    <span class="muted">YouTube or Vimeo link recommended.</span>
-  </div>
+                    <div class="lesson-media-list" id="lesson-media-list">
+                        <%= form.fields_for :lesson_media do |mf| %>
+                        <% media = mf.object %>
+                        <div class="slide-card" data-slide-row>
+                            <div class="slide-thumb">
+                                <% if media.image? %>
+                                <% if media.image_file.attached? %>
+                                <%= image_tag(media.image_file.variant(resize_to_limit: [200, 200])) rescue image_tag(media.image_file, style: "max-width: 80px;") %>
+                                <% else %>
+                                <span class="muted small-text">Image</span>
+                                <% end %>
+                                <% else %>
+                                <div class="thumb-video">Video</div>
+                                <% end %>
+                            </div>
 
-  <div class="card" style="margin: 12px 0; padding: 12px;">
-    <strong>Visibility</strong>
-    <div class="form-row">
-      <label class="radio-row">
-        <%= form.radio_button :visibility, "free", checked: @lesson.visibility == "free" %>
-        <span>Free (visible to all logged-in users)</span>
-      </label>
-      <label class="radio-row">
-        <%= form.radio_button :visibility, "subscribers", checked: @lesson.visibility == "subscribers" %>
-        <span>Subscribers only</span>
-      </label>
-      <label class="radio-row">
-        <%= form.radio_button :visibility, "restricted", checked: @lesson.visibility == "restricted" %>
-        <span>Private (select subscribers)</span>
-      </label>
+                            <div class="slide-body">
+                                <div class="slide-badge">
+                                    <span class="pill-soft"><%= media.kind.capitalize %> slide</span>
+                                </div>
+                                <div class="slide-fields">
+                                    <%= mf.hidden_field :id if media.persisted? %>
+                                    <%= mf.hidden_field :kind %>
+                                    <%= mf.hidden_field :position, class: "position-field", value: media.position || 0 %>
+                                    <% if media.image? %>
+                                    <label class="muted small-text">Image file</label>
+                                    <%= mf.file_field :image_file, class: "input" %>
+                                    <% else %>
+                                    <label class="muted small-text">Video URL</label>
+                                    <%= mf.text_field :video_url, class: "input", placeholder: "https://www.youtube.com/watch?v=..." %>
+                                    <% end %>
+                                </div>
+                            </div>
+
+                            <div class="slide-controls">
+                                <button type="button" class="icon-btn" data-move="up" aria-label="Move up">↑</button>
+                                <button type="button" class="icon-btn" data-move="down" aria-label="Move down">↓</button>
+                                <button type="button" class="icon-btn icon-btn--danger" data-remove-row aria-label="Remove slide">🗑</button>
+                                <%= mf.check_box :_destroy, style: "display:none;", data: { destroy_field: true } %>
+                            </div>
+                        </div>
+                        <% end %>
+                    </div>
+
+                    <div class="lesson-media-actions-row">
+                        <button type="button" class="btn btn-secondary btn-small" data-action="click" data-add-media="image">+ Add image slide</button>
+                        <button type="button" class="btn btn-secondary btn-small" data-action="click" data-add-media="video">+ Add video slide</button>
+                    </div>
+
+                    <div class="draft-slide card" id="draft-slide" hidden>
+                        <div class="draft-slide__header">
+                            <h4>New slide</h4>
+                            <button type="button" class="icon-btn" id="draft-close" aria-label="Close draft">×</button>
+                        </div>
+                        <div class="draft-slide__body">
+                            <div class="draft-image" id="draft-image" hidden>
+                                <label class="muted small-text">Image file</label>
+                                <input type="file" class="input" id="draft-image-input" />
+                            </div>
+                            <div class="draft-video" id="draft-video" hidden>
+                                <label class="muted small-text">Video URL</label>
+                                <input type="text" class="input" id="draft-video-input" placeholder="https://www.youtube.com/watch?v=..." />
+                            </div>
+                        </div>
+                        <div class="draft-slide__footer">
+                            <button type="button" class="btn btn-ghost btn-small" id="draft-cancel">Cancel</button>
+                            <button type="button" class="btn btn-primary btn-small" id="draft-add">Add slide</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="form-section">
+                    <div class="section-header">
+                        <div>
+                            <h3 class="section-title">Preview</h3>
+                            <p class="muted small-text">Add a teaser for unsubscribed viewers (Subscribers visibility only).</p>
+                        </div>
+                    </div>
+                    <div id="preview-fields" style="<%= (@lesson.visibility == "subscribers") ? '' : 'display:none;' %>">
+                        <label class="radio-row">
+                            <%= form.check_box :preview, { checked: @lesson.preview?, data: { action: "change->preview-toggle#toggle" } }, true, false %>
+                            <span>Enable preview (teaser for unsubscribed viewers)</span>
+                        </label>
+                        <div class="form-row" id="preview-text-row" style="<%= (@lesson.preview? && @lesson.visibility == "subscribers") ? '' : 'display:none;' %>">
+                            <%= form.label :preview_text, "Preview text" %>
+                            <%= form.text_area :preview_text, rows: 3, class: "textarea", placeholder: "Short teaser shown to unsubscribed viewers." %>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <aside class="lesson-form-sidebar sticky-sidebar">
+            <div class="card lesson-form-card">
+                <div class="section-header">
+                    <div>
+                        <h3 class="section-title">Visibility</h3>
+                        <p class="muted small-text">Choose who can view this lesson.</p>
+                    </div>
+                </div>
+                <div class="visibility-options">
+                    <label class="visibility-card">
+                        <%= form.radio_button :visibility, "free", checked: @lesson.visibility == "free", class: "vis-radio" %>
+                        <div class="visibility-card__body">
+                            <div class="visibility-card__title">Free</div>
+                            <div class="muted small-text">Visible to all logged-in users.</div>
+                        </div>
+                        <span class="checkmark" aria-hidden="true">✓</span>
+                    </label>
+                    <label class="visibility-card">
+                        <%= form.radio_button :visibility, "subscribers", checked: @lesson.visibility == "subscribers", class: "vis-radio" %>
+                        <div class="visibility-card__body">
+                            <div class="visibility-card__title">Subscribers</div>
+                            <div class="muted small-text">All active subscribers can view.</div>
+                        </div>
+                        <span class="checkmark" aria-hidden="true">✓</span>
+                    </label>
+                    <label class="visibility-card">
+                        <%= form.radio_button :visibility, "restricted", checked: @lesson.visibility == "restricted", class: "vis-radio" %>
+                        <div class="visibility-card__body">
+                            <div class="visibility-card__title">Private</div>
+                            <div class="muted small-text">Only selected subscribers can view.</div>
+                        </div>
+                        <span class="checkmark" aria-hidden="true">✓</span>
+                    </label>
+                </div>
+                <p class="muted small-text" id="private-note-new" style="<%= @lesson.restricted? ? '' : 'display:none;' %>">Only selected subscribers can watch this lesson.</p>
+
+                <div class="subscriber-picker" id="selected-wrapper-new" style="<%= @lesson.restricted? ? '' : 'display:none;' %>">
+                    <div class="section-header">
+                        <div>
+                            <h4 class="section-title">Allowed subscribers</h4>
+                            <p class="muted small-text">Choose which active subscribers can view this private lesson.</p>
+                        </div>
+                        <span class="pill-soft" id="selected-count-new"></span>
+                    </div>
+                    <div class="access-filter">
+                        <input type="text" id="subscriber-search-new" class="input" placeholder="Search subscribers..." />
+                        <div class="card-actions" style="margin:0;">
+                            <button type="button" class="btn btn-ghost btn-small" id="select-all-btn-new">Select all</button>
+                            <button type="button" class="btn btn-ghost btn-small" id="clear-all-btn-new">Clear</button>
+                        </div>
+                    </div>
+                    <div class="subscriber-list">
+                        <% if @subscribers.empty? %>
+                        <div class="empty-state">No active subscribers to share with.</div>
+                        <% else %>
+                        <% preselected = @preselected_allowed_ids || [] %>
+                        <% @subscribers.each do |sub| %>
+                        <label class="subscriber-card subscriber-access-new" data-email="<%= sub.email.downcase %>">
+                            <input type="checkbox" name="lesson[allowed_subscriber_ids][]" value="<%= sub.id %>" <%= "checked" if preselected.include?(sub.id) %> />
+                            <span class="avatar"><%= sub.email.first&.upcase %></span>
+                            <div class="subscriber-meta">
+                                <div class="subscriber-name"><%= sub.email %></div>
+                                <div class="muted small-text">Active subscriber</div>
+                            </div>
+                            <span class="pill-soft selected-pill">Selected</span>
+                        </label>
+                        <% end %>
+                        <% end %>
+                    </div>
+                    <div class="access-disabled-overlay" id="access-disabled-overlay-new" style="<%= @lesson.restricted? ? 'display:none;' : '' %>">
+                        <p class="muted">Subscriber selection is available when “Private” is chosen.</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
     </div>
 
-    <div id="preview-fields" style="<%= (@lesson.visibility == "subscribers") ? '' : 'display:none;' %>">
-      <label class="radio-row">
-        <%= form.check_box :preview, { checked: @lesson.preview?, data: { action: "change->preview-toggle#toggle" } }, true, false %>
-        <span>Enable preview (teaser for unsubscribed viewers)</span>
-      </label>
-      <div class="form-row" id="preview-text-row" style="<%= (@lesson.preview? && @lesson.visibility == "subscribers") ? '' : 'display:none;' %>">
-        <%= form.label :preview_text, "Preview text" %>
-        <%= form.text_area :preview_text, rows: 3, class: "textarea", placeholder: "Short teaser shown to unsubscribed viewers." %>
-      </div>
+    <div class="access-footer card sticky-save lesson-form-actions">
+        <div class="muted small-text" id="dirty-indicator-new">Changes are saved when you click Save.</div>
+        <div class="card-actions">
+            <%= form.submit(@lesson.persisted? ? "Update lesson" : "Create lesson", class: "btn btn-primary") %>
+            <%= link_to "Cancel", coach_lessons_path, class: "btn btn-ghost" %>
+        </div>
     </div>
-  </div>
-
-  <div class="card-actions">
-    <%= form.submit(@lesson.persisted? ? "Update lesson" : "Create lesson", class: "btn btn-primary") %>
-    <%= link_to "Cancel", coach_lessons_path, class: "btn btn-ghost" %>
-  </div>
-<% end %>
+    <% end %>
+</div>
 
 <script>
-  document.addEventListener("turbo:load", () => {
-    const visibilityRadios = document.querySelectorAll("input[name='lesson[visibility]']");
-    const previewWrap = document.getElementById("preview-fields");
-    const previewCheckbox = document.querySelector("input[name='lesson[preview]']");
-    const previewTextRow = document.getElementById("preview-text-row");
+    document.addEventListener("turbo:load", () => {
+        const root = document.querySelector(".lesson-form-page");
+        if (!root) return;
+        if (root.dataset.mediaInit === "true") return;
+        root.dataset.mediaInit = "true";
+        const visibilityRadios = document.querySelectorAll("input[name='lesson[visibility]']");
+        const previewWrap = document.getElementById("preview-fields");
+        const previewCheckbox = document.querySelector("input[name='lesson[preview]']");
+        const previewTextRow = document.getElementById("preview-text-row");
+        const privateNote = document.getElementById("private-note-new");
+        const selectedWrapper = document.getElementById("selected-wrapper-new");
+        const disabledOverlay = document.getElementById("access-disabled-overlay-new");
+        const search = document.getElementById("subscriber-search-new");
+        const rows = Array.from(document.querySelectorAll(".subscriber-access-new"));
+        const selectAllBtn = document.getElementById("select-all-btn-new");
+        const clearAllBtn = document.getElementById("clear-all-btn-new");
+        const selectedCount = document.getElementById("selected-count-new");
+        const form = document.querySelector(".lesson-form-page form");
+        const dirtyIndicator = document.getElementById("dirty-indicator-new");
 
-    function togglePreviewVisibility() {
-      const val = document.querySelector("input[name='lesson[visibility]']:checked")?.value;
-      if (val === "subscribers") {
-        previewWrap.style.display = "";
-      } else {
-        previewWrap.style.display = "none";
-      }
-    }
+        function togglePreviewVisibility() {
+            const val = document.querySelector("input[name='lesson[visibility]']:checked")?.value;
+            if (val === "subscribers") {
+                previewWrap.style.display = "";
+            } else {
+                previewWrap.style.display = "none";
+            }
+        }
 
-    function togglePreviewText() {
-      previewTextRow.style.display = (previewCheckbox && previewCheckbox.checked) ? "" : "none";
-    }
+        function togglePreviewText() {
+            previewTextRow.style.display = (previewCheckbox && previewCheckbox.checked) ? "" : "none";
+        }
 
-    visibilityRadios.forEach((r) => r.addEventListener("change", togglePreviewVisibility));
-    previewCheckbox?.addEventListener("change", togglePreviewText);
-    togglePreviewVisibility();
-    togglePreviewText();
-  });
+        function toggleVisibility() {
+            const val = document.querySelector("input[name='lesson[visibility]']:checked")?.value;
+            const isRestricted = val === "restricted";
+            selectedWrapper.style.display = isRestricted ? "" : "none";
+            disabledOverlay.style.display = isRestricted ? "none" : "";
+            if (privateNote) privateNote.style.display = isRestricted ? "" : "none";
+            const disabled = !isRestricted;
+            rows.forEach((row) => {
+                const cb = row.querySelector("input[type='checkbox']");
+                if (cb) cb.disabled = disabled;
+                row.classList.toggle("disabled", disabled);
+            });
+            updateCount();
+        }
+
+        visibilityRadios.forEach((r) => r.addEventListener("change", () => {
+            toggleVisibility();
+            togglePreviewVisibility();
+            markDirty();
+        }));
+        previewCheckbox?.addEventListener("change", () => {
+            togglePreviewText();
+            markDirty();
+        });
+
+        search?.addEventListener("input", (e) => {
+            const q = e.target.value.toLowerCase();
+            rows.forEach((row) => {
+                const email = row.dataset.email || "";
+                row.style.display = email.includes(q) ? "" : "none";
+            });
+        });
+
+        function updateCount() {
+            const checked = rows.filter((row) => row.querySelector("input[type='checkbox']")?.checked);
+            if (selectedCount) selectedCount.textContent = `${checked.length} selected`;
+            if (clearAllBtn) clearAllBtn.style.visibility = checked.length > 0 ? "visible" : "hidden";
+        }
+
+        rows.forEach((row) => {
+            const cb = row.querySelector("input[type='checkbox']");
+            cb?.addEventListener("change", () => {
+                updateCount();
+                markDirty();
+            });
+        });
+
+        selectAllBtn?.addEventListener("click", () => {
+            rows.forEach((row) => {
+                const cb = row.querySelector("input[type='checkbox']");
+                if (cb) cb.checked = true;
+            });
+            updateCount();
+            markDirty();
+        });
+
+        clearAllBtn?.addEventListener("click", () => {
+            rows.forEach((row) => {
+                const cb = row.querySelector("input[type='checkbox']");
+                if (cb) cb.checked = false;
+            });
+            updateCount();
+            markDirty();
+        });
+
+        // dirty state
+        let initialSnapshot = form ? new FormData(form) : null;
+
+        function isDirty() {
+            if (!form || !initialSnapshot) return false;
+            const current = new FormData(form);
+            const keys = Array.from(new Set([...initialSnapshot.keys(), ...current.keys()]));
+            for (const k of keys) {
+                if (current.getAll(k).sort().join(",") !== initialSnapshot.getAll(k).sort().join(",")) return true;
+            }
+            return false;
+        }
+
+        function markDirty() {
+            if (!dirtyIndicator) return;
+            dirtyIndicator.textContent = isDirty() ? "Unsaved changes" : "Changes are saved when you click Save.";
+        }
+
+        toggleVisibility();
+        togglePreviewVisibility();
+        togglePreviewText();
+        updateCount();
+        markDirty();
+        form?.addEventListener("change", markDirty);
+
+        // ---- Lesson media (slides) ----
+        const mediaList = document.getElementById("lesson-media-list");
+        const addButtons = Array.from(document.querySelectorAll("[data-add-media]"));
+        const draft = document.getElementById("draft-slide");
+        const draftImageWrap = document.getElementById("draft-image");
+        const draftVideoWrap = document.getElementById("draft-video");
+        let draftImageInput = document.getElementById("draft-image-input");
+        const draftVideoInput = document.getElementById("draft-video-input");
+        const draftClose = document.getElementById("draft-close");
+        const draftCancel = document.getElementById("draft-cancel");
+        const draftAdd = document.getElementById("draft-add");
+        let draftKind = null;
+
+        const mediaTemplate = (kind, index) => {
+            const positionField = `<input type=\"hidden\" name=\"lesson[lesson_media_attributes][${index}][position]\" class=\"position-field\" value=\"0\" />`;
+            if (kind === "image") {
+                return `
+          <div class=\"slide-card\" data-slide-row>
+            <div class=\"slide-thumb\">
+              <div class=\"thumb-video\">Image</div>
+            </div>
+            <div class=\"slide-body\">
+              <div class=\"slide-badge\">
+                <span class=\"pill-soft\">Image slide</span>
+              </div>
+              <div class=\"slide-fields\">
+                <input type=\"hidden\" name=\"lesson[lesson_media_attributes][${index}][kind]\" value=\"image\" />
+                ${positionField}
+                <label class=\"muted small-text\">Image file</label>
+                <input type=\"file\" name=\"lesson[lesson_media_attributes][${index}][image_file]\" class=\"input\" />
+              </div>
+            </div>
+            <div class=\"slide-controls\">
+              <button type=\"button\" class=\"icon-btn\" data-move=\"up\" aria-label=\"Move up\">↑</button>
+              <button type=\"button\" class=\"icon-btn\" data-move=\"down\" aria-label=\"Move down\">↓</button>
+              <button type=\"button\" class=\"icon-btn icon-btn--danger\" data-remove-row aria-label=\"Remove slide\">🗑</button>
+              <input type=\"checkbox\" name=\"lesson[lesson_media_attributes][${index}][_destroy]\" style=\"display:none;\" data-destroy-field=\"true\" />
+            </div>
+          </div>
+        `;
+            }
+            return `
+        <div class=\"slide-card\" data-slide-row>
+          <div class=\"slide-thumb\">
+            <div class=\"thumb-video\">Video</div>
+          </div>
+          <div class=\"slide-body\">
+            <div class=\"slide-badge\">
+              <span class=\"pill-soft\">Video slide</span>
+            </div>
+            <div class=\"slide-fields\">
+              <input type=\"hidden\" name=\"lesson[lesson_media_attributes][${index}][kind]\" value=\"video\" />
+              ${positionField}
+              <label class=\"muted small-text\">Video URL</label>
+              <input type=\"text\" name=\"lesson[lesson_media_attributes][${index}][video_url]\" class=\"input\" placeholder=\"https://www.youtube.com/watch?v=...\" />
+            </div>
+          </div>
+          <div class=\"slide-controls\">
+            <button type=\"button\" class=\"icon-btn\" data-move=\"up\" aria-label=\"Move up\">↑</button>
+            <button type=\"button\" class=\"icon-btn\" data-move=\"down\" aria-label=\"Move down\">↓</button>
+            <button type=\"button\" class=\"icon-btn icon-btn--danger\" data-remove-row aria-label=\"Remove slide\">🗑</button>
+            <input type=\"checkbox\" name=\"lesson[lesson_media_attributes][${index}][_destroy]\" style=\"display:none;\" data-destroy-field=\"true\" />
+          </div>
+        </div>
+      `;
+        };
+
+        const reindexPositions = () => {
+            if (!mediaList) return;
+            const rows = Array.from(mediaList.querySelectorAll("[data-slide-row]"));
+            rows.forEach((row, idx) => {
+                const posField = row.querySelector(".position-field");
+                if (posField) posField.value = idx;
+            });
+        };
+
+        const attachRowHandlers = (row, isNew = false) => {
+            const up = row.querySelector("[data-move='up']");
+            const down = row.querySelector("[data-move='down']");
+            const removeBtn = row.querySelector("[data-remove-row]");
+            const destroyField = row.querySelector("[data-destroy-field]");
+
+            up?.addEventListener("click", () => {
+                const prev = row.previousElementSibling;
+                if (prev) {
+                    mediaList.insertBefore(row, prev);
+                    reindexPositions();
+                    markDirty();
+                }
+            });
+
+            down?.addEventListener("click", () => {
+                const next = row.nextElementSibling;
+                if (next) {
+                    mediaList.insertBefore(next, row);
+                    reindexPositions();
+                    markDirty();
+                }
+            });
+
+            removeBtn?.addEventListener("click", () => {
+                if (destroyField) {
+                    destroyField.checked = true;
+                    destroyField.value = "1";
+                    row.classList.add("is-destroyed");
+                } else if (isNew) {
+                    row.remove();
+                } else {
+                    row.classList.add("is-destroyed");
+                }
+                reindexPositions();
+                markDirty();
+            });
+        };
+
+        // attach to existing rows
+        Array.from(mediaList?.querySelectorAll("[data-slide-row]") || []).forEach((row) => attachRowHandlers(row));
+
+        const resetDraft = () => {
+            draftKind = null;
+            draftImageWrap.hidden = true;
+            draftVideoWrap.hidden = true;
+            if (draftImageInput) draftImageInput.value = "";
+            if (draftVideoInput) draftVideoInput.value = "";
+            draft.hidden = true;
+        };
+
+        const openDraft = (kind) => {
+            draftKind = kind;
+            draft.hidden = false;
+            draftImageWrap.hidden = kind !== "image";
+            draftVideoWrap.hidden = kind !== "video";
+            if (kind === "image") {
+                draftVideoInput.value = "";
+                draftImageInput.value = "";
+                draftImageInput?.focus();
+            } else {
+                draftImageInput.value = "";
+                draftVideoInput.value = "";
+                draftVideoInput?.focus();
+            }
+        };
+
+        addButtons.forEach((btn) => {
+            btn.addEventListener("click", () => {
+                openDraft(btn.dataset.addMedia);
+            });
+        });
+
+        const closeDraft = () => resetDraft();
+        draftClose?.addEventListener("click", closeDraft);
+        draftCancel?.addEventListener("click", closeDraft);
+        if (!window.__lessonDraftEscapeBound) {
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape" && draft && !draft.hidden) closeDraft();
+            });
+            window.__lessonDraftEscapeBound = true;
+        }
+
+        draftAdd?.addEventListener("click", () => {
+            if (!draftKind || !mediaList) return;
+            if (draftKind === "image" && (!draftImageInput || !draftImageInput.files.length)) return;
+            if (draftKind === "video" && (!draftVideoInput || draftVideoInput.value.trim() === "")) return;
+
+            const index = Date.now();
+            mediaList.insertAdjacentHTML("beforeend", mediaTemplate(draftKind, index));
+            const newRow = mediaList.lastElementChild;
+
+            if (draftKind === "image") {
+                // Move the actual file input into the new row so the file is submitted
+                const target = newRow.querySelector("input[type='file']");
+                if (target && draftImageInput) {
+                    draftImageInput.name = target.name;
+                    target.replaceWith(draftImageInput);
+                    // recreate a fresh draft input for future use
+                    const fresh = document.createElement("input");
+                    fresh.type = "file";
+                    fresh.className = "input";
+                    fresh.id = "draft-image-input";
+                    draftImageInput = fresh;
+                    const draftImageParent = draftImageWrap;
+                    draftImageParent?.querySelector("input[type='file']")?.remove();
+                    draftImageParent?.appendChild(fresh);
+                }
+            } else {
+                const target = newRow.querySelector("input[type='text']");
+                if (target) target.value = draftVideoInput.value.trim();
+            }
+
+            attachRowHandlers(newRow, true);
+            reindexPositions();
+            closeDraft();
+            markDirty();
+        });
+
+        reindexPositions();
+    });
 </script>

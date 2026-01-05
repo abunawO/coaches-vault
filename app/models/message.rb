@@ -5,6 +5,7 @@ class Message < ApplicationRecord
   validates :body, presence: true
   validate :sender_is_participant
   after_create_commit :notify_recipient
+  after_create_commit :restore_deleted_flags
 
   scope :unread, -> { where(read_at: nil) }
 
@@ -33,5 +34,17 @@ class Message < ApplicationRecord
       notifiable: self,
       message: "New message from #{sender.email}"
     )
+  end
+
+  def restore_deleted_flags
+    recipient =
+      if sender_id == conversation.student_id
+        conversation.coach
+      else
+        conversation.student
+      end
+
+    conversation.restore_for!(sender) if sender
+    conversation.restore_for!(recipient) if recipient
   end
 end

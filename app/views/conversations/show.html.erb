@@ -1,55 +1,74 @@
-<div class="chat-page">
-  <div class="chat-shell">
-    <div class="chat-header">
-      <%= link_to "← Inbox", conversations_path, class: "chat-back" %>
-      <div class="chat-header__text">
+<div class="container">
+  <div class="mv-chat mv-card">
+    <div class="mv-chat__header">
+      <div class="mv-chat__header-left">
+        <%= link_to "← Inbox", conversations_path, class: "chat-back" %>
         <% if (other = @conversation.other_party(current_user)) %>
-          <h1 class="chat-title"><%= other.email %></h1>
-          <p class="chat-subtitle">Direct messages</p>
+          <div class="mv-chat__avatar"><%= other.email.to_s.first&.upcase %></div>
+          <div class="mv-chat__identity">
+            <h1 class="mv-chat__title"><%= other.email %></h1>
+            <p class="mv-chat__subtitle"><span class="mv-chat__subtitle-icon">💬</span> Direct messages</p>
+          </div>
         <% else %>
-          <h1 class="chat-title">Conversation</h1>
-          <p class="chat-subtitle">Direct messages</p>
+          <div class="mv-chat__identity">
+            <h1 class="mv-chat__title">Conversation</h1>
+            <p class="mv-chat__subtitle"><span class="mv-chat__subtitle-icon">💬</span> Direct messages</p>
+          </div>
         <% end %>
       </div>
     </div>
 
-    <div id="chat-messages" class="chat-messages">
-      <% if @messages.blank? %>
-        <div class="chat-empty">
-          <div class="chat-empty-icon">💬</div>
-          <div class="chat-empty-title">Start the conversation</div>
-          <% if (other = @conversation.other_party(current_user)) %>
-            <div class="chat-empty-subtitle">Send a message to <%= other.email %></div>
-          <% else %>
-            <div class="chat-empty-subtitle">Send a message to get started</div>
-          <% end %>
-        </div>
-      <% else %>
-        <% @messages.each do |message| %>
-          <% mine = message.sender_id == current_user.id %>
-          <div class="chat-row <%= mine ? "chat-row--me" : "chat-row--them" %>">
-            <div class="chat-bubble">
-              <div class="chat-body"><%= simple_format(message.body) %></div>
-              <div class="chat-meta"><%= message.created_at.strftime("%b %e, %l:%M %p") %></div>
+    <div class="mv-chat__body">
+      <div id="chat-messages" class="mv-chat__messages">
+        <% if @messages.blank? %>
+          <div class="chat-empty">
+            <div class="chat-empty-icon">💬</div>
+            <div class="chat-empty-title">Start the conversation</div>
+            <% if (other = @conversation.other_party(current_user)) %>
+              <div class="chat-empty-subtitle">Send a message to <%= other.email %></div>
+            <% else %>
+              <div class="chat-empty-subtitle">Send a message to get started</div>
+            <% end %>
+          </div>
+        <% else %>
+          <% prev_date = nil %>
+          <% @messages.each_with_index do |message, idx| %>
+            <% mine = message.sender_id == current_user.id %>
+            <% current_date = message.created_at.to_date %>
+            <% if prev_date != current_date %>
+              <div class="mv-chat__date-separator">
+                <span><%= current_date.strftime("%b %-d, %Y") %></span>
+              </div>
+              <% prev_date = current_date %>
+            <% end %>
+            <% prev_message = idx.positive? ? @messages[idx - 1] : nil %>
+            <% continued = prev_message && prev_message.sender_id == message.sender_id %>
+            <div class="mv-chat__row <%= mine ? "mv-chat__row--me" : "mv-chat__row--them" %> <%= 'mv-chat__row--continued' if continued %>">
+              <div class="mv-chat__bubble">
+                <div class="mv-chat__body-text"><%= simple_format(message.body) %></div>
+                <div class="mv-chat__meta"><%= message.created_at.strftime("%l:%M %p") %></div>
+              </div>
             </div>
+          <% end %>
+        <% end %>
+      </div>
+
+      <div class="mv-chat__composer">
+        <% if @allow_messaging %>
+          <%= form_with model: [@conversation, @message], local: true, class: "chat-form mv-chat__composer-form" do |f| %>
+            <%= f.label :body, "Message", class: "sr-only" %>
+            <div class="mv-chat__input-row">
+              <%= f.text_area :body, rows: 2, class: "mv-chat__input", placeholder: "Write a message…" %>
+              <%= f.submit "Send", class: "btn btn-primary mv-chat__send" %>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="chat-locked">
+            <div class="chat-locked__title">Messaging is available to subscribers.</div>
+            <div class="chat-locked__subtitle">Subscribe to this coach to send messages.</div>
           </div>
         <% end %>
-      <% end %>
-    </div>
-
-    <div class="chat-composer">
-      <% if @allow_messaging %>
-        <%= form_with model: [@conversation, @message], local: true, class: "chat-form" do |f| %>
-          <%= f.label :body, "Message", class: "sr-only" %>
-          <%= f.text_area :body, rows: 2, class: "chat-input", placeholder: "Write a message…" %>
-          <%= f.submit "Send", class: "btn btn-primary chat-send" %>
-        <% end %>
-      <% else %>
-        <div class="chat-locked">
-          <div class="chat-locked__title">Messaging is available to subscribers.</div>
-          <div class="chat-locked__subtitle">Subscribe to this coach to send messages.</div>
-        </div>
-      <% end %>
+      </div>
     </div>
   </div>
 </div>

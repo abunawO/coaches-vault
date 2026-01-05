@@ -1,70 +1,124 @@
-<div class="container">
-  <div class="page-header">
+<div class="container access-page">
+  <div class="page-header access-header card">
     <div>
       <h1 class="page-title">Manage Access</h1>
       <p class="page-subtitle"><%= @lesson.title %></p>
+      <p class="muted">Control who can view this lesson.</p>
     </div>
     <%= link_to "Back to lessons", lessons_path, class: "btn btn-secondary" %>
   </div>
 
-  <div class="card">
-    <%= form_with model: @lesson, url: access_coach_lesson_path(@lesson), method: :patch, local: true do |f| %>
-      <div class="form-row">
-        <strong>Visibility</strong>
-        <label class="radio-row">
-          <%= f.radio_button :visibility, "free", checked: @lesson.visibility == "free" %>
-          <span>Free - visible to all logged-in users</span>
-        </label>
-        <label class="radio-row">
-          <%= f.radio_button :visibility, "subscribers", checked: @lesson.visibility == "subscribers" %>
-          <span>All active subscribers can view</span>
-        </label>
-        <label class="radio-row">
-          <%= f.radio_button :visibility, "restricted", checked: @lesson.visibility == "restricted" %>
-          <span>Only selected subscribers can view</span>
-        </label>
+  <%= form_with model: @lesson, url: access_coach_lesson_path(@lesson), method: :patch, local: true do |f| %>
+    <div class="card access-card">
+      <div class="section-header">
+        <div>
+          <h3 class="section-title">Visibility</h3>
+          <p class="muted">Choose how students can view this lesson.</p>
+        </div>
       </div>
-
-      <div id="selected-wrapper" style="<%= @lesson.restricted? ? '' : 'display:none;' %>">
-        <div class="section-header">
-          <h3 class="section-title">Select subscribers</h3>
-        </div>
-        <div class="filter-row">
-          <input type="text" id="subscriber-search" class="input" placeholder="Search subscribers..." />
-        </div>
-
-        <div class="grid-2">
-          <div>
-            <div class="stack" id="subscriber-list-access">
-              <% @subscribers.each do |sub| %>
-                <label class="card subscriber-card subscriber-access" data-email="<%= sub.email.downcase %>">
-                  <input type="checkbox" name="selected_user_ids[]" value="<%= sub.id %>" <%= "checked" if @selected_user_ids.include?(sub.id) %> />
-                  <span class="avatar"><%= sub.email.first&.upcase %></span>
-                  <span class="subscriber-name"><%= sub.email %></span>
-                </label>
-              <% end %>
-            </div>
+      <div class="visibility-options">
+        <label class="visibility-card">
+          <%= f.radio_button :visibility, "free", checked: @lesson.visibility == "free", class: "vis-radio" %>
+          <div class="visibility-card__body">
+            <div class="visibility-card__title">Free</div>
+            <div class="muted small-text">Visible to all logged-in users.</div>
           </div>
+          <span class="checkmark" aria-hidden="true">✓</span>
+        </label>
+        <label class="visibility-card">
+          <%= f.radio_button :visibility, "subscribers", checked: @lesson.visibility == "subscribers", class: "vis-radio" %>
+          <div class="visibility-card__body">
+            <div class="visibility-card__title">Subscribers</div>
+            <div class="muted small-text">All active subscribers can view.</div>
+          </div>
+          <span class="checkmark" aria-hidden="true">✓</span>
+        </label>
+        <label class="visibility-card">
+          <%= f.radio_button :visibility, "restricted", checked: @lesson.visibility == "restricted", class: "vis-radio" %>
+          <div class="visibility-card__body">
+            <div class="visibility-card__title">Private</div>
+            <div class="muted small-text">Only selected subscribers can view.</div>
+          </div>
+          <span class="checkmark" aria-hidden="true">✓</span>
+        </label>
+      </div>
+      <p class="muted small-text" id="private-note" style="<%= @lesson.restricted? ? '' : 'display:none;' %>">Only selected subscribers can watch this lesson.</p>
+    </div>
+
+    <div class="card access-card">
+      <div class="section-header">
+        <div>
+          <h3 class="section-title">Allowed subscribers</h3>
+          <p class="muted">Choose which active subscribers can view this private lesson.</p>
+        </div>
+        <span class="pill-soft" id="selected-count"></span>
+      </div>
+
+      <div class="filter-row access-filter">
+        <input type="text" id="subscriber-search" class="input" placeholder="Search subscribers..." />
+        <div class="card-actions" style="margin:0;">
+          <button type="button" class="btn btn-ghost btn-small" id="select-all-btn">Select all</button>
+          <button type="button" class="btn btn-ghost btn-small" id="clear-all-btn">Clear</button>
         </div>
       </div>
 
-      <div class="card-actions" style="margin-top: 16px;">
-        <%= f.submit "Save changes", class: "btn btn-primary" %>
+      <div class="subscriber-list" id="selected-wrapper" style="<%= @lesson.restricted? ? '' : 'display:none;' %>">
+        <% if @subscribers.empty? %>
+          <div class="empty-state">No active subscribers to share with.</div>
+        <% else %>
+          <% @subscribers.each do |sub| %>
+            <label class="subscriber-card subscriber-access" data-email="<%= sub.email.downcase %>">
+              <input type="checkbox" name="selected_user_ids[]" value="<%= sub.id %>" <%= "checked" if @selected_user_ids.include?(sub.id) %> />
+              <span class="avatar"><%= sub.email.first&.upcase %></span>
+              <div class="subscriber-meta">
+                <div class="subscriber-name"><%= sub.email %></div>
+                <div class="muted small-text">Active subscriber</div>
+              </div>
+              <span class="pill-soft selected-pill">Selected</span>
+            </label>
+          <% end %>
+        <% end %>
       </div>
-    <% end %>
-  </div>
+
+      <div class="access-disabled-overlay" id="access-disabled-overlay" style="<%= @lesson.restricted? ? 'display:none;' : '' %>">
+        <p class="muted">Subscriber selection is available when “Private” is chosen.</p>
+      </div>
+    </div>
+
+    <div class="access-footer card sticky-save">
+      <div class="muted small-text" id="dirty-indicator">Changes are saved when you click Save.</div>
+      <%= f.submit "Save changes", class: "btn btn-primary", id: "save-button" %>
+    </div>
+  <% end %>
 </div>
 
 <script>
   document.addEventListener("turbo:load", () => {
+    const form = document.querySelector(".access-page form");
     const radios = document.querySelectorAll("input[name='lesson[visibility]']");
     const selectedWrapper = document.getElementById("selected-wrapper");
+    const disabledOverlay = document.getElementById("access-disabled-overlay");
+    const privateNote = document.getElementById("private-note");
     const search = document.getElementById("subscriber-search");
     const rows = Array.from(document.querySelectorAll(".subscriber-access"));
+    const selectAllBtn = document.getElementById("select-all-btn");
+    const clearAllBtn = document.getElementById("clear-all-btn");
+    const selectedCount = document.getElementById("selected-count");
+    const dirtyIndicator = document.getElementById("dirty-indicator");
 
     function toggleVisibility() {
       const val = document.querySelector("input[name='lesson[visibility]']:checked")?.value;
-      selectedWrapper.style.display = val === "selected_subscribers" ? "" : "none";
+      const isRestricted = val === "restricted";
+      selectedWrapper.style.display = isRestricted ? "" : "none";
+      disabledOverlay.style.display = isRestricted ? "none" : "";
+      if (privateNote) privateNote.style.display = isRestricted ? "" : "none";
+      const disabled = !isRestricted;
+      rows.forEach((row) => {
+        const cb = row.querySelector("input[type='checkbox']");
+        if (cb) cb.disabled = disabled;
+        row.classList.toggle("disabled", disabled);
+      });
+      updateCount();
     }
 
     radios.forEach((r) => r.addEventListener("change", toggleVisibility));
@@ -77,5 +131,53 @@
         row.style.display = email.includes(q) ? "" : "none";
       });
     });
+
+    function updateCount() {
+      const checked = rows.filter((row) => row.querySelector("input[type='checkbox']")?.checked);
+      if (selectedCount) selectedCount.textContent = `${checked.length} selected`;
+      if (clearAllBtn) clearAllBtn.style.visibility = checked.length > 0 ? "visible" : "hidden";
+    }
+
+    rows.forEach((row) => {
+      const cb = row.querySelector("input[type='checkbox']");
+      cb?.addEventListener("change", updateCount);
+    });
+
+    selectAllBtn?.addEventListener("click", () => {
+      rows.forEach((row) => {
+        const cb = row.querySelector("input[type='checkbox']");
+        if (cb) cb.checked = true;
+      });
+      updateCount();
+    });
+
+    clearAllBtn?.addEventListener("click", () => {
+      rows.forEach((row) => {
+        const cb = row.querySelector("input[type='checkbox']");
+        if (cb) cb.checked = false;
+      });
+      updateCount();
+    });
+
+    updateCount();
+
+    // dirty state
+    let initialSnapshot = form ? new FormData(form) : null;
+    function isDirty() {
+      if (!form || !initialSnapshot) return false;
+      const current = new FormData(form);
+      for (const [k, v] of initialSnapshot.entries()) {
+        if (current.getAll(k).sort().join(",") !== initialSnapshot.getAll(k).sort().join(",")) return true;
+      }
+      return false;
+    }
+
+    function markDirty() {
+      if (!dirtyIndicator) return;
+      dirtyIndicator.textContent = isDirty() ? "Unsaved changes" : "Changes are saved when you click Save.";
+    }
+
+    form?.addEventListener("change", markDirty);
+    markDirty();
   });
 </script>

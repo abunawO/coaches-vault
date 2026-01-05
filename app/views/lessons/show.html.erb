@@ -1,153 +1,414 @@
 <div class="container lesson-page">
   <% coach_profile = @lesson.coach&.coach_profile %>
   <% coach_name = coach_profile&.display_name || @lesson.coach&.email || "Coach" %>
+  <% visibility_label = @lesson.visibility == "restricted" ? "Private" : @lesson.visibility.capitalize %>
 
-  <div class="lesson-hero card">
-    <div class="lesson-hero-text">
-      <p class="muted">Lesson</p>
-      <h1 class="page-title"><%= @lesson.title %></h1>
-      <p class="page-subtitle">By <%= coach_name %></p>
-    </div>
-    <div class="lesson-hero-actions">
-      <% if current_user&.student? %>
-        <% favorited = Favorite.exists?(student_id: current_user.id, lesson_id: @lesson.id) %>
-        <% if favorited %>
-          <%= button_to "Unfavorite", unfavorite_lesson_path(@lesson), method: :delete, class: "btn btn-secondary" %>
-        <% else %>
-          <%= button_to "Favorite", favorite_lesson_path(@lesson), method: :post, class: "btn btn-primary" %>
-        <% end %>
-      <% end %>
-    </div>
-  </div>
-
-  <div class="card lesson-media-card">
-    <% if @lesson.description.present? %>
-      <p class="muted"><%= @lesson.description %></p>
-    <% end %>
-
-    <% if @access_level == :full %>
-      <% if @lesson.video_url&.include?("youtube") || @lesson.video_url&.include?("youtu.be") %>
-        <div class="video-embed">
-          <iframe src="<%= @lesson.video_url.sub("watch?v=", "embed/") %>" title="Video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  <div class="mx-auto max-w-6xl px-4 watch-layout">
+    <div class="watch-main">
+      <header class="watch-header card">
+        <div class="meta-info">
+          <p class="muted tiny-label">Lesson</p>
+          <h1 class="page-title"><%= @lesson.title %></h1>
+          <div class="meta-row">
+            <span class="muted">
+              by <%= coach_profile ? link_to(coach_name, coach_path(coach_profile.slug), class: "muted strong-link") : coach_name %>
+            </span>
+            <%= render "shared/lesson_badge", visibility: @lesson.visibility %>
+            <span class="muted"><%= time_ago_in_words(@lesson.created_at) %> ago</span>
+          </div>
         </div>
-      <% elsif @lesson.video_url&.include?("vimeo") %>
-        <div class="video-embed">
-          <iframe src="<%= @lesson.video_url.sub("vimeo.com/", "player.vimeo.com/video/") %>" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
-        </div>
-      <% else %>
-        <%= link_to "Watch video", @lesson.video_url, class: "btn btn-primary", target: "_blank", rel: "noopener" %>
-      <% end %>
-    <% elsif @access_level == :preview %>
-      <% if @lesson.preview_text.present? %>
-        <p class="muted"><%= @lesson.preview_text %></p>
-      <% end %>
-      <p class="muted">Preview available. Subscribe to unlock full lesson.</p>
-      <div class="card-actions">
-        <% if logged_in? && current_user.student? %>
-          <%= button_to "Subscribe", coach_subscription_path(@lesson.coach), method: :post, class: "btn btn-primary" %>
-        <% else %>
-          <%= link_to "Log in to subscribe", login_path, class: "btn btn-primary" %>
-        <% end %>
-      </div>
-    <% else %>
-      <% if @lock_reason == :not_subscribed %>
-        <% if @lesson.restricted? %>
-          <p class="muted">Subscribe required. This lesson is private and access is granted by the coach.</p>
-        <% else %>
-          <p class="muted">Subscribe to unlock this lesson.</p>
-        <% end %>
-        <div class="card-actions">
-          <% if logged_in? && current_user.student? %>
-            <%= button_to "Subscribe", coach_subscription_path(@lesson.coach), method: :post, class: "btn btn-primary" %>
-          <% else %>
-            <%= link_to "Log in to subscribe", login_path, class: "btn btn-primary" %>
+        <div class="action-row watch-actions">
+          <% if @access_level == :full && current_user&.student? %>
+            <% favorited = Favorite.exists?(student_id: current_user.id, lesson_id: @lesson.id) %>
+            <% if favorited %>
+              <%= button_to "Unfavorite", unfavorite_lesson_path(@lesson), method: :delete, class: "btn btn-secondary btn-small" %>
+            <% else %>
+              <%= button_to "Favorite", favorite_lesson_path(@lesson), method: :post, class: "btn btn-primary btn-small" %>
+            <% end %>
           <% end %>
+          <button class="btn btn-ghost btn-small" disabled>Save</button>
+          <button class="btn btn-ghost btn-small" disabled>Share</button>
         </div>
-      <% elsif @lock_reason == :not_shared %>
-        <p class="muted">This lesson is private and not shared with your account.</p>
-      <% else %>
-        <p class="muted">Please log in to view this lesson.</p>
-        <div class="card-actions">
-          <%= link_to "Log in", login_path, class: "btn btn-primary" %>
-        </div>
-      <% end %>
-    <% end %>
-  </div>
+      </header>
 
-  <% if @can_view_lesson %>
-    <section class="section comments-section">
-      <div class="section-header">
-        <div>
-          <h2 class="page-title">Comments</h2>
-          <p class="page-subtitle">Student questions and coach replies.</p>
-        </div>
-      </div>
+      <% media_slides = @media_slides || [] %>
 
-      <% if @root_comments.any? %>
-        <div class="comment-list">
-          <% @root_comments.each do |comment| %>
-            <div class="comment-card" id="comment-<%= comment.id %>">
-              <div class="comment-header">
-                <div class="avatar"><%= comment.user.email.first.upcase %></div>
-                <div>
-                  <p class="comment-author"><%= comment.user.email %></p>
-                  <p class="muted">Student comment</p>
-                </div>
-              </div>
-              <p><%= comment.body %></p>
+      <div class="player-card card ig-carousel">
+        <% if @access_level == :full %>
+          <% if media_slides.any? %>
+            <div class="carousel" data-carousel>
+              <div class="ig-frame">
+                <% if media_slides.size > 1 %>
+                  <div class="ig-counter" data-carousel-counter><span>1</span>/<span><%= media_slides.size %></span></div>
+                <% end %>
+                <div class="carousel-track" data-carousel-track>
+                  <% media_slides.each_with_index do |slide, idx| %>
+                    <div class="carousel-slide <%= 'is-active' if idx.zero? %>" data-carousel-index="<%= idx %>">
+                      <% kind = slide.respond_to?(:kind) ? slide.kind : slide[:kind] %>
+                      <% video_url = slide.respond_to?(:video_url) ? slide.video_url : slide[:video_url] %>
+                      <% image_file = slide.respond_to?(:image_file) ? slide.image_file : slide[:image_file] %>
+                      <% image_attached = image_file.respond_to?(:attached?) ? image_file.attached? : false %>
 
-              <% if comment.replies.any? %>
-                <div class="reply-list">
-                  <% comment.replies.each do |reply| %>
-                    <div class="comment-card reply-card">
-                      <div class="comment-header">
-                        <div class="avatar coach-avatar"><%= reply.user.email.first.upcase %></div>
-                        <div>
-                          <p class="comment-author"><%= reply.user.email %></p>
-                          <p class="muted">Coach reply</p>
+                      <% if kind.to_s == "image" && image_attached %>
+                        <div class="carousel-media image">
+                          <%= image_tag(image_file, alt: "#{@lesson.title} slide #{idx + 1}") %>
                         </div>
-                      </div>
-                      <p><%= reply.body %></p>
+                      <% elsif video_url.present? %>
+                        <% embed = embed_url_for(video_url) %>
+                        <% if embed %>
+                          <% youtube_id = embed[%r{youtube\.com/embed/([^/?]+)}, 1] %>
+                          <% poster = youtube_id ? "https://i.ytimg.com/vi/#{youtube_id}/hqdefault.jpg" : nil %>
+                          <div class="player-frame">
+                            <button class="video-poster" type="button" data-video-embed="<%= embed %>" data-video-provider="<%= youtube_id ? "youtube" : "vimeo" %>" aria-label="Play video">
+                              <% if poster %>
+                                <img src="<%= poster %>" alt="Video thumbnail" loading="lazy" decoding="async">
+                              <% end %>
+                              <span class="video-play-icon" aria-hidden="true"></span>
+                            </button>
+                          </div>
+                        <% else %>
+                          <div class="player-frame" style="display:grid; place-items:center;">
+                            <%= link_to "Watch video", video_url, class: "btn btn-primary", target: "_blank", rel: "noopener" %>
+                          </div>
+                        <% end %>
+                      <% else %>
+                        <div class="player-frame" style="display:grid; place-items:center;">
+                          <p class="muted">Slide unavailable</p>
+                        </div>
+                      <% end %>
                     </div>
                   <% end %>
                 </div>
-              <% end %>
 
-              <% if @can_reply %>
-                <%= form_with model: [@lesson, Comment.new], local: true, class: "comment-form" do |f| %>
-                  <%= f.hidden_field :parent_id, value: comment.id %>
-                  <div class="form-row">
-                    <%= f.label :body, "Reply" %>
-                    <%= f.text_area :body, rows: 2, required: true, class: "textarea" %>
-                  </div>
-                  <div class="card-actions" style="justify-content: flex-end;">
-                    <%= f.submit "Reply", class: "btn btn-secondary" %>
+                <% if media_slides.size > 1 %>
+                  <button class="ig-arrow left" data-carousel-prev aria-label="Previous slide">‹</button>
+                  <button class="ig-arrow right" data-carousel-next aria-label="Next slide">›</button>
+                  <div class="ig-dots" data-carousel-dots>
+                    <% media_slides.each_with_index do |_, idx| %>
+                      <button class="ig-dot <%= 'active' if idx.zero? %>" data-carousel-dot="<%= idx %>" aria-label="Go to slide <%= idx + 1 %>" aria-current="<%= idx.zero? %>"></button>
+                    <% end %>
                   </div>
                 <% end %>
+              </div>
+            </div>
+          <% else %>
+            <div class="player-frame" style="display:grid; place-items:center;">
+              <p class="muted">No media yet.</p>
+            </div>
+          <% end %>
+        <% elsif @access_level == :preview %>
+          <%= render "shared/locked_player",
+                    message: "Preview available. Subscribe to unlock full lesson.",
+                    cta_path: logged_in? && current_user.student? ? coach_subscription_path(@lesson.coach) : login_path,
+                    cta_method: (logged_in? && current_user.student? ? :post : nil),
+                    secondary_path: coach_profile ? coach_path(coach_profile.slug) : coaches_path,
+                    cta_label: "Subscribe" %>
+        <% else %>
+          <% locked_message =
+              if @lock_reason == :not_shared
+                "This lesson is private and not shared with your account."
+              elsif @lock_reason == :not_subscribed
+                @lesson.restricted? ? "Subscribe required. This lesson is private and access is granted by the coach." : "Subscribe to unlock this lesson."
+              else
+                "Please log in to view this lesson."
+              end %>
+          <%= render "shared/locked_player",
+                    message: locked_message,
+                    cta_path: (@lock_reason == :not_logged_in ? login_path : coach_subscription_path(@lesson.coach)),
+                    cta_method: (@lock_reason == :not_logged_in ? nil : :post),
+                    secondary_path: coach_profile ? coach_path(coach_profile.slug) : coaches_path,
+                    cta_label: (@lock_reason == :not_logged_in ? "Log in" : "Subscribe") %>
+        <% end %>
+      </div>
+
+      <div class="card about-card">
+        <div class="card-header" style="justify-content: space-between; gap: 10px;">
+          <h3 class="card-title" style="margin:0;">About this lesson</h3>
+          <div class="muted small-meta">
+            <%= render "shared/lesson_badge", visibility: @lesson.visibility %>
+            <span class="muted"><%= time_ago_in_words(@lesson.created_at) %> ago</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <% body_id = "lesson-about-body" %>
+          <% about_text =
+              if @access_level == :full
+                @lesson.description.presence || "No description yet."
+              elsif @access_level == :preview
+                @lesson.preview_text.presence || "Preview available. Subscribe to unlock full lesson."
+              else
+                locked_message
+              end %>
+          <div id="<%= body_id %>" class="about-body about-collapsed">
+            <p class="muted"><%= about_text %></p>
+          </div>
+          <button type="button" class="btn btn-ghost btn-small is-hidden" data-about-toggle data-target="<%= body_id %>">Show more</button>
+        </div>
+      </div>
+
+      <% if @can_view_lesson %>
+        <section class="comments-card card">
+          <div class="section-header">
+            <div>
+              <h2 class="page-title">Comments</h2>
+              <p class="page-subtitle">Student questions and coach replies.</p>
+            </div>
+          </div>
+
+          <% if @root_comments.any? %>
+            <div class="comment-list">
+              <% @root_comments.each do |comment| %>
+                <div class="comment-card" id="comment-<%= comment.id %>">
+                  <div class="comment-header">
+                    <div class="avatar"><%= comment.user.email.first.upcase %></div>
+                    <div>
+                      <p class="comment-author"><%= comment.user.email %></p>
+                      <p class="muted">Student comment</p>
+                    </div>
+                  </div>
+                  <p><%= comment.body %></p>
+
+                  <% if comment.replies.any? %>
+                    <div class="reply-list">
+                      <% comment.replies.each do |reply| %>
+                        <div class="comment-card reply-card">
+                          <div class="comment-header">
+                            <div class="avatar coach-avatar"><%= reply.user.email.first.upcase %></div>
+                            <div>
+                              <p class="comment-author"><%= reply.user.email %></p>
+                              <p class="muted">Coach reply</p>
+                            </div>
+                          </div>
+                          <p><%= reply.body %></p>
+                        </div>
+                      <% end %>
+                    </div>
+                  <% end %>
+
+                  <% if @can_reply %>
+                    <%= form_with model: [@lesson, Comment.new], local: true, class: "comment-form" do |f| %>
+                      <%= f.hidden_field :parent_id, value: comment.id %>
+                      <div class="form-row">
+                        <%= f.label :body, "Reply" %>
+                        <%= f.text_area :body, rows: 2, required: true, class: "textarea" %>
+                      </div>
+                      <div class="card-actions" style="justify-content: flex-end;">
+                        <%= f.submit "Reply", class: "btn btn-secondary" %>
+                      </div>
+                    <% end %>
+                  <% end %>
+                </div>
               <% end %>
             </div>
+          <% else %>
+            <div class="empty-state">No comments yet.</div>
           <% end %>
-        </div>
-      <% else %>
-        <div class="empty-state">No comments yet.</div>
-      <% end %>
 
-      <% if @can_comment %>
-        <div class="card comment-form-card">
-          <h3 class="card-title">Leave a comment</h3>
-          <%= form_with model: [@lesson, Comment.new], local: true do |f| %>
-            <div class="form-row">
-              <%= f.label :body, "Your comment" %>
-              <%= f.text_area :body, rows: 3, required: true, class: "textarea" %>
+          <% if @can_comment %>
+            <div class="card comment-form-card">
+              <h3 class="card-title">Leave a comment</h3>
+              <%= form_with model: [@lesson, Comment.new], local: true do |f| %>
+                <div class="form-row">
+                  <%= f.label :body, "Your comment" %>
+                  <%= f.text_area :body, rows: 3, required: true, class: "textarea" %>
+                </div>
+                <div class="card-actions" style="justify-content: flex-end;">
+                  <%= f.submit "Post comment", class: "btn btn-primary" %>
+                </div>
+              <% end %>
             </div>
-            <div class="card-actions" style="justify-content: flex-end;">
-              <%= f.submit "Post comment", class: "btn btn-primary" %>
-            </div>
+          <% elsif logged_in? %>
+            <div class="empty-state">You must be subscribed to comment on this lesson.</div>
           <% end %>
-        </div>
-      <% elsif logged_in? %>
-        <div class="empty-state">You must be subscribed to comment on this lesson.</div>
+        </section>
       <% end %>
-    </section>
-  <% end %>
+    </div>
+
+    <aside class="watch-sidebar sticky">
+      <div class="section-header" style="margin-bottom: 8px;">
+        <h3 class="section-title">Up next</h3>
+      </div>
+      <div class="up-next-list">
+        <% @up_next.each do |other| %>
+          <%= render "shared/up_next_card", lesson: other %>
+        <% end %>
+      </div>
+    </aside>
+  </div>
 </div>
+
+<script>
+  document.addEventListener("turbo:load", () => {
+    const loadVideo = (button) => {
+      if (!button || button.dataset.loaded === "true") return;
+      const embed = button.dataset.videoEmbed;
+      if (!embed) return;
+      const frame = button.closest(".player-frame");
+      if (!frame) return;
+
+      const iframe = document.createElement("iframe");
+      const separator = embed.includes("?") ? "&" : "?";
+      const provider = button.dataset.videoProvider || "";
+      const params = provider === "youtube" ? "autoplay=1&playsinline=1&rel=0" : "autoplay=1";
+      iframe.src = `${embed}${separator}${params}`;
+      iframe.title = "Video player";
+      iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+      iframe.allowFullscreen = true;
+      iframe.setAttribute("frameborder", "0");
+      iframe.loading = "lazy";
+      iframe.referrerPolicy = "strict-origin-when-cross-origin";
+
+      if (!frame.dataset.posterHtml) {
+        frame.dataset.posterHtml = frame.innerHTML;
+      }
+
+      button.dataset.loaded = "true";
+      frame.replaceChildren(iframe);
+    };
+
+    const unloadVideosExcept = (activeIndex) => {
+      document.querySelectorAll(".carousel-slide").forEach((slide, idx) => {
+        if (idx === activeIndex) return;
+        const frame = slide.querySelector(".player-frame");
+        if (!frame) return;
+        const iframe = frame.querySelector("iframe");
+        if (iframe && frame.dataset.posterHtml) {
+          frame.innerHTML = frame.dataset.posterHtml;
+          const btn = frame.querySelector(".video-poster");
+          if (btn) btn.dataset.loaded = "false";
+        }
+      });
+    };
+
+    document.addEventListener("click", (event) => {
+      const btn = event.target.closest(".video-poster");
+      if (btn) loadVideo(btn);
+    });
+
+    document.querySelectorAll("[data-about-toggle]").forEach((btn) => {
+      const target = document.getElementById(btn.dataset.target);
+      if (!target) return;
+
+      const updateLabel = () => {
+        const isCollapsed = target.classList.contains("about-collapsed");
+        btn.textContent = isCollapsed ? "Show more" : "Show less";
+      };
+
+      const evaluateOverflow = () => {
+        const wasCollapsed = target.classList.contains("about-collapsed");
+        if (!wasCollapsed) target.classList.add("about-collapsed");
+        const needsToggle = target.scrollHeight > target.clientHeight + 1;
+        if (!wasCollapsed) target.classList.remove("about-collapsed");
+
+        if (!needsToggle) {
+          target.classList.remove("about-collapsed");
+          btn.classList.add("is-hidden");
+          btn.textContent = "";
+          return;
+        }
+
+        btn.classList.remove("is-hidden");
+        updateLabel();
+      };
+
+      evaluateOverflow();
+      if (window.ResizeObserver) {
+        const observer = new ResizeObserver(evaluateOverflow);
+        observer.observe(target);
+      }
+
+      btn.addEventListener("click", () => {
+        target.classList.toggle("about-collapsed");
+        updateLabel();
+      });
+    });
+
+    const carousel = document.querySelector("[data-carousel]");
+    if (carousel) {
+      const track = carousel.querySelector("[data-carousel-track]");
+      if (!track) return;
+      const slides = Array.from(track.querySelectorAll(".carousel-slide"));
+      const prevBtn = carousel.querySelector("[data-carousel-prev]");
+      const nextBtn = carousel.querySelector("[data-carousel-next]");
+      const dots = Array.from(carousel.querySelectorAll("[data-carousel-dot]"));
+      const counter = carousel.querySelector("[data-carousel-counter]");
+      let index = 0;
+      let startX = 0;
+      let currentX = 0;
+      let isDown = false;
+      const threshold = 50;
+
+      const updateCounter = () => {
+        if (!counter) return;
+        const parts = counter.querySelectorAll("span");
+        if (parts[0]) parts[0].textContent = String(index + 1);
+        if (parts[1]) parts[1].textContent = String(slides.length);
+      };
+
+      const update = () => {
+        track.style.transform = `translateX(-${index * 100}%)`;
+        slides.forEach((slide, i) => slide.classList.toggle("is-active", i === index));
+        dots.forEach((dot, i) => {
+          dot.classList.toggle("active", i === index);
+          dot.setAttribute("aria-current", i === index);
+        });
+        updateCounter();
+        unloadVideosExcept(index);
+      };
+
+      const goTo = (i) => {
+        index = (i + slides.length) % slides.length;
+        update();
+      };
+
+      prevBtn?.addEventListener("click", () => goTo(index - 1));
+      nextBtn?.addEventListener("click", () => goTo(index + 1));
+
+      dots.forEach((dot) => {
+        dot.addEventListener("click", () => {
+          const targetIdx = parseInt(dot.dataset.carouselDot, 10);
+          if (Number.isInteger(targetIdx)) goTo(targetIdx);
+        });
+      });
+
+      const onPointerDown = (e) => {
+        isDown = true;
+        startX = e.clientX || e.touches?.[0]?.clientX || 0;
+        currentX = startX;
+        track.style.transition = "none";
+      };
+
+      const onPointerMove = (e) => {
+        if (!isDown) return;
+        const x = e.clientX || e.touches?.[0]?.clientX || 0;
+        currentX = x;
+        const delta = currentX - startX;
+        track.style.transform = `translateX(calc(-${index * 100}% + ${delta}px))`;
+      };
+
+      const onPointerUp = () => {
+        if (!isDown) return;
+        isDown = false;
+        const delta = currentX - startX;
+        track.style.transition = "";
+        if (Math.abs(delta) > threshold) {
+          if (delta < 0) goTo(index + 1);
+          else goTo(index - 1);
+        } else {
+          update();
+        }
+      };
+
+      track.addEventListener("pointerdown", onPointerDown);
+      track.addEventListener("pointermove", onPointerMove);
+      track.addEventListener("pointerup", onPointerUp);
+      track.addEventListener("pointerleave", onPointerUp);
+      track.addEventListener("touchstart", onPointerDown, { passive: true });
+      track.addEventListener("touchmove", onPointerMove, { passive: true });
+      track.addEventListener("touchend", onPointerUp);
+
+      update();
+      unloadVideosExcept(index);
+    }
+  });
+</script>

@@ -1,0 +1,11 @@
+<% visibility = local_assigns.fetch(:visibility, "subscribers") %>
+<% label = case visibility
+           when "free" then "Free"
+           when "restricted" then "Private"
+           when "subscribers" then "Subscribers"
+           else visibility.to_s.capitalize
+           end %>
+<span class="visibility-pill visibility-pill--<%= visibility %>">
+  <span class="pill-dot"></span>
+  <%= label %>
+</span>
