@@ -3134,6 +3134,171 @@ details[open] .vault-caret {
   display: none;
 }
 
+.coach-vault {
+  display: grid;
+  gap: 16px;
+}
+
+.vault-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: sticky;
+  top: 12px;
+  z-index: 5;
+}
+
+.vault-header__info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.vault-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  background-size: cover;
+  background-position: center;
+  background-color: #e5e7eb;
+}
+
+.vault-title {
+  margin: 0;
+}
+
+.vault-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vault-categories {
+  display: grid;
+  gap: 14px;
+}
+
+.vault-accordion-list {
+  display: grid;
+  gap: 10px;
+  max-height: calc(100vh - 240px);
+  overflow-y: auto;
+}
+
+.vault-accordion {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  padding: 0;
+  overflow: hidden;
+}
+
+.vault-summary {
+  list-style: none;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.vault-summary::-webkit-details-marker {
+  display: none;
+}
+
+.vault-summary__left {
+  display: grid;
+  gap: 4px;
+}
+
+.vault-summary__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vault-caret {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.vault-accordion[open] .vault-caret {
+  transform: rotate(90deg);
+}
+
+.vault-body {
+  padding: 12px;
+  border-top: 1px solid #e5e7eb;
+  display: grid;
+  gap: 10px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+.vault-category {
+  display: grid;
+  gap: 10px;
+}
+
+.vault-lesson-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.vault-lesson-card {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+}
+
+.vault-lesson-card:hover {
+  border-color: #dbeafe;
+}
+
+.vault-lesson-card.is-locked {
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+}
+
+.vault-lesson-card.is-hidden {
+  display: none;
+}
+
+.vault-lesson-card__title {
+  font-weight: 700;
+}
+
+.vault-lesson-card__meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.vault-lesson-card__lock {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 18px;
+}
+
+.vault-search {
+  max-width: 240px;
+}
+
+@media (max-width: 768px) {
+  .vault-header {
+    position: static;
+  }
+}
+
 .lesson-media-row {
   padding: 12px;
   border: 1px solid #e5e7eb;

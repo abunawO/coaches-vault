@@ -1,0 +1,89 @@
+<div class="container coach-vault" data-controller="student-vault" data-student-vault-selected-id-value="<%= params[:category_id] %>">
+  <div class="vault-header card">
+    <div class="vault-header__info">
+      <div class="vault-avatar" style="background-image: url('<%= @coach_profile.avatar_url.presence || "https://via.placeholder.com/80x80.png?text=Coach" %>');"></div>
+      <div>
+        <h1 class="vault-title"><%= @coach_profile.display_name %>’s Vault</h1>
+        <p class="muted small-text">@<%= @coach_profile.slug %></p>
+      </div>
+    </div>
+    <div class="vault-header__actions">
+      <% subscribed = current_user&.student? && current_user.subscribed_to?(@coach) %>
+      <% owning_coach = current_user&.coach? && current_user.id == @coach.id %>
+      <% if subscribed || owning_coach %>
+        <span class="pill-soft pill-success">Unlocked</span>
+      <% else %>
+        <%= button_to "Subscribe to unlock", coach_subscription_path(@coach), method: :post, class: "btn btn-primary btn-small" %>
+      <% end %>
+      <input type="search" class="input vault-search" placeholder="Search lessons…" data-student-vault-target="searchInput" aria-label="Search lessons">
+    </div>
+  </div>
+
+  <% if @categories.empty? %>
+    <div class="card">
+      <p class="muted">This coach hasn’t organized lessons into a vault yet.</p>
+    </div>
+  <% else %>
+    <div class="vault-accordion-list" data-student-vault-target="accordionList">
+      <% @categories.each do |category| %>
+        <% category_lessons = category.category_lessons.includes(:lesson).sort_by { |cl| cl.position || 0 } %>
+        <% preview_titles = category_lessons.first(3).map { |cl| cl.lesson.title } %>
+        <details class="card vault-accordion" data-category-id="<%= category.id %>" data-student-vault-target="accordion">
+          <summary class="vault-summary"
+                    data-action="click->student-vault#selectCategory"
+                    data-category-id="<%= category.id %>">
+            <div class="vault-summary__left">
+              <div class="vault-cat-name"><%= category.name %></div>
+              <% if category.description.present? %>
+                <div class="muted tiny-text"><%= truncate(category.description, length: 80) %></div>
+              <% end %>
+              <% if preview_titles.any? %>
+                <div class="muted tiny-text">Top lessons: <%= preview_titles.join(", ") %></div>
+              <% end %>
+            </div>
+            <div class="vault-summary__right">
+              <span class="pill-soft"><%= pluralize(category_lessons.count, "lesson") %></span>
+              <span class="vault-caret" aria-hidden="true">▸</span>
+            </div>
+          </summary>
+          <div class="vault-body" data-student-vault-target="lessonPanel" data-category-id="<%= category.id %>">
+            <% if category_lessons.empty? %>
+              <p class="muted">No lessons in this category yet.</p>
+            <% else %>
+              <% category_lessons.each do |cl| %>
+                <% lesson = cl.lesson %>
+                <% access = lesson.viewer_access_level(current_user) %>
+                <% locked = access != :full %>
+                <% link_target =
+                    if locked
+                      logged_in? ? coach_subscription_path(@coach) : login_path
+                    else
+                      public_coach_lesson_path(@coach_profile.slug, lesson)
+                    end %>
+                <% link_options = locked && logged_in? ? { method: :post } : {} %>
+                <% searchable = [lesson.title, lesson.description].compact.join(" ").downcase %>
+                <%= link_to link_target, link_options.merge(class: "vault-lesson-card #{'is-locked' if locked}", data: { student_vault_target: "lessonCard", search: searchable }) do %>
+                  <div class="vault-lesson-card__title"><%= lesson.title %></div>
+                  <% if lesson.description.present? %>
+                    <div class="muted small-text"><%= truncate(lesson.description, length: 120) %></div>
+                  <% end %>
+                  <div class="vault-lesson-card__meta muted small-text">
+                    <span><%= l(lesson.created_at, format: :short) %></span>
+                    <% if locked %>
+                      <span class="pill-soft pill-warning">Locked</span>
+                    <% else %>
+                      <span class="pill-soft pill-success">Unlocked</span>
+                    <% end %>
+                  </div>
+                  <% if locked %>
+                    <div class="vault-lesson-card__lock" aria-hidden="true">🔒</div>
+                  <% end %>
+                <% end %>
+              <% end %>
+            <% end %>
+          </div>
+        </details>
+      <% end %>
+    </div>
+  <% end %>
+</div>

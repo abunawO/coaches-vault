@@ -18,6 +18,7 @@ Rails.application.routes.draw do
 
   get "/coaches/:slug/lessons", to: "lessons#index", as: :public_coach_lessons
   get "/coaches/:slug/lessons/:lesson_slug", to: "lessons#show", as: :public_coach_lesson
+  get "/coaches/:slug/vault", to: "coaches/vaults#show", as: :coach_public_vault
 
   resources :coaches, only: %i[index show], param: :slug
   resources :lessons, only: %i[index show]

@@ -25,11 +25,11 @@
                 <% if @coach_profile.website_url.present? %>
                 <%= link_to "Website", @coach_profile.website_url, class: "social-link", target: "_blank", rel: "noopener" %>
                 <% end %>
-                <% if @coach_profile.tiktok_url.present? %>
-                <%= link_to "TikTok", @coach_profile.tiktok_url, class: "social-link", target: "_blank", rel: "noopener" %>
-                <% end %>
-            </div>
-            <% subscribed = current_user&.student? && current_user.subscribed_to?(@coach) %>
+            <% if @coach_profile.tiktok_url.present? %>
+            <%= link_to "TikTok", @coach_profile.tiktok_url, class: "social-link", target: "_blank", rel: "noopener" %>
+            <% end %>
+        </div>
+        <% subscribed = current_user&.student? && current_user.subscribed_to?(@coach) %>
             <% owning_coach = current_user&.coach? && current_user.id == @coach.id %>
             <div class="profile-actions">
                 <% if !logged_in? %>
@@ -43,10 +43,11 @@
                 <% else %>
                 <%= button_to "Subscribe to unlock all lessons", coach_subscription_path(@coach), method: :post, class: "btn btn-primary", aria: { label: "Subscribe to unlock all lessons" } %>
                 <%= link_to "View free lessons", public_coach_lessons_path(@coach_profile.slug), class: "btn btn-secondary", aria: { label: "View free lessons" } %>
+                <%= link_to "Go to Vault", coach_public_vault_path(@coach_profile.slug), class: "btn btn-secondary", aria: { label: "Go to vault" } %>
                 <button class="btn btn-secondary" aria-label="Subscribe to message this coach" disabled>🔒 Message (subscribers only)</button>
                 <% end %>
-                <% else %>
-                <%= link_to "Explore Lessons", public_coach_lessons_path(@coach_profile.slug), class: "btn btn-primary", aria: { label: "Explore lessons" } %>
+            <% else %>
+            <%= link_to "Explore Lessons", public_coach_lessons_path(@coach_profile.slug), class: "btn btn-primary", aria: { label: "Explore lessons" } %>
                 <% end %>
             </div>
             <div class="profile-stats">
