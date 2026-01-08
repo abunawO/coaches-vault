@@ -15,6 +15,16 @@ Rails.application.routes.draw do
   get "/login", to: "sessions#new"
   post "/login", to: "sessions#create"
   delete "/logout", to: "sessions#destroy"
+  get "/signup", to: "registrations#new", as: :signup
+  post "/signup", to: "registrations#create"
+
+  get "/verify-email", to: "email_verifications#show", as: :verify_email
+  get "/verify-email/pending", to: "email_verifications#pending", as: :verify_email_pending
+  post "/verify-email/resend", to: "email_verifications#resend", as: :resend_verification_email
+
+  if Rails.env.development?
+    mount LetterOpenerWeb::Engine, at: "/letter_opener"
+  end
 
   get "/coaches/:slug/lessons", to: "lessons#index", as: :public_coach_lessons
   get "/coaches/:slug/lessons/:lesson_slug", to: "lessons#show", as: :public_coach_lesson

@@ -25,6 +25,10 @@ class User < ApplicationRecord
   validates :email, presence: true, uniqueness: true
   validates :role, presence: true, inclusion: { in: VALID_ROLES }
 
+  def email_verified?
+    email_verified_at.present?
+  end
+
   def coach?
     role == "coach"
   end

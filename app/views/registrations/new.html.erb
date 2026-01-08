@@ -1,0 +1,63 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="auth-brand__mark"></span>
+      <span class="auth-brand__name">MyVault</span>
+    </div>
+    <h1 class="auth-title">Create your account</h1>
+    <p class="auth-subtitle">Join MyVault to access lessons and subscriptions.</p>
+
+    <% if @user.errors.any? %>
+      <div class="flash flash-error" style="position:static; box-shadow:none; margin-bottom:12px;">
+        <div class="flash-message">
+          <strong><%= pluralize(@user.errors.count, "error") %> prevented signup:</strong>
+          <ul style="margin:6px 0 0 18px; padding:0;">
+            <% @user.errors.full_messages.each do |msg| %>
+              <li><%= msg %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    <% end %>
+
+    <%= form_with model: @user, url: signup_path, local: true, html: { class: "auth-form" } do |f| %>
+      <div class="form-row">
+        <%= f.label :email %>
+        <%= f.email_field :email, required: true, autofocus: true, class: "input" %>
+      </div>
+
+      <div class="form-row">
+        <%= f.label :password %>
+        <%= f.password_field :password, required: true, class: "input" %>
+      </div>
+
+      <div class="form-row">
+        <%= f.label :password_confirmation, "Confirm password" %>
+        <%= f.password_field :password_confirmation, required: true, class: "input" %>
+      </div>
+
+      <div class="form-row">
+        <span class="muted" style="display:block; margin-bottom:6px;">Choose your role</span>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <label class="chip chip--neutral" style="cursor:pointer;">
+            <%= f.radio_button :role, "student", checked: @user.role.to_s != "coach" %>
+            <span style="margin-left:6px;">Student</span>
+          </label>
+          <label class="chip chip--neutral" style="cursor:pointer;">
+            <%= f.radio_button :role, "coach", checked: @user.role.to_s == "coach" %>
+            <span style="margin-left:6px;">Coach</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="auth-actions">
+        <%= f.submit "Sign up", class: "btn btn-primary auth-submit" %>
+      </div>
+    <% end %>
+
+    <div class="auth-footer">
+      Already have an account?
+      <%= link_to "Log in", login_path %>
+    </div>
+  </div>
+</div>
