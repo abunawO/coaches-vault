@@ -1,10 +1,9 @@
 <div class="container">
-  <div class="page-header">
-    <div>
-      <h1 class="page-title">Your Favorites</h1>
-      <p class="page-subtitle">Save lessons for quick access.</p>
-    </div>
-  </div>
+  <div class="mx-auto max-w-4xl px-4">
+    <%= render "shared/page_header",
+               breadcrumbs: [["Dashboard", root_path], ["Favorites", favorites_path]],
+               title: content_tag(:span, "⭐️", class: "page-title-icon") + " Your Favorites",
+               subtitle: "Save lessons for quick access." %>
 
   <% if @favorites.any? %>
     <div class="grid">
@@ -27,9 +26,10 @@
       <% end %>
     </div>
   <% else %>
-    <div class="card empty-state">
-      <p>No favorites yet.</p>
-      <p><%= link_to "Browse coaches", coaches_path, class: "btn btn-primary" %></p>
-    </div>
-  <% end %>
+      <div class="card empty-state">
+        <p>No favorites yet.</p>
+        <p><%= link_to "Browse coaches", coaches_path, class: "btn btn-primary" %></p>
+      </div>
+    <% end %>
+  </div>
 </div>

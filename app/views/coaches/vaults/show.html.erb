@@ -24,32 +24,30 @@
       <p class="muted">This coach hasn’t organized lessons into a vault yet.</p>
     </div>
   <% else %>
-    <div class="vault-accordion-list" data-student-vault-target="accordionList">
+    <div class="vault-rows">
       <% @categories.each do |category| %>
         <% category_lessons = category.category_lessons.includes(:lesson).sort_by { |cl| cl.position || 0 } %>
-        <% preview_titles = category_lessons.first(3).map { |cl| cl.lesson.title } %>
-        <details class="card vault-accordion" data-category-id="<%= category.id %>" data-student-vault-target="accordion">
-          <summary class="vault-summary"
-                    data-action="click->student-vault#selectCategory"
-                    data-category-id="<%= category.id %>">
-            <div class="vault-summary__left">
-              <div class="vault-cat-name"><%= category.name %></div>
+        <% preview_titles = category_lessons.first(2).map { |cl| cl.lesson.title } %>
+        <section class="vault-row" data-student-vault-target="lessonPanel" data-category-id="<%= category.id %>">
+          <div class="vault-row__header">
+            <div>
+              <h3 class="vault-row__title"><%= category.name %></h3>
               <% if category.description.present? %>
-                <div class="muted tiny-text"><%= truncate(category.description, length: 80) %></div>
+                <p class="muted small-text"><%= category.description %></p>
               <% end %>
               <% if preview_titles.any? %>
-                <div class="muted tiny-text">Top lessons: <%= preview_titles.join(", ") %></div>
+                <p class="muted tiny-text">Top lessons: <%= preview_titles.join(", ") %></p>
               <% end %>
             </div>
-            <div class="vault-summary__right">
+            <div class="vault-row__meta">
               <span class="pill-soft"><%= pluralize(category_lessons.count, "lesson") %></span>
-              <span class="vault-caret" aria-hidden="true">▸</span>
             </div>
-          </summary>
-          <div class="vault-body" data-student-vault-target="lessonPanel" data-category-id="<%= category.id %>">
-            <% if category_lessons.empty? %>
-              <p class="muted">No lessons in this category yet.</p>
-            <% else %>
+          </div>
+
+          <% if category_lessons.empty? %>
+            <p class="muted">No lessons in this category yet.</p>
+          <% else %>
+            <div class="vault-row__scroller" data-student-vault-target="rowScroller">
               <% category_lessons.each do |cl| %>
                 <% lesson = cl.lesson %>
                 <% access = lesson.viewer_access_level(current_user) %>
@@ -62,7 +60,7 @@
                     end %>
                 <% link_options = locked && logged_in? ? { method: :post } : {} %>
                 <% searchable = [lesson.title, lesson.description].compact.join(" ").downcase %>
-                <%= link_to link_target, link_options.merge(class: "vault-lesson-card #{'is-locked' if locked}", data: { student_vault_target: "lessonCard", search: searchable }) do %>
+                <%= link_to link_target, link_options.merge(class: "vault-lesson-card vault-lesson-card--tile #{'is-locked' if locked}", data: { student_vault_target: "lessonCard", search: searchable }) do %>
                   <div class="vault-lesson-card__title"><%= lesson.title %></div>
                   <% if lesson.description.present? %>
                     <div class="muted small-text"><%= truncate(lesson.description, length: 120) %></div>
@@ -80,9 +78,9 @@
                   <% end %>
                 <% end %>
               <% end %>
-            <% end %>
-          </div>
-        </details>
+            </div>
+          <% end %>
+        </section>
       <% end %>
     </div>
   <% end %>

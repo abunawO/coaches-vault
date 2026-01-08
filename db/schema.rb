@@ -148,7 +148,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_21_110000) do
     t.text "preview_text"
     t.string "title", null: false
     t.datetime "updated_at", null: false
-    t.string "video_url", null: false
+    t.string "video_url"
     t.integer "visibility", default: 1, null: false
     t.index ["coach_id"], name: "index_lessons_on_coach_id"
   end

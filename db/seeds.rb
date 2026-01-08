@@ -48,35 +48,175 @@ coach2_profile.update!(
   tiktok_url: "https://tiktok.com/@example2"
 )
 
-coach1_lessons = [
-  { title: "Distance & Angles 101", description: "Managing range and angles effectively.", video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
-  { title: "The Void: Green / Yellow / Red", description: "Color system for situational awareness.", video_url: "https://vimeo.com/76979871" },
-  { title: "Footwork: Exit and Re-enter", description: "Footwork patterns to disengage and re-enter safely.", video_url: "https://www.youtube.com/watch?v=5NV6Rdv1a3I" },
-  { title: "Pressure and Pace", description: "Control tempo and pressure in exchanges.", video_url: "https://www.youtube.com/watch?v=ysz5S6PUM-U" },
-  { title: "Angles Under Fire", description: "Counter aggressive entries with sharp angles.", video_url: "https://www.youtube.com/watch?v=HgzGwKwLmgM" },
-  { title: "Ring Craft Basics", description: "Footwork to own the center and exits.", video_url: "https://www.youtube.com/watch?v=2vjPBrBU-TM" }
-]
-
-coach2_lessons = [
-  { title: "Guard Passing Basics", description: "Fundamentals of stable guard passing.", video_url: "https://www.youtube.com/watch?v=kXYiU_JCYtU" },
-  { title: "Front Headlock System", description: "Entries and finishes from front headlock.", video_url: "https://vimeo.com/148751763" },
-  { title: "Defense Layering", description: "Layered defense strategies.", video_url: "https://www.youtube.com/watch?v=3AtDnEC4zak" },
-  { title: "Back Attacks Flow", description: "Systematic back attacks.", video_url: "https://www.youtube.com/watch?v=uelHwf8o7_U" },
-  { title: "Takedown Chains", description: "Linking takedowns together.", video_url: "https://www.youtube.com/watch?v=4NRXx6U8ABQ" },
-  { title: "Leg Entanglement 101", description: "Intro to safe entries for legs.", video_url: "https://www.youtube.com/watch?v=fLexgOxsZu0" }
-]
-
-[ [coach1, coach1_lessons], [coach2, coach2_lessons] ].each do |coach, lessons|
-  lessons.each do |attrs|
-    lesson = coach.lessons.find_or_initialize_by(title: attrs[:title])
-    lesson.description = attrs[:description]
-    lesson.video_url = attrs[:video_url]
-    lesson.save!
-  end
-end
-
 def cancel_other_active_subscriptions(student, keep_coach_id)
 end
+
+def seed_coach_vault(coach)
+  coach.categories.destroy_all
+  coach.lessons.destroy_all
+
+  icon_path = Rails.root.join("public", "icon.png")
+  categories = [
+    {
+      name: "Jiu Jitsu",
+      description: "Grappling fundamentals, submissions, and transitions.",
+      lessons: [
+        { title: "Arm Bar Setup", visibility: "subscribers", preview_text: "Smooth setup from guard into a tight finish.",
+          description: "Drill the classic arm bar from closed guard with attention to hips, head control, and breaking posture. We connect the back take if the arm bar fails.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=s7hRzIc_yAY" }, { kind: "image" }] },
+        { title: "Guard Retention Blueprint", visibility: "free",
+          description: "Stay in guard against heavy pressure: frames, hip escapes, and guard recovery routes to half guard or butterfly.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=ysz5S6PUM-U" }] },
+        { title: "Triangle System Entries", visibility: "subscribers",
+          description: "Chain triangles from wrist control and collar ties; finish details and contingencies into omoplata or arm bar.",
+          media: [{ kind: "video", url: "https://vimeo.com/76979871" }, { kind: "image" }] },
+        { title: "Passing Open Guards", visibility: "restricted",
+          description: "Pressure passing vs. butterfly and shin-to-shin with clear checkpoints and grips.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=kXYiU_JCYtU" }] },
+        { title: "Back Control Fundamentals", visibility: "subscribers",
+          description: "Seatbelt, hooks, and head height. Maintain control and finish with short choke or RNC.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=HgzGwKwLmgM" }] }
+      ]
+    },
+    {
+      name: "Wrestling",
+      description: "Stand-up control, takedowns, and rides.",
+      lessons: [
+        { title: "Snap Down to Front Headlock", visibility: "free",
+          description: "Snap mechanics, go-behinds, and basic choke threats from front headlock.",
+          media: [{ kind: "video", url: "https://vimeo.com/148751763" }, { kind: "image" }] },
+        { title: "Single Leg Finishes", visibility: "subscribers",
+          description: "Options when opponent whizzers or sprawls: run the pipe, shelf, and trip series.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=4NRXx6U8ABQ" }] },
+        { title: "Chain Wrestling Flow", visibility: "restricted",
+          description: "Linking shots: double to high-crotch to knee tap based on opponent reactions.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=fLexgOxsZu0" }] },
+        { title: "Mat Return Series", visibility: "subscribers",
+          description: "Return a standing opponent safely: lift-and-return and trip variations.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=3AtDnEC4zak" }] }
+      ]
+    },
+    {
+      name: "Striking",
+      description: "Boxing and kickboxing concepts for MMA.",
+      lessons: [
+        { title: "Jab Craft", visibility: "free",
+          description: "Long guard, probing jabs, and setting up the cross with footwork.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=5NV6Rdv1a3I" }, { kind: "image" }] },
+        { title: "Low Kick Mechanics", visibility: "subscribers",
+          description: "Set up and finish low kicks without getting caught; exit footwork.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=2vjPBrBU-TM" }] },
+        { title: "Counter Fighting Essentials", visibility: "subscribers",
+          description: "Slip, parry, and pull counters; timing drills to build reactions.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=uelHwf8o7_U" }] },
+        { title: "Clinch Striking", visibility: "restricted",
+          description: "Elbows, knees, and posture control inside the clinch.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" }] }
+      ]
+    },
+    {
+      name: "MMA Systems",
+      description: "Blending striking and grappling into coherent systems.",
+      lessons: [
+        { title: "Cage Control Basics", visibility: "subscribers",
+          description: "Pinning opponents to the fence, underhook battles, and head position.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=ysz5S6PUM-U" }, { kind: "image" }] },
+        { title: "Shot Entries off Feints", visibility: "subscribers",
+          description: "Use level changes and shoulder feints to create takedown windows.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=2vjPBrBU-TM" }] },
+        { title: "Ground and Pound Safety", visibility: "restricted",
+          description: "Posture, base, and strike selection to avoid submissions.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=HgzGwKwLmgM" }] },
+        { title: "Transition to Back Takes", visibility: "subscribers",
+          description: "Chain guard passes into back exposure and secure hooks quickly.",
+          media: [{ kind: "video", url: "https://vimeo.com/76979871" }] }
+      ]
+    },
+    {
+      name: "Fight IQ",
+      description: "Strategy, pacing, and in-fight decision making.",
+      lessons: [
+        { title: "Pace Management", visibility: "free",
+          description: "Surge and settle tactics to win rounds without burning out.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=ysz5S6PUM-U" }] },
+        { title: "Reading Opponent Habits", visibility: "subscribers",
+          description: "Identify patterns in the first minute and build traps.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=HgzGwKwLmgM" }] },
+        { title: "Corner Communication", visibility: "subscribers",
+          description: "What to listen for between rounds and how to adjust.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=4NRXx6U8ABQ" }] },
+        { title: "Finishing the Round Strong", visibility: "restricted",
+          description: "Winning the last 30 seconds: positional dominance vs. flurries.",
+          media: [{ kind: "video", url: "https://vimeo.com/148751763" }] }
+      ]
+    },
+    {
+      name: "Conditioning",
+      description: "Energy systems and durability for fighters.",
+      lessons: [
+        { title: "Airdyne Intervals", visibility: "subscribers",
+          description: "Short burst intervals to mimic scramble demands.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=3AtDnEC4zak" }] },
+        { title: "Grappling Rounds Conditioning", visibility: "subscribers",
+          description: "Positional sparring rounds to build specific endurance.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=fLexgOxsZu0" }, { kind: "image" }] },
+        { title: "Neck and Grip Strength", visibility: "free",
+          description: "Simple weekly circuits to bulletproof neck and grips.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=kXYiU_JCYtU" }] },
+        { title: "Breathing Under Fire", visibility: "restricted",
+          description: "Breathing protocols for scrambles and high output exchanges.",
+          media: [{ kind: "video", url: "https://www.youtube.com/watch?v=2vjPBrBU-TM" }] }
+      ]
+    }
+  ]
+
+  lesson_count = 0
+  media_count = 0
+
+  categories.each_with_index do |cat, c_idx|
+    category = coach.categories.create!(
+      name: cat[:name],
+      description: cat[:description],
+      position: c_idx
+    )
+
+    cat[:lessons].each_with_index do |lesson_attrs, l_idx|
+      created_at = rand(1..60).days.ago
+      lesson = coach.lessons.new(
+        title: lesson_attrs[:title],
+        description: lesson_attrs[:description],
+        visibility: lesson_attrs[:visibility],
+        preview_text: lesson_attrs[:preview_text],
+        created_at: created_at,
+        updated_at: created_at
+      )
+
+      lesson_attrs[:media].each_with_index do |media_attr, m_idx|
+        media = lesson.lesson_media.build(
+          kind: media_attr[:kind],
+          video_url: media_attr[:kind] == "video" ? media_attr[:url] : nil,
+          position: m_idx
+        )
+        if media.image? && icon_path.exist?
+          media.image_file.attach(
+            io: File.open(icon_path),
+            filename: "placeholder.png",
+            content_type: "image/png"
+          )
+        end
+      end
+
+      lesson.save!
+      lesson_count += 1
+      media_count += lesson.lesson_media.count
+      CategoryLesson.create!(category: category, lesson: lesson, position: l_idx)
+    end
+  end
+
+  puts "Seeded demo vault for #{coach.email}: #{categories.size} categories, #{lesson_count} lessons, #{media_count} media items."
+end
+
+seed_coach_vault(coach1)
 
 [[student1, coach1], [student2, coach2]].each do |student, coach|
   scope = Subscription.where(student: student, coach: coach)

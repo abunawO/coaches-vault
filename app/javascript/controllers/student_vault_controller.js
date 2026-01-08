@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["categoryDetails", "categoryButton", "searchInput", "lessonCard"]
+  static targets = ["categoryButton", "lessonPanel", "rowScroller", "searchInput", "lessonCard"]
   static values = { selectedId: Number }
 
   connect() {
@@ -10,8 +10,8 @@ export default class extends Controller {
   }
 
   defaultCategoryId() {
-    if (this.categoryDetailsTargets.length === 0) return null
-    const first = this.categoryDetailsTargets[0]
+    if (this.categoryButtonTargets.length === 0) return null
+    const first = this.categoryButtonTargets[0]
     return parseInt(first.dataset.categoryId, 10)
   }
 
@@ -29,9 +29,10 @@ export default class extends Controller {
       btn.setAttribute("aria-current", isActive ? "true" : "false")
     })
 
-    this.categoryDetailsTargets.forEach((details) => {
-      const isSelected = parseInt(details.dataset.categoryId, 10) === id
-      details.open = isSelected
+    this.lessonPanelTargets.forEach((panel) => {
+      const isSelected = parseInt(panel.dataset.categoryId, 10) === id
+      panel.classList.toggle("is-active", isSelected)
+      if (isSelected) panel.scrollLeft = 0
     })
 
     this.filterLessons()
@@ -46,11 +47,9 @@ export default class extends Controller {
       card.classList.toggle("is-hidden", !match)
     })
 
-    if (!term) return
-
-    this.categoryDetailsTargets.forEach((details) => {
-      const visibleCount = details.querySelectorAll(".vault-lesson-card:not(.is-hidden)").length
-      details.open = visibleCount > 0
+    this.lessonPanelTargets.forEach((panel) => {
+      const anyVisible = panel.querySelectorAll(".vault-lesson-card:not(.is-hidden)").length > 0
+      panel.classList.toggle("is-hidden", !anyVisible && term.length > 0)
     })
   }
 }

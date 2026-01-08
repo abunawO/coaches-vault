@@ -3233,34 +3233,28 @@ details[open] .vault-caret {
   border-top: 1px solid #e5e7eb;
   display: grid;
   gap: 10px;
-  max-height: 380px;
-  overflow-y: auto;
-}
-.vault-category {
-  display: grid;
-  gap: 10px;
-}
-
-.vault-lesson-grid {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
 .vault-lesson-card {
   position: relative;
   display: grid;
   gap: 6px;
-  padding: 12px;
+  padding: 14px;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  background: #fff;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
   color: inherit;
   text-decoration: none;
+  min-width: 260px;
+  scroll-snap-align: start;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .vault-lesson-card:hover {
-  border-color: #dbeafe;
+  border-color: #bfdbfe;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.14);
 }
 
 .vault-lesson-card.is-locked {
@@ -3291,6 +3285,45 @@ details[open] .vault-caret {
 
 .vault-search {
   max-width: 240px;
+}
+
+.vault-rows {
+  display: grid;
+  gap: 12px;
+}
+
+.vault-row {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  background: #fff;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.vault-row__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.vault-row__title {
+  margin: 0;
+}
+
+.vault-row__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.vault-row__scroller {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 4px 0;
+  scroll-snap-type: x mandatory;
 }
 
 @media (max-width: 768px) {
