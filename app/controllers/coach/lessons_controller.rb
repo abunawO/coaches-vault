@@ -14,11 +14,15 @@ module Coach
 
     def create
       @lesson = current_user.lessons.build(lesson_params.except(:allowed_subscriber_ids))
-      if process_visibility_and_shares(@lesson, lesson_params[:allowed_subscriber_ids])
-        redirect_to coach_lessons_path, notice: "Lesson created successfully."
-      else
-        render :new, status: :unprocessable_entity
+      ActiveRecord::Base.transaction do
+        if @lesson.save
+          reconcile_shares!(@lesson, lesson_params[:allowed_subscriber_ids])
+          redirect_to coach_lessons_path, notice: "Lesson created successfully." and return
+        else
+          raise ActiveRecord::Rollback
+        end
       end
+      render :new, status: :unprocessable_entity
     end
 
     def edit; end
@@ -100,6 +104,9 @@ module Coach
       else
         lesson.lesson_shares.delete_all
       end
+    rescue ActiveRecord::RecordInvalid => e
+      lesson.errors.add(:base, e.record.errors.full_messages.to_sentence)
+      raise ActiveRecord::Rollback
     end
   end
 end

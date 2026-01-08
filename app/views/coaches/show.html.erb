@@ -25,28 +25,30 @@
                 <% if @coach_profile.website_url.present? %>
                 <%= link_to "Website", @coach_profile.website_url, class: "social-link", target: "_blank", rel: "noopener" %>
                 <% end %>
-                <% if @coach_profile.tiktok_url.present? %>
-                <%= link_to "TikTok", @coach_profile.tiktok_url, class: "social-link", target: "_blank", rel: "noopener" %>
-                <% end %>
-            </div>
-            <% subscribed = current_user&.student? && current_user.subscribed_to?(@coach) %>
+            <% if @coach_profile.tiktok_url.present? %>
+            <%= link_to "TikTok", @coach_profile.tiktok_url, class: "social-link", target: "_blank", rel: "noopener" %>
+            <% end %>
+        </div>
+        <% subscribed_student = current_user&.student? && current_user.subscribed_to?(@coach) %>
             <% owning_coach = current_user&.coach? && current_user.id == @coach.id %>
             <div class="profile-actions">
                 <% if !logged_in? %>
                 <%= link_to "Explore Lessons", public_coach_lessons_path(@coach_profile.slug), class: "btn btn-primary", aria: { label: "Explore lessons" } %>
                 <%= link_to "Log in to subscribe", login_path, class: "btn btn-secondary", aria: { label: "Log in to subscribe" } %>
                 <% elsif owning_coach %>
+                <%= link_to "Go to Vault", coach_public_vault_path(@coach_profile.slug), class: "btn btn-secondary", aria: { label: "Go to vault" } %>
                 <span class="muted">You are viewing your profile.</span>
                 <% elsif current_user.student? %>
-                <% if subscribed %>
+                <% if subscribed_student %>
                 <%= button_to "Message", conversations_path(coach_id: @coach.id), method: :post, class: "btn btn-secondary", aria: { label: "Message coach" } %>
+                <%= link_to "Go to Vault", coach_public_vault_path(@coach_profile.slug), class: "btn btn-secondary", aria: { label: "Go to vault" } %>
                 <% else %>
                 <%= button_to "Subscribe to unlock all lessons", coach_subscription_path(@coach), method: :post, class: "btn btn-primary", aria: { label: "Subscribe to unlock all lessons" } %>
                 <%= link_to "View free lessons", public_coach_lessons_path(@coach_profile.slug), class: "btn btn-secondary", aria: { label: "View free lessons" } %>
                 <button class="btn btn-secondary" aria-label="Subscribe to message this coach" disabled>🔒 Message (subscribers only)</button>
                 <% end %>
-                <% else %>
-                <%= link_to "Explore Lessons", public_coach_lessons_path(@coach_profile.slug), class: "btn btn-primary", aria: { label: "Explore lessons" } %>
+            <% else %>
+            <%= link_to "Explore Lessons", public_coach_lessons_path(@coach_profile.slug), class: "btn btn-primary", aria: { label: "Explore lessons" } %>
                 <% end %>
             </div>
             <div class="profile-stats">
@@ -75,7 +77,7 @@
                 <div class="profile-grid">
                     <% featured_lessons.each do |lesson| %>
                     <% lesson_path_to_use = public_coach_lesson_path(@coach_profile.slug, lesson) %>
-                    <% locked = !subscribed && !owning_coach %>
+                    <% locked = !(subscribed_student || owning_coach) %>
                     <%= link_to lesson_path_to_use, class: "profile-tile #{'tile-locked' if locked}" do %>
                     <div class="tile-thumb" style="background-image: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #93c5fd 100%);"></div>
                     <div class="tile-overlay">
