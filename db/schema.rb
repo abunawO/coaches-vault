@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_22_001000) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_22_002000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -70,6 +70,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_22_001000) do
     t.text "bio"
     t.datetime "created_at", null: false
     t.string "display_name", null: false
+    t.string "headline", limit: 120
     t.string "instagram_url"
     t.string "location"
     t.string "slug", null: false

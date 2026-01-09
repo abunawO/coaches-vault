@@ -27,6 +27,8 @@ Rails.application.routes.draw do
   post "/password/reset/resend", to: "password_resets#resend", as: :resend_password_reset
   get "/password/reset", to: "password_resets#edit", as: :password_reset
   patch "/password/reset", to: "password_resets#update"
+  get "/coach/profile/edit", to: "coach_profiles#edit", as: :edit_my_coach_profile
+  patch "/coach/profile", to: "coach_profiles#update", as: :my_coach_profile
 
   if Rails.env.development?
     mount LetterOpenerWeb::Engine, at: "/letter_opener"

@@ -32,6 +32,12 @@ A subscription-based platform where coaches host private lesson vaults and stude
 5. Start the app: `bin/dev` (or `rails server`)
 6. Visit: `http://localhost:3000`
 
+### Image processing (libvips)
+- We use ActiveStorage variants with vips. Install libvips locally:
+  - macOS: `brew install vips`
+  - Debian/Ubuntu: `sudo apt-get update && sudo apt-get install -y libvips`
+  - Alpine: `apk add vips`
+
 ## Seeded Accounts
 - Coach: `coach@test.com` (role: coach)
 - Student: `student@test.com` (role: student)

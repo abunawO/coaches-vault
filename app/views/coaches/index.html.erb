@@ -43,6 +43,9 @@
             <div class="coach-card__meta">
               <div class="coach-name"><%= profile.display_name %></div>
               <div class="muted">@<%= profile.slug %></div>
+              <% if profile.headline.present? %>
+                <div class="coach-card__headline"><%= profile.headline %></div>
+              <% end %>
             </div>
           </div>
           <% if profile.bio.present? %>
