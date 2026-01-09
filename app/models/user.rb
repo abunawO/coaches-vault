@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   has_secure_password
   has_one :coach_profile, dependent: :destroy
+  has_one :student_profile, dependent: :destroy
   has_many :lessons, foreign_key: :coach_id, dependent: :destroy
   has_many :favorites, foreign_key: :student_id, dependent: :destroy
   has_many :favorite_lessons, through: :favorites, source: :lesson

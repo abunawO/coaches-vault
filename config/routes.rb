@@ -29,6 +29,8 @@ Rails.application.routes.draw do
   patch "/password/reset", to: "password_resets#update"
   get "/coach/profile/edit", to: "coach_profiles#edit", as: :edit_my_coach_profile
   patch "/coach/profile", to: "coach_profiles#update", as: :my_coach_profile
+  get "/student/profile/edit", to: "student_profiles#edit", as: :edit_my_student_profile
+  patch "/student/profile", to: "student_profiles#update", as: :my_student_profile
 
   if Rails.env.development?
     mount LetterOpenerWeb::Engine, at: "/letter_opener"

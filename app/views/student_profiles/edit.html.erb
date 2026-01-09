@@ -1,0 +1,62 @@
+<div class="container">
+  <div class="mx-auto max-w-4xl px-4">
+    <div class="page-header card">
+      <div class="page-header__main">
+        <h1 class="page-title">
+          <svg class="page-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.5 4.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 20.25a7.25 7.25 0 0 1 14.5 0v.25H4v-.25Z" />
+          </svg>
+          Edit student profile
+        </h1>
+        <p class="page-header__subtitle">Update your student profile and avatar.</p>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 20px;">
+      <%= form_with model: @student_profile, url: my_student_profile_path, method: :patch, local: true, html: { multipart: true } do |f| %>
+        <div class="profile-edit-grid">
+          <div class="profile-edit-avatar">
+            <div class="profile-avatar profile-avatar--editable">
+              <% if @student_profile.avatar.attached? %>
+                <% begin %>
+                  <%= image_tag url_for(@student_profile.avatar.variant(resize_to_fill: [160, 160])), alt: @student_profile.display_name, class: "avatar-img" %>
+                <% rescue StandardError %>
+                  <%= image_tag url_for(@student_profile.avatar), alt: @student_profile.display_name, class: "avatar-img" %>
+                <% end %>
+              <% else %>
+                <div class="profile-avatar__placeholder"></div>
+              <% end %>
+            </div>
+            <label class="btn btn-secondary btn-small" style="margin-top: 10px; cursor: pointer;">
+              Upload photo
+              <%= f.file_field :avatar, accept: "image/*", style: "display:none;" %>
+            </label>
+            <p class="muted" style="margin-top: 6px;">PNG/JPG/WEBP, up to 5MB.</p>
+          </div>
+
+          <div class="profile-edit-fields">
+            <div class="form-row">
+              <%= f.label :display_name %>
+              <%= f.text_field :display_name, required: true, class: "input" %>
+            </div>
+
+            <div class="form-row">
+              <%= f.label :bio %>
+              <%= f.text_area :bio, rows: 4, class: "textarea" %>
+            </div>
+
+            <div class="form-row">
+              <%= f.label :location %>
+              <%= f.text_field :location, class: "input" %>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions" style="display:flex; justify-content:flex-end; margin-top:16px;">
+          <%= f.submit "Save profile", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

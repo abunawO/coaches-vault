@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_22_002000) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_22_003000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -182,6 +182,16 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_22_002000) do
     t.index ["recipient_id"], name: "index_notifications_on_recipient_id"
   end
 
+  create_table "student_profiles", force: :cascade do |t|
+    t.text "bio"
+    t.datetime "created_at", null: false
+    t.string "display_name", null: false
+    t.string "location"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id"], name: "index_student_profiles_on_user_id", unique: true
+  end
+
   create_table "subscriptions", force: :cascade do |t|
     t.bigint "coach_id", null: false
     t.datetime "created_at", null: false
@@ -230,6 +240,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_22_002000) do
   add_foreign_key "messages", "users", column: "sender_id"
   add_foreign_key "notifications", "users", column: "actor_id"
   add_foreign_key "notifications", "users", column: "recipient_id"
+  add_foreign_key "student_profiles", "users"
   add_foreign_key "subscriptions", "users", column: "coach_id"
   add_foreign_key "subscriptions", "users", column: "student_id"
 end

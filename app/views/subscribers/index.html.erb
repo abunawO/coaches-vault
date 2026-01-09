@@ -21,13 +21,32 @@
                 <div class="stack" id="subscriber-list" data-total="<%= @subscriber_count %>">
                     <% @subscriptions.each do |subscription| %>
                     <% student = subscription.student %>
+                    <% profile = student.student_profile %>
+                    <% name = profile&.display_name.presence || student.email %>
+                    <% initials = name.to_s.strip.first(2).presence || student.email.to_s.first(2) %>
+                    <% location = profile&.location.presence %>
                     <div class="card subscriber-card" data-subscriber-id="<%= student.id %>">
                         <div class="subscriber-row">
-                            <input type="checkbox" class="subscriber-checkbox" aria-label="Select <%= student.email %>" data-subscriber-id="<%= student.id %>" />
-                            <div class="avatar"><%= student.email.to_s.first&.upcase %></div>
-                            <div class="subscriber-meta">
-                                <div class="subscriber-name"><%= student.email %></div>
-                                <div class="subscriber-date muted">Subscribed since <%= subscription.created_at.strftime("%b %e, %Y") %></div>
+                            <div class="subscriber-left">
+                              <input type="checkbox" class="subscriber-checkbox" aria-label="Select <%= student.email %>" data-subscriber-id="<%= student.id %>" />
+                              <div class="avatar-circle avatar-circle--lg">
+                                <% if profile&.avatar&.attached? %>
+                                  <% begin %>
+                                    <%= image_tag url_for(profile.avatar.variant(resize_to_fill: [48, 48])), alt: name, class: "avatar-img" %>
+                                  <% rescue StandardError %>
+                                    <%= image_tag url_for(profile.avatar), alt: name, class: "avatar-img" %>
+                                  <% end %>
+                                <% else %>
+                                  <span class="avatar-fallback"><%= initials.upcase %></span>
+                                <% end %>
+                              </div>
+                              <div class="subscriber-meta">
+                                <div class="subscriber-name"><%= name %></div>
+                                <% if location.present? %>
+                                  <div class="subscriber-location muted"><%= location %></div>
+                                <% end %>
+                                <div class="subscriber-date muted">Subscribed since <%= subscription.created_at.strftime("%b %d, %Y") %></div>
+                              </div>
                             </div>
                             <div class="subscriber-actions-row">
                                 <button class="btn btn-secondary btn-small subscriber-message" data-student-id="<%= student.id %>" data-student-email="<%= student.email %>">Message</button>

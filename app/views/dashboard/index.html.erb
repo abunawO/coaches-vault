@@ -96,12 +96,32 @@
   <% else %>
     <section class="card dashboard-hero">
       <div class="dashboard-hero-header">
-        <div>
-          <p class="muted">Dashboard</p>
-          <h1 class="page-title">Welcome back</h1>
-          <p class="page-subtitle"><%= current_user.email %></p>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <% student_profile = current_user.student_profile %>
+          <% initials = current_user.email.to_s.first(2).upcase %>
+          <div class="avatar-circle">
+            <% if student_profile&.avatar&.attached? %>
+              <% begin %>
+                <%= image_tag url_for(student_profile.avatar.variant(resize_to_fill: [48, 48])), alt: student_profile.display_name, class: "avatar-img" %>
+              <% rescue StandardError %>
+                <%= image_tag url_for(student_profile.avatar), alt: student_profile.display_name, class: "avatar-img" %>
+              <% end %>
+            <% else %>
+              <span class="avatar-fallback"><%= initials %></span>
+            <% end %>
+          </div>
+          <div>
+            <p class="muted">Dashboard</p>
+            <h1 class="page-title">Welcome back, <%= student_profile&.display_name.presence || current_user.email %></h1>
+            <p class="page-subtitle"><%= student_profile&.location.presence || current_user.email %></p>
+          </div>
         </div>
-        <%= link_to "Refresh", root_path, class: "btn btn-secondary" %>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <% if current_user.student? %>
+            <%= link_to "Edit profile", edit_my_student_profile_path, class: "btn btn-secondary" %>
+          <% end %>
+          <%= link_to "Refresh", root_path, class: "btn btn-secondary" %>
+        </div>
       </div>
 
       <div class="dashboard-hero-stats">

@@ -38,8 +38,14 @@
         <% avatar_text = profile.display_name.to_s.first.presence || profile.slug.to_s.first.presence || "C" %>
         <% lessons_count = profile.user&.respond_to?(:lessons) ? profile.user.lessons.size : nil %>
         <div class="coach-card card">
-          <div class="coach-card__header">
-            <div class="avatar-circle"><%= avatar_text.upcase %></div>
+          <div class="coach-card-header">
+            <div class="avatar-circle">
+              <% if profile.avatar.attached? %>
+                <%= image_tag profile.avatar.variant(resize_to_fill: [48, 48]), alt: profile.display_name, class: "avatar-img" %>
+              <% else %>
+                <div class="avatar-fallback"><%= avatar_text.upcase %></div>
+              <% end %>
+            </div>
             <div class="coach-card__meta">
               <div class="coach-name"><%= profile.display_name %></div>
               <div class="muted">@<%= profile.slug %></div>
