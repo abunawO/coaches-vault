@@ -31,6 +31,9 @@
             <%= form.label :password %>
             <%= form.password_field :password, required: true, class: "input" %>
         </div>
+        <div style="margin-top: 6px; margin-bottom: 10px;">
+            <%= link_to "Forgot password?", forgot_password_path, class: "muted" %>
+        </div>
 
         <div class="auth-actions">
             <%= form.submit "Log in", class: "btn btn-primary auth-submit" %>

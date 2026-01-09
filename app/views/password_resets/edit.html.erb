@@ -1,0 +1,45 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="auth-brand__mark"></span>
+      <span class="auth-brand__name">MyVault</span>
+    </div>
+    <h1 class="auth-title">Reset your password</h1>
+    <p class="auth-subtitle">Choose a new password for your account.</p>
+
+    <% if @user.errors.any? %>
+      <div class="flash flash-error" style="position:static; box-shadow:none; margin-bottom:12px;">
+        <div class="flash-message">
+          <strong><%= pluralize(@user.errors.count, "error") %> prevented saving:</strong>
+          <ul style="margin:6px 0 0 18px; padding:0;">
+            <% @user.errors.full_messages.each do |msg| %>
+              <li><%= msg %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    <% end %>
+
+    <%= form_with model: @user, url: password_reset_path, method: :patch, local: true, html: { class: "auth-form" } do |f| %>
+      <%= hidden_field_tag :token, params[:token] %>
+
+      <div class="form-row">
+        <%= f.label :password %>
+        <%= f.password_field :password, required: true, class: "input" %>
+      </div>
+
+      <div class="form-row">
+        <%= f.label :password_confirmation, "Confirm password" %>
+        <%= f.password_field :password_confirmation, required: true, class: "input" %>
+      </div>
+
+      <div class="auth-actions">
+        <%= f.submit "Update password", class: "btn btn-primary auth-submit" %>
+      </div>
+    <% end %>
+
+    <div class="auth-footer">
+      <%= link_to "Back to login", login_path %>
+    </div>
+  </div>
+</div>

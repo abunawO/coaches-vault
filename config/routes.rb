@@ -21,6 +21,12 @@ Rails.application.routes.draw do
   get "/verify-email", to: "email_verifications#show", as: :verify_email
   get "/verify-email/pending", to: "email_verifications#pending", as: :verify_email_pending
   post "/verify-email/resend", to: "email_verifications#resend", as: :resend_verification_email
+  get "/password/forgot", to: "password_resets#new", as: :forgot_password
+  post "/password/forgot", to: "password_resets#create"
+  get "/password/reset/pending", to: "password_resets#pending", as: :password_reset_pending
+  post "/password/reset/resend", to: "password_resets#resend", as: :resend_password_reset
+  get "/password/reset", to: "password_resets#edit", as: :password_reset
+  patch "/password/reset", to: "password_resets#update"
 
   if Rails.env.development?
     mount LetterOpenerWeb::Engine, at: "/letter_opener"
