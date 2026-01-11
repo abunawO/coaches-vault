@@ -2,3 +2,6 @@
 import "@hotwired/turbo-rails"
 import "controllers"
 import "lessons_filter"
+import * as ActiveStorage from "@rails/activestorage"
+
+ActiveStorage.start()
