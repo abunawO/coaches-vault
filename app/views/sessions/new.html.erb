@@ -7,6 +7,19 @@
         <h1 class="auth-title">Welcome back</h1>
         <p class="auth-subtitle">Access your vault and subscriptions.</p>
         <p class="auth-helper">Log in to continue.</p>
+        <% if @unverified_email.present? %>
+          <div class="flash flash-alert" style="position:static; box-shadow:none; margin-bottom:12px;">
+            <div class="flash-message">
+              <strong>Please verify your email.</strong>
+              <div style="margin-top:6px;">
+                <%= form_with url: resend_verification_email_path, method: :post, local: true, class: "inline-form" do %>
+                  <%= hidden_field_tag :email, @unverified_email %>
+                  <button type="submit" class="btn btn-secondary btn-small">Resend verification email</button>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
 
         <%= form_with url: login_path, method: :post, local: true, html: { class: "auth-form" } do |form| %>
         <div class="form-row">
@@ -17,6 +30,9 @@
         <div class="form-row">
             <%= form.label :password %>
             <%= form.password_field :password, required: true, class: "input" %>
+        </div>
+        <div style="margin-top: 6px; margin-bottom: 10px;">
+            <%= link_to "Forgot password?", forgot_password_path, class: "muted" %>
         </div>
 
         <div class="auth-actions">

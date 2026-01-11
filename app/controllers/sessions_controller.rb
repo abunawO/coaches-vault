@@ -9,6 +9,12 @@ class SessionsController < ApplicationController
     user = User.find_by(email: params[:email])
 
     if user&.authenticate(params[:password])
+      unless user.email_verified?
+        @unverified_email = user.email
+        flash.now[:alert] = "Please verify your email before logging in."
+        return render :new, status: :unprocessable_entity
+      end
+
       session[:user_id] = user.id
       redirect_to root_path, notice: "Logged in successfully."
     else

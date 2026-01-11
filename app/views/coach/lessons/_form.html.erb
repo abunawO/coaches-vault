@@ -187,12 +187,31 @@
                         <% else %>
                         <% preselected = @preselected_allowed_ids || [] %>
                         <% @subscribers.each do |sub| %>
+                        <% profile = sub.student_profile %>
+                        <% name = profile&.display_name.presence || sub.email %>
+                        <% initials = name.to_s.strip.first(2).presence || sub.email.to_s.first(2) %>
+                        <% location = profile&.location.presence %>
                         <label class="subscriber-card subscriber-access-new" data-email="<%= sub.email.downcase %>">
                             <input type="checkbox" name="lesson[allowed_subscriber_ids][]" value="<%= sub.id %>" <%= "checked" if preselected.include?(sub.id) %> />
-                            <span class="avatar"><%= sub.email.first&.upcase %></span>
-                            <div class="subscriber-meta">
-                                <div class="subscriber-name"><%= sub.email %></div>
-                                <div class="muted small-text">Active subscriber</div>
+                            <div class="subscriber-left">
+                                <div class="avatar-circle avatar-circle--lg">
+                                    <% if profile&.avatar&.attached? %>
+                                        <% begin %>
+                                            <%= image_tag url_for(profile.avatar.variant(resize_to_fill: [48, 48])), alt: name, class: "avatar-img" %>
+                                        <% rescue StandardError %>
+                                            <%= image_tag url_for(profile.avatar), alt: name, class: "avatar-img" %>
+                                        <% end %>
+                                    <% else %>
+                                        <span class="avatar-fallback"><%= initials.upcase %></span>
+                                    <% end %>
+                                </div>
+                                <div class="subscriber-meta">
+                                    <div class="subscriber-name"><%= name %></div>
+                                    <% if location.present? %>
+                                        <div class="muted small-text"><%= location %></div>
+                                    <% end %>
+                                    <div class="muted small-text">Active subscriber</div>
+                                </div>
                             </div>
                             <span class="pill-soft selected-pill">Selected</span>
                         </label>

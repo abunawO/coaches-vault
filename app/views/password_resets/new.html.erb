@@ -1,0 +1,25 @@
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <span class="auth-brand__mark"></span>
+      <span class="auth-brand__name">MyVault</span>
+    </div>
+    <h1 class="auth-title">Forgot password</h1>
+    <p class="auth-subtitle">Enter your email and we’ll send a reset link.</p>
+
+    <%= form_with url: forgot_password_path, method: :post, local: true, html: { class: "auth-form" } do %>
+      <div class="form-row">
+        <label for="reset-email">Email</label>
+        <%= email_field_tag :email, params[:email], required: true, autofocus: true, class: "input", id: "reset-email" %>
+      </div>
+
+      <div class="auth-actions">
+        <button type="submit" class="btn btn-primary auth-submit">Send reset link</button>
+      </div>
+    <% end %>
+
+    <div class="auth-footer">
+      <%= link_to "Back to login", login_path %>
+    </div>
+  </div>
+</div>

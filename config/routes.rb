@@ -15,6 +15,26 @@ Rails.application.routes.draw do
   get "/login", to: "sessions#new"
   post "/login", to: "sessions#create"
   delete "/logout", to: "sessions#destroy"
+  get "/signup", to: "registrations#new", as: :signup
+  post "/signup", to: "registrations#create"
+
+  get "/verify-email", to: "email_verifications#show", as: :verify_email
+  get "/verify-email/pending", to: "email_verifications#pending", as: :verify_email_pending
+  post "/verify-email/resend", to: "email_verifications#resend", as: :resend_verification_email
+  get "/password/forgot", to: "password_resets#new", as: :forgot_password
+  post "/password/forgot", to: "password_resets#create"
+  get "/password/reset/pending", to: "password_resets#pending", as: :password_reset_pending
+  post "/password/reset/resend", to: "password_resets#resend", as: :resend_password_reset
+  get "/password/reset", to: "password_resets#edit", as: :password_reset
+  patch "/password/reset", to: "password_resets#update"
+  get "/coach/profile/edit", to: "coach_profiles#edit", as: :edit_my_coach_profile
+  patch "/coach/profile", to: "coach_profiles#update", as: :my_coach_profile
+  get "/student/profile/edit", to: "student_profiles#edit", as: :edit_my_student_profile
+  patch "/student/profile", to: "student_profiles#update", as: :my_student_profile
+
+  if Rails.env.development?
+    mount LetterOpenerWeb::Engine, at: "/letter_opener"
+  end
 
   get "/coaches/:slug/lessons", to: "lessons#index", as: :public_coach_lessons
   get "/coaches/:slug/lessons/:lesson_slug", to: "lessons#show", as: :public_coach_lesson

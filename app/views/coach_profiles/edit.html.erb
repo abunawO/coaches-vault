@@ -1,0 +1,86 @@
+<div class="container">
+  <div class="mx-auto max-w-4xl px-4">
+    <div class="page-header card">
+      <div class="page-header__main">
+        <h1 class="page-title">
+          <svg class="page-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.5 4.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 20.25a7.25 7.25 0 0 1 14.5 0v.25H4v-.25Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16 15.5h4M18 13.5v4" />
+          </svg>
+          Edit coach profile
+        </h1>
+        <p class="page-header__subtitle">Update your public profile and social links.</p>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 20px;">
+      <%= form_with model: @coach_profile, url: my_coach_profile_path, method: :patch, local: true, html: { multipart: true } do |f| %>
+        <div class="profile-edit-grid">
+          <div class="profile-edit-avatar">
+            <div class="profile-avatar profile-avatar--editable">
+              <% if @coach_profile.avatar.attached? %>
+                <%= image_tag @coach_profile.avatar.variant(resize_to_fill: [160, 160]), alt: @coach_profile.display_name %>
+              <% elsif @coach_profile.avatar_url.present? %>
+                <div class="profile-avatar__bg" style="background-image: url('<%= @coach_profile.avatar_url %>');"></div>
+              <% else %>
+                <div class="profile-avatar__placeholder"></div>
+              <% end %>
+            </div>
+            <label class="btn btn-secondary btn-small" style="margin-top: 10px; cursor: pointer;">
+              Upload photo
+              <%= f.file_field :avatar, accept: "image/*", style: "display:none;" %>
+            </label>
+            <p class="muted" style="margin-top: 6px;">PNG/JPG/WEBP, up to 5MB.</p>
+          </div>
+
+          <div class="profile-edit-fields">
+            <div class="form-row">
+              <%= f.label :display_name %>
+              <%= f.text_field :display_name, required: true, class: "input" %>
+            </div>
+
+            <div class="form-row">
+              <%= f.label :headline %>
+              <%= f.text_field :headline, required: true, class: "input", maxlength: 120 %>
+            </div>
+
+            <div class="form-row">
+              <%= f.label :bio %>
+              <%= f.text_area :bio, rows: 4, class: "textarea" %>
+            </div>
+
+            <div class="form-row">
+              <%= f.label :location %>
+              <%= f.text_field :location, class: "input" %>
+            </div>
+
+            <div class="form-row">
+              <%= f.label :website_url, "Website" %>
+              <%= f.url_field :website_url, class: "input" %>
+            </div>
+
+            <div class="form-row">
+              <%= f.label :instagram_url, "Instagram" %>
+              <%= f.url_field :instagram_url, class: "input" %>
+            </div>
+
+            <div class="form-row">
+              <%= f.label :youtube_url, "YouTube" %>
+              <%= f.url_field :youtube_url, class: "input" %>
+            </div>
+
+            <div class="form-row">
+              <%= f.label :tiktok_url, "TikTok" %>
+              <%= f.url_field :tiktok_url, class: "input" %>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-actions" style="display:flex; justify-content:flex-end; margin-top:16px;">
+          <%= f.submit "Save profile", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

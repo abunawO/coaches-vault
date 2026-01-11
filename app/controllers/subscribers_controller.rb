@@ -7,7 +7,7 @@ class SubscribersController < ApplicationController
     @subscriptions = scope
                       .select("DISTINCT ON (student_id) subscriptions.*")
                       .order("student_id, created_at DESC")
-                      .includes(:student)
+                      .includes(student: { student_profile: { avatar_attachment: :blob } })
   end
 
   def bulk_message
