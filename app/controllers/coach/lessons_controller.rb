@@ -69,9 +69,11 @@ module Coach
       redirect_to root_path, alert: "You must be a coach to access that page."
     end
 
-    def load_active_subscribers
-      ids = Subscription.active.where(coach_id: current_user.id).pluck(:student_id)
-      @subscribers = User.where(id: ids).order(:email)
+  def load_active_subscribers
+    ids = Subscription.active.where(coach_id: current_user.id).pluck(:student_id)
+    @subscribers = User.where(id: ids)
+                       .includes(student_profile: { avatar_attachment: :blob })
+                       .order(:email)
       @preselected_allowed_ids =
         if params.dig(:lesson, :allowed_subscriber_ids).present?
           Array(params[:lesson][:allowed_subscriber_ids]).reject(&:blank?).map(&:to_i)
