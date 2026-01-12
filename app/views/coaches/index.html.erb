@@ -28,7 +28,7 @@
       <h3>No coaches found<%= @q.present? ? " for “#{@q}”" : "" %>.</h3>
       <p class="muted">Try a different search or return to your dashboard.</p>
       <div class="card-actions">
-        <%= link_to "Back to dashboard", dashboard_path, class: "btn btn-primary" %>
+        <%= link_to "Back to dashboard", root_path, class: "btn btn-primary" %>
         <%= link_to "Clear search", coaches_path, class: "btn btn-ghost" if @q.present? %>
       </div>
     </div>
