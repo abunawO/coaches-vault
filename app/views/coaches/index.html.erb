@@ -1,74 +1,74 @@
 <div class="container coaches-page">
-  <div class="coaches-hero">
-    <div>
-      <h1 class="page-title">Coaches</h1>
-      <p class="page-subtitle">Explore coach vaults and public profiles.</p>
+    <div class="coaches-hero">
+        <div>
+            <h1 class="page-title">Coaches</h1>
+            <p class="page-subtitle">Explore coach vaults and public profiles.</p>
+        </div>
     </div>
-  </div>
 
-  <div class="coaches-toolbar card">
-    <%= form_with url: coaches_path, method: :get, local: true, class: "coaches-search-form" do |f| %>
-      <div class="coaches-search-input">
-        <span class="muted">🔍</span>
-        <%= f.search_field :q, value: @q, placeholder: "Search coaches by name or bio…", class: "input" %>
-        <% if @q.present? %>
-          <%= link_to "Clear", coaches_path, class: "btn btn-ghost btn-small" %>
+    <div class="coaches-toolbar card">
+        <%= form_with url: coaches_path, method: :get, local: true, class: "coaches-search-form" do |f| %>
+        <div class="coaches-search-input">
+            <span class="muted">🔍</span>
+            <%= f.search_field :q, value: @q, placeholder: "Search coaches by name or bio…", class: "input" %>
+            <% if @q.present? %>
+            <%= link_to "Clear", coaches_path, class: "btn btn-ghost btn-small" %>
+            <% end %>
+        </div>
+        <div class="coaches-sort">
+            <select class="input" disabled>
+                <option>Sort: Most recent</option>
+            </select>
+        </div>
         <% end %>
-      </div>
-      <div class="coaches-sort">
-        <select class="input" disabled>
-          <option>Sort: Most recent</option>
-        </select>
-      </div>
-    <% end %>
-  </div>
-
-  <% if @coach_profiles.empty? %>
-    <div class="card empty-state-card">
-      <h3>No coaches found<%= @q.present? ? " for “#{@q}”" : "" %>.</h3>
-      <p class="muted">Try a different search or return to your dashboard.</p>
-      <div class="card-actions">
-        <%= link_to "Back to dashboard", root_path, class: "btn btn-primary" %>
-        <%= link_to "Clear search", coaches_path, class: "btn btn-ghost" if @q.present? %>
-      </div>
     </div>
-  <% else %>
+
+    <% if @coach_profiles.empty? %>
+    <div class="card empty-state-card">
+        <h3>No coaches found<%= @q.present? ? " for “#{@q}”" : "" %>.</h3>
+        <p class="muted">Try a different search or return to your dashboard.</p>
+        <div class="card-actions">
+            <%= link_to "Back to dashboard", dashboard_path, class: "btn btn-primary" %>
+            <%= link_to "Clear search", coaches_path, class: "btn btn-ghost" if @q.present? %>
+        </div>
+    </div>
+    <% else %>
     <div class="coaches-grid">
-      <% @coach_profiles.each do |profile| %>
+        <% @coach_profiles.each do |profile| %>
         <% avatar_text = profile.display_name.to_s.first.presence || profile.slug.to_s.first.presence || "C" %>
         <% lessons_count = profile.user&.respond_to?(:lessons) ? profile.user.lessons.size : nil %>
         <div class="coach-card card">
-          <div class="coach-card-header">
-            <div class="avatar-circle">
-              <% if profile.avatar.attached? %>
-                <%= image_tag profile.avatar.variant(resize_to_fill: [48, 48]), alt: profile.display_name, class: "avatar-img" %>
-              <% else %>
-                <div class="avatar-fallback"><%= avatar_text.upcase %></div>
-              <% end %>
+            <div class="coach-card-header">
+                <div class="avatar-circle">
+                    <% if profile.avatar.attached? %>
+                    <%= image_tag profile.avatar.variant(resize_to_fill: [48, 48]), alt: profile.display_name, class: "avatar-img" %>
+                    <% else %>
+                    <div class="avatar-fallback"><%= avatar_text.upcase %></div>
+                    <% end %>
+                </div>
+                <div class="coach-card__meta">
+                    <div class="coach-name"><%= profile.display_name %></div>
+                    <div class="muted">@<%= profile.slug %></div>
+                    <% if profile.headline.present? %>
+                    <div class="coach-card__headline"><%= profile.headline %></div>
+                    <% end %>
+                </div>
             </div>
-            <div class="coach-card__meta">
-              <div class="coach-name"><%= profile.display_name %></div>
-              <div class="muted">@<%= profile.slug %></div>
-              <% if profile.headline.present? %>
-                <div class="coach-card__headline"><%= profile.headline %></div>
-              <% end %>
-            </div>
-          </div>
-          <% if profile.bio.present? %>
+            <% if profile.bio.present? %>
             <p class="muted coach-bio-snippet"><%= truncate(profile.bio, length: 140) %></p>
-          <% else %>
+            <% else %>
             <p class="muted coach-bio-snippet">No bio provided yet.</p>
-          <% end %>
-          <div class="coach-stats">
-            <% if lessons_count %>
-              <span class="pill pill-soft">Lessons: <strong><%= lessons_count %></strong></span>
             <% end %>
-          </div>
-          <div class="card-actions">
-            <%= link_to "View profile", coach_path(profile.slug), class: "btn btn-primary" %>
-          </div>
+            <div class="coach-stats">
+                <% if lessons_count %>
+                <span class="pill pill-soft">Lessons: <strong><%= lessons_count %></strong></span>
+                <% end %>
+            </div>
+            <div class="card-actions">
+                <%= link_to "View profile", coach_path(profile.slug), class: "btn btn-primary" %>
+            </div>
         </div>
-      <% end %>
+        <% end %>
     </div>
-  <% end %>
+    <% end %>
 </div>

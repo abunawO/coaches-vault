@@ -90,6 +90,7 @@ production:
     database: myvault_production
     username: myvault
     password: <%= ENV["MYVAULT_DATABASE_PASSWORD"] %>
+    host: 127.0.0.1
   cache:
     <<: *primary_production
     database: myvault_production_cache
