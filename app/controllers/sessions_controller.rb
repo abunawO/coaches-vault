@@ -16,7 +16,11 @@ class SessionsController < ApplicationController
       end
 
       session[:user_id] = user.id
-      redirect_to root_path, notice: "Logged in successfully."
+      if user.coach? && user.coach_profile.blank?
+        redirect_to edit_my_coach_profile_path, notice: "Finish your coach profile to activate your vault."
+      else
+        redirect_to root_path, notice: "Logged in successfully."
+      end
     else
       flash.now[:alert] = "Invalid email or password."
       render :new, status: :unprocessable_entity
