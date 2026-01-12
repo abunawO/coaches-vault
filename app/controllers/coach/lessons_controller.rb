@@ -59,7 +59,7 @@ module Coach
         :preview,
         :preview_text,
         allowed_subscriber_ids: [],
-        lesson_media_attributes: %i[id kind video_url position _destroy image_file]
+        lesson_media_attributes: %i[id kind video_url position _destroy image_file video_file]
       )
     end
 

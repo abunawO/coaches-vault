@@ -46,12 +46,20 @@
                             <div class="carousel-slide <%= 'is-active' if idx.zero? %>" data-carousel-index="<%= idx %>">
                                 <% kind = slide.respond_to?(:kind) ? slide.kind : slide[:kind] %>
                                 <% video_url = slide.respond_to?(:video_url) ? slide.video_url : slide[:video_url] %>
+                                <% video_file = slide.respond_to?(:video_file) ? slide.video_file : slide[:video_file] %>
+                                <% video_attached = video_file.respond_to?(:attached?) ? video_file.attached? : false %>
                                 <% image_file = slide.respond_to?(:image_file) ? slide.image_file : slide[:image_file] %>
                                 <% image_attached = image_file.respond_to?(:attached?) ? image_file.attached? : false %>
 
                                 <% if kind.to_s == "image" && image_attached %>
                                 <div class="carousel-media image">
                                     <%= image_tag(image_file, alt: "#{@lesson.title} slide #{idx + 1}") %>
+                                </div>
+                                <% elsif kind.to_s == "video" && video_attached %>
+                                <div class="carousel-media video">
+                                    <video controls preload="metadata" style="max-width:100%; height:auto;">
+                                        <source src="<%= url_for(video_file) %>">
+                                    </video>
                                 </div>
                                 <% elsif video_url.present? %>
                                 <% embed = embed_url_for(video_url) %>

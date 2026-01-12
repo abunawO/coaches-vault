@@ -76,7 +76,7 @@ class Lesson < ApplicationRecord
 
   def content_presence
     media_ok = lesson_media.reject(&:marked_for_destruction?).any? do |m|
-      (m.video? && m.video_url.present?) ||
+      (m.video? && (m.video_url.present? || m.video_file.attached? || m.video_file_blob.present?)) ||
         (m.image? && (m.image_file.attached? || m.image_file_blob.present?))
     end
 
