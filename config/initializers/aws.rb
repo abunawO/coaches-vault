@@ -1,8 +1,4 @@
-# config/initializers/aws.rb
+return unless defined?(Aws)
+return if ENV["AWS_SSL_CA_BUNDLE"].blank?
 
-Aws.config.update(
-  region: ENV.fetch("AWS_REGION", "us-east-2"),
-  s3: {
-    ssl_ca_bundle: ENV["AWS_SSL_CA_BUNDLE"]
-  }
-)
+Aws.config.update(ssl_ca_bundle: ENV["AWS_SSL_CA_BUNDLE"])

@@ -19,6 +19,13 @@ Rails.application.routes.draw do
   get "/signup", to: "registrations#new", as: :signup
   post "/signup", to: "registrations#create"
 
+  namespace :s3 do
+    post "multipart/create", to: "multipart_uploads#create"
+    post "multipart/sign_part", to: "multipart_uploads#sign_part"
+    post "multipart/complete", to: "multipart_uploads#complete"
+    post "multipart/abort", to: "multipart_uploads#abort"
+  end
+
   get "/verify-email", to: "email_verifications#show", as: :verify_email
   get "/verify-email/pending", to: "email_verifications#pending", as: :verify_email_pending
   post "/verify-email/resend", to: "email_verifications#resend", as: :resend_verification_email

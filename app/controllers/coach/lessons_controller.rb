@@ -16,6 +16,7 @@ module Coach
       @lesson = current_user.lessons.build(lesson_params.except(:allowed_subscriber_ids))
       ActiveRecord::Base.transaction do
         if @lesson.save
+          log_video_upload_expectations(@lesson)
           reconcile_shares!(@lesson, lesson_params[:allowed_subscriber_ids])
           redirect_to coach_lessons_path, notice: "Lesson created successfully." and return
         else
@@ -30,6 +31,7 @@ module Coach
     def update
       ActiveRecord::Base.transaction do
         if @lesson.update(lesson_params.except(:allowed_subscriber_ids))
+          log_video_upload_expectations(@lesson)
           reconcile_shares!(@lesson, lesson_params[:allowed_subscriber_ids])
           redirect_to coach_lessons_path, notice: "Lesson updated successfully."
         else
@@ -69,11 +71,11 @@ module Coach
       redirect_to root_path, alert: "You must be a coach to access that page."
     end
 
-  def load_active_subscribers
-    ids = Subscription.active.where(coach_id: current_user.id).pluck(:student_id)
-    @subscribers = User.where(id: ids)
-                       .includes(student_profile: { avatar_attachment: :blob })
-                       .order(:email)
+    def load_active_subscribers
+      ids = Subscription.active.where(coach_id: current_user.id).pluck(:student_id)
+      @subscribers = User.where(id: ids)
+                         .includes(student_profile: { avatar_attachment: :blob })
+                         .order(:email)
       @preselected_allowed_ids =
         if params.dig(:lesson, :allowed_subscriber_ids).present?
           Array(params[:lesson][:allowed_subscriber_ids]).reject(&:blank?).map(&:to_i)
@@ -82,6 +84,27 @@ module Coach
         else
           []
         end
+    end
+
+    def log_video_upload_expectations(lesson)
+      threshold = multipart_threshold_bytes
+
+      lesson.lesson_media.each do |medium|
+        blob = medium.video_file_attachment&.blob
+        next unless blob
+
+        size = blob.byte_size
+        multipart = size >= threshold
+        service = ActiveStorage::Blob.service.name
+        ca_bundle_present = ENV["AWS_SSL_CA_BUNDLE"].present?
+        Rails.logger.info(
+          "[lesson upload] service=#{service} ca_bundle=#{ca_bundle_present} lesson_id=#{lesson.id} video=#{blob.filename} bytes=#{size} multipart_expected=#{multipart} threshold=#{threshold}"
+        )
+      end
+    end
+
+    def multipart_threshold_bytes
+      10.megabytes
     end
 
     def reconcile_shares!(lesson, allowed_ids)

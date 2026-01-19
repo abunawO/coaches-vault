@@ -69,7 +69,8 @@
                                     <label class="muted small-text">Video URL</label>
                                     <%= mf.text_field :video_url, class: "input", placeholder: "https://www.youtube.com/watch?v=..." %>
                                     <label class="muted small-text" style="margin-top:8px;">Or upload video</label>
-                                    <%= mf.file_field :video_file, class: "input", direct_upload: true, accept: "video/mp4,video/quicktime" %>
+                                    <%= mf.file_field :video_file, class: "input", accept: "video/mp4,video/quicktime", data: { video_multipart_upload: true } %>
+                                    <div class="muted small-text upload-status" data-upload-status></div>
                                     <p class="muted small-text">Use a YouTube/Vimeo URL OR upload an MP4/MOV file.</p>
                                     <% end %>
                                 </div>
@@ -104,7 +105,8 @@
                                 <label class="muted small-text">Video URL</label>
                                 <input type="text" class="input" id="draft-video-input" placeholder="https://www.youtube.com/watch?v=..." />
                                 <label class="muted small-text" style="margin-top:8px;">Or upload video</label>
-                                <input type="file" class="input" id="draft-video-file-input" accept="video/mp4,video/quicktime" data-direct-upload-url="<%= rails_direct_uploads_path %>" />
+                                <input type="file" class="input" id="draft-video-file-input" accept="video/mp4,video/quicktime" data-video-multipart-upload="true" />
+                                <div class="muted small-text upload-status" data-upload-status></div>
                                 <p class="muted small-text">Use a YouTube/Vimeo URL OR upload an MP4/MOV file.</p>
                             </div>
                         </div>
@@ -423,7 +425,8 @@
               <label class=\"muted small-text\">Video URL</label>
               <input type=\"text\" name=\"lesson[lesson_media_attributes][${index}][video_url]\" class=\"input\" placeholder=\"https://www.youtube.com/watch?v=...\" />
               <label class=\"muted small-text\" style=\"margin-top:8px;\">Or upload video</label>
-              <input type=\"file\" name=\"lesson[lesson_media_attributes][${index}][video_file]\" class=\"input\" accept=\"video/mp4,video/quicktime\" data-direct-upload-url=\"<%= rails_direct_uploads_path %>\" />
+              <input type=\"file\" name=\"lesson[lesson_media_attributes][${index}][video_file]\" class=\"input\" accept=\"video/mp4,video/quicktime\" data-video-multipart-upload=\"true\" />
+              <div class=\"muted small-text upload-status\" data-upload-status></div>
               <p class=\"muted small-text\">Use a YouTube/Vimeo URL OR upload an MP4/MOV file.</p>
             </div>
           </div>
@@ -570,7 +573,7 @@
                     freshVideoFile.className = "input";
                     freshVideoFile.id = "draft-video-file-input";
                     freshVideoFile.accept = "video/mp4,video/quicktime";
-                    freshVideoFile.setAttribute("data-direct-upload-url", "<%= rails_direct_uploads_path %>");
+                    freshVideoFile.setAttribute("data-video-multipart-upload", "true");
                     draftVideoFileInput = freshVideoFile;
                     const draftVideoParent = draftVideoWrap;
                     draftVideoParent?.querySelector("input[type='file']")?.remove();
@@ -581,6 +584,7 @@
             }
 
             attachRowHandlers(newRow, true);
+            window.initVideoMultipartUploads?.(newRow);
             reindexPositions();
             closeDraft();
             markDirty();

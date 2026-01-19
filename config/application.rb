@@ -23,5 +23,12 @@ module Myvault
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    config.after_initialize do
+      next unless ENV["AWS_SSL_CA_BUNDLE"].present?
+      next unless defined?(Aws)
+
+      Aws.config.update(ssl_ca_bundle: ENV["AWS_SSL_CA_BUNDLE"])
+    end
   end
 end
