@@ -24,6 +24,8 @@ module Coach
         end
       end
       render :new, status: :unprocessable_entity
+    rescue Aws::S3::MultipartUploadError => e
+      handle_upload_error(e, :new)
     end
 
     def edit; end
@@ -39,6 +41,8 @@ module Coach
         end
       end
       render(:edit, status: :unprocessable_entity) if performed? == false && @lesson.errors.any?
+    rescue Aws::S3::MultipartUploadError => e
+      handle_upload_error(e, :edit)
     end
 
     def destroy
@@ -132,6 +136,16 @@ module Coach
     rescue ActiveRecord::RecordInvalid => e
       lesson.errors.add(:base, e.record.errors.full_messages.to_sentence)
       raise ActiveRecord::Rollback
+    end
+
+    def handle_upload_error(error, template)
+      return if performed?
+
+      Rails.logger.error("[lesson upload] multipart failure lesson_id=#{@lesson&.id} error=#{error.class} message=#{error.message}")
+      @lesson ||= current_user.lessons.build
+      @lesson.errors.add(:base, "Video upload failed. Please try again.")
+      flash.now[:alert] = "Video upload failed. Please try again."
+      render template, status: :service_unavailable
     end
   end
 end
