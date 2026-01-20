@@ -1,5 +1,11 @@
 <div class="lesson-form-page">
-    <%= form_with model: [:coach, @lesson], local: true, html: { multipart: true } do |form| %>
+    <%= form_with model: [:coach, @lesson], local: true, html: { multipart: true, data: { controller: "form-submit-lock", action: "submit->form-submit-lock#handleSubmit turbo:submit-end->form-submit-lock#handleTurboEnd ajax:complete->form-submit-lock#handleAjaxComplete" } } do |form| %>
+    <div class="form-submit-lock__overlay" data-form-submit-lock-target="overlay" aria-hidden="true">
+        <div class="form-submit-lock__dialog">
+            <div class="form-submit-lock__spinner" aria-hidden="true"></div>
+            <p class="form-submit-lock__message" data-form-submit-lock-target="overlayMessage">Saving your lesson...</p>
+        </div>
+    </div>
     <% if @lesson.errors.any? %>
     <div class="alert alert-danger">
         <p><strong><%= pluralize(@lesson.errors.count, "error") %> prevented this lesson from saving:</strong></p>
@@ -237,8 +243,12 @@
     <div class="access-footer card sticky-save lesson-form-actions">
         <div class="muted small-text" id="dirty-indicator-new">Changes are saved when you click Save.</div>
         <div class="card-actions">
-            <%= form.submit(@lesson.persisted? ? "Update lesson" : "Create lesson", class: "btn btn-primary") %>
-            <%= link_to "Cancel", coach_lessons_path, class: "btn btn-ghost" %>
+            <div class="form-submit-lock__status" style="display:inline-flex; align-items:center; gap:8px; margin-right:12px;">
+                <span data-form-submit-lock-target="status" class="muted small-text" style="display:none;"></span>
+                <span data-form-submit-lock-target="error" class="small-text" style="display:none; color:#dc2626;"></span>
+            </div>
+            <%= form.submit(@lesson.persisted? ? "Update lesson" : "Create lesson", class: "btn btn-primary", data: { form_submit_lock_target: "submit" }) %>
+            <%= link_to "Cancel", coach_lessons_path, class: "btn btn-ghost", data: { form_submit_lock_target: "cancel", action: "click->form-submit-lock#handleCancelClick" } %>
         </div>
     </div>
     <% end %>
