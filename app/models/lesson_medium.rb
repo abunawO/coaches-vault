@@ -31,13 +31,19 @@ class LessonMedium < ApplicationRecord
   def video_file_validation
     return unless video_file.attached?
 
-    unless video_file.content_type.in?(%w[video/mp4 video/quicktime])
-      errors.add(:video_file, "must be an MP4 or MOV file")
+    allowed_types = %w[video/mp4 video/quicktime]
+    unless allowed_types.include?(video_file.content_type)
+      errors.add(:video_file, "must be an MP4 or MOV (H.264/AAC) file")
     end
 
     max_size = 500.megabytes
     if video_file.byte_size > max_size
       errors.add(:video_file, "is too large (maximum 500 MB)")
+    end
+
+    duration = video_file.blob&.metadata&.with_indifferent_access&.[](:duration)
+    if duration && duration.to_f > 120
+      errors.add(:video_file, "must be 2 minutes or shorter")
     end
   end
 end

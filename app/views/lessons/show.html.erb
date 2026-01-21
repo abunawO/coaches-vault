@@ -57,9 +57,15 @@
                                 </div>
                                 <% elsif kind.to_s == "video" && video_attached %>
                                 <div class="carousel-media video">
-                                    <video controls preload="metadata" style="max-width:100%; height:auto;">
+                                    <video preload="metadata" playsinline data-inline-video style="max-width:100%; height:auto;">
                                         <source src="<%= url_for(video_file) %>">
                                     </video>
+                                    <button type="button" class="video-inline-overlay" data-inline-video-overlay aria-label="Play video">
+                                        <span class="video-poster__overlay" aria-hidden="true">
+                                            <span class="video-play-icon"></span>
+                                            <span class="video-poster__label">Play</span>
+                                        </span>
+                                    </button>
                                 </div>
                                 <% elsif video_url.present? %>
                                 <% embed = embed_url_for(video_url) %>
@@ -71,7 +77,10 @@
                                         <% if poster %>
                                         <img src="<%= poster %>" alt="Video thumbnail" loading="lazy" decoding="async">
                                         <% end %>
-                                        <span class="video-play-icon" aria-hidden="true"></span>
+                                        <span class="video-poster__overlay" aria-hidden="true">
+                                            <span class="video-play-icon"></span>
+                                            <span class="video-poster__label">Play</span>
+                                        </span>
                                     </button>
                                 </div>
                                 <% else %>
@@ -327,6 +336,33 @@
             btn.addEventListener("click", () => {
                 target.classList.toggle("about-collapsed");
                 updateLabel();
+            });
+        });
+
+        // Play overlay for inline video files
+        document.querySelectorAll("[data-inline-video]").forEach((video) => {
+            const overlay = video.parentElement?.querySelector("[data-inline-video-overlay]");
+            if (!overlay) return;
+
+            const showOverlay = () => {
+                overlay.style.display = "";
+            };
+
+            const hideOverlay = () => {
+                overlay.style.display = "none";
+            };
+
+            overlay.addEventListener("click", () => {
+                hideOverlay();
+                video.setAttribute("controls", "controls");
+                video.play().catch(() => {
+                    showOverlay();
+                });
+            });
+
+            video.addEventListener("play", hideOverlay);
+            video.addEventListener("pause", () => {
+                if (video.currentTime === 0 || video.ended) showOverlay();
             });
         });
 

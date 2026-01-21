@@ -406,6 +406,10 @@ a:hover {
   opacity: 1;
 }
 
+.carousel-media.video {
+  position: relative;
+}
+
 .carousel-media.image {
   display: grid;
   place-items: center;
@@ -584,11 +588,28 @@ a:hover {
   border-radius: inherit;
 }
 
+.video-inline-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  background: transparent;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  z-index: 3;
+}
+
 .video-play-icon {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
+  z-index: 2;
 }
 
 .video-play-icon::before {
@@ -607,6 +628,38 @@ a:hover {
   border-top: 12px solid transparent;
   border-bottom: 12px solid transparent;
   margin-left: 6px;
+}
+
+.video-poster__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.55));
+  border-radius: inherit;
+}
+
+.video-poster__label {
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.1px;
+}
+
+/* Hide native controls until we explicitly show them */
+video[data-inline-video]:not([controls])::-webkit-media-controls {
+  display: none !important;
+}
+video[data-inline-video]:not([controls])::-moz-media-controls {
+  display: none !important;
 }
 
 .meta-header {

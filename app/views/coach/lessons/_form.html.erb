@@ -74,10 +74,10 @@
                                     <% else %>
                                     <label class="muted small-text">Video URL</label>
                                     <%= mf.text_field :video_url, class: "input", placeholder: "https://www.youtube.com/watch?v=..." %>
-                                    <label class="muted small-text" style="margin-top:8px;">Or upload video</label>
+                                    <label class="muted small-text" style="margin-top:8px;">Or upload video (MP4/MOV, H.264/AAC, max 2 minutes)</label>
                                     <%= mf.file_field :video_file, class: "input", accept: "video/mp4,video/quicktime", data: { video_multipart_upload: true } %>
                                     <div class="muted small-text upload-status" data-upload-status></div>
-                                    <p class="muted small-text">Use a YouTube/Vimeo URL OR upload an MP4/MOV file.</p>
+                                    <p class="muted small-text">Use a YouTube/Vimeo URL OR upload an MP4 or MOV (H.264/AAC) file under 2 minutes.</p>
                                     <% end %>
                                 </div>
                             </div>
@@ -95,6 +95,7 @@
                     <div class="lesson-media-actions-row">
                         <button type="button" class="btn btn-secondary btn-small" data-action="click" data-add-media="image">+ Add image slide</button>
                         <button type="button" class="btn btn-secondary btn-small" data-action="click" data-add-media="video">+ Add video slide</button>
+                        <p class="muted small-text" id="slide-limit-message" style="margin:0;">You can add up to 5 slides per lesson.</p>
                     </div>
 
                     <div class="draft-slide card" id="draft-slide" hidden>
@@ -381,6 +382,8 @@
         // ---- Lesson media (slides) ----
         const mediaList = document.getElementById("lesson-media-list");
         const addButtons = Array.from(document.querySelectorAll("[data-add-media]"));
+        const slideLimitMessage = document.getElementById("slide-limit-message");
+        const MAX_SLIDES = 5;
         const draft = document.getElementById("draft-slide");
         const draftImageWrap = document.getElementById("draft-image");
         const draftVideoWrap = document.getElementById("draft-video");
@@ -459,6 +462,28 @@
             });
         };
 
+        const currentSlidesCount = () => {
+            if (!mediaList) return 0;
+            return Array.from(mediaList.querySelectorAll("[data-slide-row]")).filter((row) => {
+                if (row.classList.contains("is-destroyed")) return false;
+                const destroyField = row.querySelector("[data-destroy-field]");
+                return !(destroyField && destroyField.checked);
+            }).length;
+        };
+
+        const updateSlideLimitState = () => {
+            const count = currentSlidesCount();
+            const limitReached = count >= MAX_SLIDES;
+            addButtons.forEach((btn) => {
+                btn.disabled = limitReached;
+            });
+            if (slideLimitMessage) {
+                slideLimitMessage.textContent = limitReached
+                    ? "Slide limit reached (5). Remove a slide to add another."
+                    : "You can add up to 5 slides per lesson.";
+            }
+        };
+
         const attachRowHandlers = (row, isNew = false) => {
             const up = row.querySelector("[data-move='up']");
             const down = row.querySelector("[data-move='down']");
@@ -494,6 +519,7 @@
                     row.classList.add("is-destroyed");
                 }
                 reindexPositions();
+                updateSlideLimitState();
                 markDirty();
             });
         };
@@ -530,6 +556,10 @@
 
         addButtons.forEach((btn) => {
             btn.addEventListener("click", () => {
+                if (currentSlidesCount() >= MAX_SLIDES) {
+                    updateSlideLimitState();
+                    return;
+                }
                 openDraft(btn.dataset.addMedia);
             });
         });
@@ -550,6 +580,10 @@
             const urlVal = draftVideoInput ? draftVideoInput.value.trim() : "";
             const hasVideoFile = draftVideoFileInput && draftVideoFileInput.files.length > 0;
             if (draftKind === "video" && !hasVideoFile && urlVal === "") return;
+            if (currentSlidesCount() >= MAX_SLIDES) {
+                updateSlideLimitState();
+                return;
+            }
 
             const index = Date.now();
             mediaList.insertAdjacentHTML("beforeend", mediaTemplate(draftKind, index));
@@ -601,5 +635,6 @@
         });
 
         reindexPositions();
+        updateSlideLimitState();
     });
 </script>

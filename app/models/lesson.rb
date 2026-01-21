@@ -13,6 +13,7 @@ class Lesson < ApplicationRecord
 
   validates :title, presence: true
   validate :content_presence
+  validate :slide_count_within_limit
 
   enum :visibility, { free: 0, subscribers: 1, restricted: 2 }, default: :subscribers
 
@@ -84,5 +85,13 @@ class Lesson < ApplicationRecord
     return if video_url.present?
 
     errors.add(:base, "Add at least one media item or a video URL")
+  end
+
+  def slide_count_within_limit
+    max_slides = 5
+    count = lesson_media.reject(&:marked_for_destruction?).size
+    return if count <= max_slides
+
+    errors.add(:base, "You can add up to #{max_slides} slides per lesson.")
   end
 end

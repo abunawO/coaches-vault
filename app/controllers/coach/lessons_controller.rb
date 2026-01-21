@@ -24,7 +24,7 @@ module Coach
         end
       end
       render :new, status: :unprocessable_entity
-    rescue Aws::S3::MultipartUploadError => e
+    rescue Aws::S3::MultipartUploadError, Seahorse::Client::NetworkingError => e
       handle_upload_error(e, :new)
     end
 
@@ -41,7 +41,7 @@ module Coach
         end
       end
       render(:edit, status: :unprocessable_entity) if performed? == false && @lesson.errors.any?
-    rescue Aws::S3::MultipartUploadError => e
+    rescue Aws::S3::MultipartUploadError, Seahorse::Client::NetworkingError => e
       handle_upload_error(e, :edit)
     end
 
