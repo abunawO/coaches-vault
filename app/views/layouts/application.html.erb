@@ -34,86 +34,195 @@
       <% end %>
     </div>
 
-    <header class="topnav">
-        <div class="topnav__inner">
-            <div class="topnav__left">
-                <% brand_path = (logged_in? && current_user.coach?) ? coach_vault_path : root_path %>
-                <%= link_to "MyVault", brand_path, class: "topnav__brand" %>
-
-        <nav class="topnav__links" aria-label="Primary">
-          <% if logged_in? %>
-            <% if current_user.student? %>
-              <%= link_to "Coaches", coaches_path, class: nav_link_class(coaches_path) %>
-              <%= link_to "Dashboard", root_path, class: nav_link_class(root_path) %>
-              <%= link_to "Search", search_path, class: nav_link_class(search_path) %>
-              <%= link_to "Subscriptions", subscriptions_path, class: nav_link_class(subscriptions_path) %>
-              <%= link_to "Favorites", favorites_path, class: nav_link_class(favorites_path) %>
-              <%= link_to conversations_path, class: nav_link_class(conversations_path) do %>
-                Messages
-                <span id="nav_messages_badge" class="topnav__badge-slot">
-                  <% if current_user.unread_messages_count.positive? %>
-                    <span class="topnav__badge" aria-label="<%= current_user.unread_messages_count %> unread messages">
-                      <%= current_user.unread_messages_count %>
-                    </span>
-                  <% end %>
-                </span>
-              <% end %>
-              <%= link_to notifications_path, class: nav_link_class(notifications_path) do %>
-                Notifications
-                <span id="nav_notifications_badge" class="topnav__badge-slot">
-                  <% if current_user.unread_notifications_count.positive? %>
-                    <span class="topnav__badge" aria-label="<%= current_user.unread_notifications_count %> unread notifications">
-                      <%= current_user.unread_notifications_count %>
-                    </span>
-                  <% end %>
-                </span>
-              <% end %>
-            <% elsif current_user.coach? %>
-              <%= link_to "Dashboard", root_path, class: nav_link_class(root_path) %>
-              <%= link_to "My Lessons", lessons_path, class: nav_link_class(lessons_path) %>
-              <%= link_to "Content", coach_content_path, class: nav_link_class(coach_content_path) %>
-              <%= link_to conversations_path, class: nav_link_class(conversations_path) do %>
-                Messages
-                <span id="nav_messages_badge" class="topnav__badge-slot">
-                  <% if current_user.unread_messages_count.positive? %>
-                    <span class="topnav__badge" aria-label="<%= current_user.unread_messages_count %> unread messages">
-                      <%= current_user.unread_messages_count %>
-                    </span>
-                  <% end %>
-                </span>
-              <% end %>
-              <%= link_to notifications_path, class: nav_link_class(notifications_path) do %>
-                Notifications
-                <span id="nav_notifications_badge" class="topnav__badge-slot">
-                  <% if current_user.unread_notifications_count.positive? %>
-                    <span class="topnav__badge" aria-label="<%= current_user.unread_notifications_count %> unread notifications">
-                      <%= current_user.unread_notifications_count %>
-                    </span>
-                  <% end %>
-                </span>
-              <% end %>
-              <%= link_to "Subscribers", subscribers_path, class: nav_link_class(subscribers_path) %>
-            <% end %>
-          <% else %>
-            <%= link_to "Coaches", coaches_path, class: nav_link_class(coaches_path) %>
-            <%= link_to "Search", search_path, class: nav_link_class(search_path) %>
-            <%= link_to "Sign up", signup_path, class: nav_link_class(signup_path) %>
-            <%= link_to "Login", login_path, class: nav_link_class(login_path) %>
-          <% end %>
-        </nav>
-      </div>
-
-      <div class="topnav__right">
-        <% if logged_in? %>
-          <div class="topnav__user">
-            <span class="topnav__signedin">Signed in as</span>
-            <span class="topnav__email"><%= current_user.email %></span>
+    <header class="topnav" data-controller="topnav">
+      <div class="topnav__inner">
+        <div class="topnav__bar">
+          <div class="topnav__brand">
+            <% brand_path = (logged_in? && current_user.coach?) ? coach_vault_path : root_path %>
+            <%= link_to "MyVault", brand_path, class: "topnav__brand-link" %>
           </div>
-          <%= button_to "Logout", logout_path, method: :delete, form: { class: "inline-form" }, class: "btn btn-secondary" %>
-        <% end %>
+
+          <nav class="topnav__nav" aria-label="Primary">
+            <div class="topnav__links" data-topnav-target="desktopLinks">
+              <% if logged_in? %>
+                <% if current_user.student? %>
+                  <%= link_to "Coaches", coaches_path, class: "topnav__link #{nav_link_class(coaches_path)}" %>
+                  <%= link_to "Dashboard", root_path, class: "topnav__link #{nav_link_class(root_path)}" %>
+                  <%= link_to "Search", search_path, class: "topnav__link #{nav_link_class(search_path)}" %>
+                  <%= link_to "Subscriptions", subscriptions_path, class: "topnav__link #{nav_link_class(subscriptions_path)} nav-item--collapse-md" %>
+                  <%= link_to "Favorites", favorites_path, class: "topnav__link #{nav_link_class(favorites_path)} nav-item--collapse-md" %>
+                  <%= link_to conversations_path, class: "topnav__link #{nav_link_class(conversations_path)} nav-item--collapse-md" do %>
+                    Messages
+                    <span id="nav_messages_badge" class="topnav__badge-slot">
+                      <% if current_user.unread_messages_count.positive? %>
+                        <span class="topnav__badge" aria-label="<%= current_user.unread_messages_count %> unread messages">
+                          <%= current_user.unread_messages_count %>
+                        </span>
+                      <% end %>
+                    </span>
+                  <% end %>
+                  <%= link_to notifications_path, class: "topnav__link #{nav_link_class(notifications_path)} nav-item--collapse-md" do %>
+                    Notifications
+                    <span id="nav_notifications_badge" class="topnav__badge-slot">
+                      <% if current_user.unread_notifications_count.positive? %>
+                        <span class="topnav__badge" aria-label="<%= current_user.unread_notifications_count %> unread notifications">
+                          <%= current_user.unread_notifications_count %>
+                        </span>
+                      <% end %>
+                    </span>
+                  <% end %>
+                <% elsif current_user.coach? %>
+                  <%= link_to "Dashboard", root_path, class: "topnav__link #{nav_link_class(root_path)}" %>
+                  <%= link_to "My Lessons", lessons_path, class: "topnav__link #{nav_link_class(lessons_path)}" %>
+                  <%= link_to "Content", coach_content_path, class: "topnav__link #{nav_link_class(coach_content_path)}" %>
+                  <%= link_to conversations_path, class: "topnav__link #{nav_link_class(conversations_path)} nav-item--collapse-md" do %>
+                    Messages
+                    <span id="nav_messages_badge" class="topnav__badge-slot">
+                      <% if current_user.unread_messages_count.positive? %>
+                        <span class="topnav__badge" aria-label="<%= current_user.unread_messages_count %> unread messages">
+                          <%= current_user.unread_messages_count %>
+                        </span>
+                      <% end %>
+                    </span>
+                  <% end %>
+                  <%= link_to notifications_path, class: "topnav__link #{nav_link_class(notifications_path)} nav-item--collapse-md" do %>
+                    Notifications
+                    <span id="nav_notifications_badge" class="topnav__badge-slot">
+                      <% if current_user.unread_notifications_count.positive? %>
+                        <span class="topnav__badge" aria-label="<%= current_user.unread_notifications_count %> unread notifications">
+                          <%= current_user.unread_notifications_count %>
+                        </span>
+                      <% end %>
+                    </span>
+                  <% end %>
+                  <%= link_to "Subscribers", subscribers_path, class: "topnav__link #{nav_link_class(subscribers_path)} nav-item--collapse-md" %>
+                <% end %>
+              <% else %>
+                <%= link_to "Coaches", coaches_path, class: "topnav__link #{nav_link_class(coaches_path)}" %>
+                <%= link_to "Search", search_path, class: "topnav__link #{nav_link_class(search_path)}" %>
+                <%= link_to "Sign up", signup_path, class: "topnav__link #{nav_link_class(signup_path)}" %>
+                <%= link_to "Login", login_path, class: "topnav__link #{nav_link_class(login_path)}" %>
+              <% end %>
+            </div>
+
+            <div class="topnav__more" data-topnav-target="moreWrap">
+              <button type="button" class="topnav__moreBtn" data-action="click->topnav#toggleMore" aria-expanded="false">
+                More ▾
+              </button>
+              <div class="topnav__moreMenu" data-topnav-target="moreMenu" hidden>
+                <% if logged_in? %>
+                  <% if current_user.student? %>
+                    <%= link_to "Subscriptions", subscriptions_path, class: "topnav__moreLink #{nav_link_class(subscriptions_path)}" %>
+                    <%= link_to "Favorites", favorites_path, class: "topnav__moreLink #{nav_link_class(favorites_path)}" %>
+                    <%= link_to conversations_path, class: "topnav__moreLink #{nav_link_class(conversations_path)}" do %>
+                      Messages
+                      <% if current_user.unread_messages_count.positive? %>
+                        <span class="topnav__badge topnav__badge--inline"><%= current_user.unread_messages_count %></span>
+                      <% end %>
+                    <% end %>
+                    <%= link_to notifications_path, class: "topnav__moreLink #{nav_link_class(notifications_path)}" do %>
+                      Notifications
+                      <% if current_user.unread_notifications_count.positive? %>
+                        <span class="topnav__badge topnav__badge--inline"><%= current_user.unread_notifications_count %></span>
+                      <% end %>
+                    <% end %>
+                  <% elsif current_user.coach? %>
+                    <%= link_to conversations_path, class: "topnav__moreLink #{nav_link_class(conversations_path)}" do %>
+                      Messages
+                      <% if current_user.unread_messages_count.positive? %>
+                        <span class="topnav__badge topnav__badge--inline"><%= current_user.unread_messages_count %></span>
+                      <% end %>
+                    <% end %>
+                    <%= link_to notifications_path, class: "topnav__moreLink #{nav_link_class(notifications_path)}" do %>
+                      Notifications
+                      <% if current_user.unread_notifications_count.positive? %>
+                        <span class="topnav__badge topnav__badge--inline"><%= current_user.unread_notifications_count %></span>
+                      <% end %>
+                    <% end %>
+                    <%= link_to "Subscribers", subscribers_path, class: "topnav__moreLink #{nav_link_class(subscribers_path)}" %>
+                  <% end %>
+                <% else %>
+                  <%= link_to "Login", login_path, class: "topnav__moreLink #{nav_link_class(login_path)}" %>
+                <% end %>
+              </div>
+            </div>
+          </nav>
+
+          <div class="topnav__account">
+            <% if logged_in? %>
+              <div class="topnav__user">
+                <span class="topnav__signedin">Signed in as</span>
+                <span class="topnav__email"><%= current_user.email %></span>
+              </div>
+              <%= button_to "Logout", logout_path, method: :delete, form: { class: "inline-form" }, class: "btn btn-secondary" %>
+            <% end %>
+            <button class="topnav__toggle topnav__hamburger" type="button" aria-label="Toggle navigation" aria-expanded="false" data-action="click->topnav#toggle" data-topnav-target="toggle">
+              <span class="topnav__toggle-bar"></span>
+              <span class="topnav__toggle-bar"></span>
+              <span class="topnav__toggle-bar"></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="topnav__panel" data-topnav-target="menu">
+          <nav class="topnav__links topnav__links--mobile" aria-label="Mobile primary">
+            <% if logged_in? %>
+              <% if current_user.student? %>
+                <%= link_to "Coaches", coaches_path, class: "topnav__link #{nav_link_class(coaches_path)}", data: { action: "click->topnav#close" } %>
+                <%= link_to "Dashboard", root_path, class: "topnav__link #{nav_link_class(root_path)}", data: { action: "click->topnav#close" } %>
+                <%= link_to "Search", search_path, class: "topnav__link #{nav_link_class(search_path)}", data: { action: "click->topnav#close" } %>
+                <%= link_to "Subscriptions", subscriptions_path, class: "topnav__link #{nav_link_class(subscriptions_path)}", data: { action: "click->topnav#close" } %>
+                <%= link_to "Favorites", favorites_path, class: "topnav__link #{nav_link_class(favorites_path)}", data: { action: "click->topnav#close" } %>
+                <%= link_to conversations_path, class: "topnav__link #{nav_link_class(conversations_path)}", data: { action: "click->topnav#close" } do %>
+                  Messages
+                  <% if current_user.unread_messages_count.positive? %>
+                    <span class="topnav__badge"><%= current_user.unread_messages_count %></span>
+                  <% end %>
+                <% end %>
+                <%= link_to notifications_path, class: "topnav__link #{nav_link_class(notifications_path)}", data: { action: "click->topnav#close" } do %>
+                  Notifications
+                  <% if current_user.unread_notifications_count.positive? %>
+                    <span class="topnav__badge"><%= current_user.unread_notifications_count %></span>
+                  <% end %>
+                <% end %>
+              <% elsif current_user.coach? %>
+                <%= link_to "Dashboard", root_path, class: "topnav__link #{nav_link_class(root_path)}", data: { action: "click->topnav#close" } %>
+                <%= link_to "My Lessons", lessons_path, class: "topnav__link #{nav_link_class(lessons_path)}", data: { action: "click->topnav#close" } %>
+                <%= link_to "Content", coach_content_path, class: "topnav__link #{nav_link_class(coach_content_path)}", data: { action: "click->topnav#close" } %>
+                <%= link_to conversations_path, class: "topnav__link #{nav_link_class(conversations_path)}", data: { action: "click->topnav#close" } do %>
+                  Messages
+                  <% if current_user.unread_messages_count.positive? %>
+                    <span class="topnav__badge"><%= current_user.unread_messages_count %></span>
+                  <% end %>
+                <% end %>
+                <%= link_to notifications_path, class: "topnav__link #{nav_link_class(notifications_path)}", data: { action: "click->topnav#close" } do %>
+                  Notifications
+                  <% if current_user.unread_notifications_count.positive? %>
+                    <span class="topnav__badge"><%= current_user.unread_notifications_count %></span>
+                  <% end %>
+                <% end %>
+                <%= link_to "Subscribers", subscribers_path, class: "topnav__link #{nav_link_class(subscribers_path)}", data: { action: "click->topnav#close" } %>
+              <% end %>
+            <% else %>
+              <%= link_to "Coaches", coaches_path, class: "topnav__link #{nav_link_class(coaches_path)}", data: { action: "click->topnav#close" } %>
+              <%= link_to "Search", search_path, class: "topnav__link #{nav_link_class(search_path)}", data: { action: "click->topnav#close" } %>
+              <%= link_to "Sign up", signup_path, class: "topnav__link #{nav_link_class(signup_path)}", data: { action: "click->topnav#close" } %>
+              <%= link_to "Login", login_path, class: "topnav__link #{nav_link_class(login_path)}", data: { action: "click->topnav#close" } %>
+            <% end %>
+          </nav>
+          <div class="topnav__panel-divider"></div>
+          <% if logged_in? %>
+            <div class="topnav__panel-account">
+              <div class="topnav__user">
+                <span class="topnav__signedin">Signed in as</span>
+                <span class="topnav__email"><%= current_user.email %></span>
+              </div>
+              <%= button_to "Logout", logout_path, method: :delete, form: { class: "inline-form" }, class: "btn btn-secondary btn-full" %>
+            </div>
+          <% end %>
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
 
     <main class="page" data-controller="confirm-modal">
         <%= render "shared/confirm_modal" %>
