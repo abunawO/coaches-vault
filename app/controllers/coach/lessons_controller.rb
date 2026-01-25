@@ -152,7 +152,7 @@ module Coach
       friendly_msg = "We couldn't upload your video. Please retry the upload or choose another file."
       @lesson.errors.add(:base, friendly_msg)
       flash.now[:alert] = friendly_msg
-      render template, status: :service_unavailable
+      render template, status: :unprocessable_entity
     end
   end
 end
