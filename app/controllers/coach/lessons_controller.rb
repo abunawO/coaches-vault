@@ -23,6 +23,7 @@ module Coach
           raise ActiveRecord::Rollback
         end
       end
+      rebuild_lesson_media_from_params(@lesson, lesson_params)
       render :new, status: :unprocessable_entity
     rescue Aws::S3::MultipartUploadError, Seahorse::Client::NetworkingError => e
       handle_upload_error(e, :new)
@@ -149,10 +150,34 @@ module Coach
       rescue ActionController::ParameterMissing
         # no params present
       end
+      rebuild_lesson_media_from_params(@lesson, lesson_params) rescue nil
       friendly_msg = "We couldn't upload your video. Please retry the upload or choose another file."
       @lesson.errors.add(:base, friendly_msg)
       flash.now[:alert] = friendly_msg
       render template, status: :unprocessable_entity
+    end
+
+    def rebuild_lesson_media_from_params(lesson, permitted_params)
+      media_attrs = permitted_params[:lesson_media_attributes]
+      return unless media_attrs.present?
+
+      media_hash = media_attrs.respond_to?(:to_unsafe_h) ? media_attrs.to_unsafe_h : media_attrs.to_h
+      media_hash.each_value do |attrs|
+        attrs = attrs.to_h
+        media =
+          if attrs["id"].present?
+            lesson.lesson_media.detect { |m| m.id == attrs["id"].to_i } || lesson.lesson_media.build(id: attrs["id"])
+          else
+            lesson.lesson_media.build
+          end
+
+        cleaned_attrs = attrs.except("id").dup
+        %w[image_file video_file].each do |file_key|
+          cleaned_attrs.delete(file_key) if cleaned_attrs[file_key].blank?
+        end
+
+        media.assign_attributes(cleaned_attrs)
+      end
     end
   end
 end
