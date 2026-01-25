@@ -6,14 +6,36 @@
             <p class="form-submit-lock__message" data-form-submit-lock-target="overlayMessage">Saving your lesson...</p>
         </div>
     </div>
+    <% sticky_error = flash.now[:alert].presence || flash[:alert].presence || @lesson.errors[:base].presence&.first %>
+    <% if sticky_error.present? %>
+    <div class="form-banner form-banner--error" role="alert">
+        <div class="form-banner__icon" aria-hidden="true">⚠️</div>
+        <div class="form-banner__body">
+            <p class="form-banner__title">Upload issue</p>
+            <p class="form-banner__text"><%= sticky_error %></p>
+            <p class="form-banner__hint">Your form entries are still here. Fix the upload below and retry.</p>
+        </div>
+        <div class="form-banner__actions">
+            <a class="btn btn-ghost btn-small" href="#lesson-media-list">Go to uploads</a>
+        </div>
+    </div>
+    <% end %>
     <% if @lesson.errors.any? %>
-    <div class="alert alert-danger">
-        <p><strong><%= pluralize(@lesson.errors.count, "error") %> prevented this lesson from saving:</strong></p>
-        <ul>
-            <% @lesson.errors.full_messages.each do |msg| %>
-            <li><%= msg %></li>
-            <% end %>
-        </ul>
+    <div class="form-alert form-alert--error" role="alert">
+        <div class="form-alert__icon" aria-hidden="true">⚠️</div>
+        <div class="form-alert__body">
+            <p class="form-alert__title">We couldn't save this lesson yet.</p>
+            <p class="form-alert__subtitle">Please review the items below and try again.</p>
+            <ul class="form-alert__list">
+                <% @lesson.errors.full_messages.each do |msg| %>
+                <li><%= msg %></li>
+                <% end %>
+            </ul>
+            <p class="form-alert__hint">Common fixes: add at least one media item or video URL, complete required fields, and retry uploads if they failed.</p>
+        </div>
+        <div class="form-alert__actions">
+            <a class="btn btn-ghost btn-small" href="#lesson-media-list">Jump to media</a>
+        </div>
     </div>
     <% end %>
     <div class="lesson-form-layout">

@@ -102,6 +102,55 @@ a:hover {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
 }
 
+.form-alert {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 16px;
+}
+
+.form-alert__icon {
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.form-alert__body {
+  display: grid;
+  gap: 6px;
+}
+
+.form-alert__title {
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.form-alert__subtitle,
+.form-alert__hint {
+  margin: 0;
+  color: #991b1b;
+  opacity: 0.85;
+}
+
+.form-alert__list {
+  margin: 0;
+  padding-left: 18px;
+  color: #991b1b;
+}
+
+.form-alert__actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .topnav__links a.is-active,
 .topnav__links a.active {
   background: rgba(15, 107, 231, 0.12);
@@ -118,6 +167,63 @@ a:hover {
   min-height: 20px;
 }
 
+.form-banner {
+  position: sticky;
+  top: 72px;
+  z-index: 15;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 16px;
+}
+
+.form-banner__icon {
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.form-banner__body {
+  display: grid;
+  gap: 4px;
+}
+
+.form-banner__title {
+  margin: 0;
+  font-weight: 800;
+}
+
+.form-banner__text {
+  margin: 0;
+  font-weight: 600;
+}
+
+.form-banner__hint {
+  margin: 0;
+  color: #991b1b;
+  opacity: 0.9;
+}
+
+.form-banner__actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-banner--error .btn-ghost {
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+#lesson-media-list {
+  scroll-margin-top: 120px;
+}
 .topnav__badge {
   display: inline-flex;
   align-items: center;
@@ -2887,6 +2993,69 @@ details[open] .vault-caret {
   justify-content: flex-end;
   white-space: nowrap;
   position: relative;
+}
+
+/* Coach content filters */
+.content-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.content-tabs {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.content-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex: 1 1 auto;
+}
+
+.content-search__field {
+  width: 200px;
+}
+
+.content-sort__select {
+  width: 140px;
+}
+
+.content-clear {
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .content-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .content-filters {
+    justify-content: stretch;
+  }
+
+  .content-search__field,
+  .content-sort__select {
+    width: 100%;
+  }
+
+  .content-filters .inline-form {
+    width: 100%;
+  }
+
+  .content-filters {
+    gap: 8px;
+  }
 }
 
 .mv-inbox__open {

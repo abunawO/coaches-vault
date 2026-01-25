@@ -6,30 +6,30 @@
           subtitle: "Control who can access your lessons.",
           primary_action: { label: "New Lesson", url: new_coach_lesson_path(return_to: request.fullpath) } %>
 
-    <div class="inbox-toolbar" style="justify-content: space-between; margin-bottom: 12px;">
-      <div class="inbox-tabs" style="margin: 0;">
+    <div class="content-toolbar">
+      <div class="inbox-tabs content-tabs">
         <%= link_to "All", coach_content_path(tab: "all", q: @q, sort: @sort), class: inbox_tab_class("all", @tab), aria: { current: ("page" if @tab == "all") } %>
         <%= link_to "Free", coach_content_path(tab: "free", q: @q, sort: @sort), class: inbox_tab_class("free", @tab), aria: { current: ("page" if @tab == "free") } %>
         <%= link_to "Subscribers", coach_content_path(tab: "subscribers", q: @q, sort: @sort), class: inbox_tab_class("subscribers", @tab), aria: { current: ("page" if @tab == "subscribers") } %>
         <%= link_to "Private", coach_content_path(tab: "private", q: @q, sort: @sort), class: inbox_tab_class("private", @tab), aria: { current: ("page" if @tab == "private") } %>
       </div>
-      <div style="display:flex; gap:10px; align-items:center;">
-        <%= form_with url: coach_content_path, method: :get, local: true, class: "inline-form", id: "content-search" do |f| %>
+      <div class="content-filters">
+        <%= form_with url: coach_content_path, method: :get, local: true, class: "inline-form content-search", id: "content-search" do |f| %>
           <%= hidden_field_tag :tab, @tab %>
           <%= hidden_field_tag :sort, @sort %>
-          <%= f.search_field :q, value: @q, placeholder: "Search lessons…", class: "input", style: "width:200px;" %>
+          <%= f.search_field :q, value: @q, placeholder: "Search lessons…", class: "input content-search__field" %>
         <% end %>
-        <%= form_with url: coach_content_path, method: :get, local: true, class: "inline-form" do %>
+        <%= form_with url: coach_content_path, method: :get, local: true, class: "inline-form content-sort" do %>
           <%= hidden_field_tag :tab, @tab %>
           <%= hidden_field_tag :q, @q %>
-          <select name="sort" class="input" style="width:140px;" onchange="this.form.submit()">
+          <select name="sort" class="input content-sort__select" onchange="this.form.submit()">
             <option value="newest" <%= "selected" if @sort == "newest" %>>Newest</option>
             <option value="oldest" <%= "selected" if @sort == "oldest" %>>Oldest</option>
             <option value="az" <%= "selected" if @sort == "az" %>>A–Z</option>
           </select>
         <% end %>
         <% if @q.present? %>
-          <%= link_to "Clear", coach_content_path(tab: @tab, sort: @sort), class: "btn btn-secondary btn-small" %>
+          <%= link_to "Clear", coach_content_path(tab: @tab, sort: @sort), class: "btn btn-secondary btn-small content-clear" %>
         <% end %>
       </div>
     </div>

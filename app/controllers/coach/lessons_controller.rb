@@ -143,8 +143,14 @@ module Coach
 
       Rails.logger.error("[lesson upload] multipart failure lesson_id=#{@lesson&.id} error=#{error.class} message=#{error.message}")
       @lesson ||= current_user.lessons.build
-      @lesson.errors.add(:base, "Video upload failed. Please try again.")
-      flash.now[:alert] = "Video upload failed. Please try again."
+      begin
+        @lesson.assign_attributes(lesson_params.except(:allowed_subscriber_ids))
+      rescue ActionController::ParameterMissing
+        # no params present
+      end
+      friendly_msg = "We couldn't upload your video. Please retry the upload or choose another file."
+      @lesson.errors.add(:base, friendly_msg)
+      flash.now[:alert] = friendly_msg
       render template, status: :service_unavailable
     end
   end
