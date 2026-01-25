@@ -278,11 +278,9 @@
 </div>
 
 <script>
-    document.addEventListener("turbo:load", () => {
+    const initLessonForm = () => {
         const root = document.querySelector(".lesson-form-page");
         if (!root) return;
-        if (root.dataset.mediaInit === "true") return;
-        root.dataset.mediaInit = "true";
         const visibilityRadios = document.querySelectorAll("input[name='lesson[visibility]']");
         const previewWrap = document.getElementById("preview-fields");
         const previewCheckbox = document.querySelector("input[name='lesson[preview]']");
@@ -403,7 +401,11 @@
 
         // ---- Lesson media (slides) ----
         const mediaList = document.getElementById("lesson-media-list");
-        const addButtons = Array.from(document.querySelectorAll("[data-add-media]"));
+        const addButtons = Array.from(document.querySelectorAll("[data-add-media]")).map((btn) => {
+            const clone = btn.cloneNode(true);
+            btn.replaceWith(clone);
+            return clone;
+        });
         const slideLimitMessage = document.getElementById("slide-limit-message");
         const MAX_SLIDES = 5;
         const draft = document.getElementById("draft-slide");
@@ -658,5 +660,8 @@
 
         reindexPositions();
         updateSlideLimitState();
-    });
+    };
+
+    document.addEventListener("turbo:load", initLessonForm);
+    document.addEventListener("turbo:render", initLessonForm);
 </script>
