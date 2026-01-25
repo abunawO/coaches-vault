@@ -144,7 +144,8 @@ module Coach
       Rails.logger.error("[lesson upload] multipart failure lesson_id=#{@lesson&.id} error=#{error.class} message=#{error.message}")
       @lesson ||= current_user.lessons.build
       begin
-        @lesson.assign_attributes(lesson_params.except(:allowed_subscriber_ids))
+        @lesson.assign_attributes(lesson_params)
+        @preselected_allowed_ids = Array(lesson_params[:allowed_subscriber_ids]).reject(&:blank?).map(&:to_i)
       rescue ActionController::ParameterMissing
         # no params present
       end
