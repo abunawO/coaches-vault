@@ -1,10 +1,20 @@
 <div class="container coach-vault" data-controller="student-vault" data-student-vault-selected-id-value="<%= params[:category_id] %>">
   <div class="vault-header card">
     <div class="vault-header__info">
-      <div class="vault-avatar" style="background-image: url('<%= @coach_profile.avatar_url.presence || "https://via.placeholder.com/80x80.png?text=Coach" %>');"></div>
+      <% if @coach_profile.avatar.attached? %>
+        <% begin %>
+          <%= image_tag url_for(@coach_profile.avatar.variant(resize_to_fill: [96, 96])), alt: @coach_profile.display_name, class: "vault-avatar__img" %>
+        <% rescue StandardError %>
+          <%= image_tag url_for(@coach_profile.avatar), alt: @coach_profile.display_name, class: "vault-avatar__img" %>
+        <% end %>
+      <% elsif @coach_profile.avatar_url.present? %>
+        <div class="vault-avatar" style="background-image: url('<%= @coach_profile.avatar_url %>');"></div>
+      <% else %>
+        <div class="vault-avatar vault-avatar--placeholder"></div>
+      <% end %>
       <div>
         <h1 class="vault-title"><%= @coach_profile.display_name %>’s Vault</h1>
-        <p class="muted small-text">@<%= @coach_profile.slug %></p>
+        <p class="muted small-text vault-handle">@<%= @coach_profile.slug %></p>
       </div>
     </div>
     <div class="vault-header__actions">
