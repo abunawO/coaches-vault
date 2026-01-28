@@ -24,7 +24,9 @@
     <%= javascript_importmap_tags %>
 </head>
 
-<body>
+<% auth_controllers = %w[sessions registrations password_resets] %>
+<% body_classes = [controller_name, action_name, ('auth-page' if auth_controllers.include?(controller_name))].compact.join(' ') %>
+<body class="<%= body_classes %>">
     <div class="toast-stack" data-controller="flash">
       <% flash.each do |type, message| %>
         <div class="toast toast-<%= type %>" data-flash-target="toast">
