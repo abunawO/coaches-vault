@@ -33,3 +33,12 @@
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 
+# Node / JS
+/node_modules
+package.json
+yarn.lock
+
+# JS/CSS build outputs
+/app/assets/builds/*
+!/app/assets/builds/.keep
+
