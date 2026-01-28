@@ -39,6 +39,5 @@ package.json
 yarn.lock
 
 # JS/CSS build outputs
-/app/assets/builds/*
-!/app/assets/builds/.keep
+/app/assets/builds
 
