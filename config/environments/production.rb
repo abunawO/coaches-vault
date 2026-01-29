@@ -62,12 +62,16 @@ Rails.application.configure do
 
   # Specify outgoing SMTP server (configure credentials via ENV/credentials).
   config.action_mailer.smtp_settings = {
-    user_name: ENV["SMTP_USER"],
-    password: ENV["SMTP_PASSWORD"],
-    address: ENV["SMTP_ADDRESS"] || "smtp.example.com",
-    port: (ENV["SMTP_PORT"] || 587).to_i,
-    authentication: :plain,
-    enable_starttls_auto: true
+  user_name: ENV.fetch("SMTP_USER"),
+  password: ENV.fetch("SMTP_PASSWORD"),
+  address: ENV.fetch("SMTP_ADDRESS"),
+  port: ENV.fetch("SMTP_PORT").to_i,
+  authentication: :login,
+  enable_starttls_auto: true
+  }
+
+  config.action_mailer.default_options = {
+    from: ENV.fetch("DEFAULT_FROM_EMAIL")
   }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
