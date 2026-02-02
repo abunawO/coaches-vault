@@ -37,15 +37,11 @@
       </div>
 
       <div class="form-row">
-        <span class="muted" style="display:block; margin-bottom:6px;">Choose your role</span>
+        <span class="muted" style="display:block; margin-bottom:6px;">You’ll sign up as a student</span>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <label class="chip chip--neutral" style="cursor:pointer;">
-            <%= f.radio_button :role, "student", checked: @user.role.to_s != "coach" %>
+            <%= f.radio_button :role, "student", checked: true %>
             <span style="margin-left:6px;">Student</span>
-          </label>
-          <label class="chip chip--neutral" style="cursor:pointer;">
-            <%= f.radio_button :role, "coach", checked: @user.role.to_s == "coach" %>
-            <span style="margin-left:6px;">Coach</span>
           </label>
         </div>
       </div>
