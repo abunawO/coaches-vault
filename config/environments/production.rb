@@ -65,12 +65,14 @@ Rails.application.configure do
 
   # Specify outgoing SMTP server (configure credentials via ENV/credentials).
   config.action_mailer.smtp_settings = {
-  user_name: ENV.fetch("SMTP_USER"),
-  password: ENV.fetch("SMTP_PASSWORD"),
-  address: ENV.fetch("SMTP_ADDRESS"),
-  port: ENV.fetch("SMTP_PORT").to_i,
-  authentication: :login,
-  enable_starttls_auto: true
+    address: ENV.fetch("SMTP_ADDRESS"),
+    port: ENV.fetch("SMTP_PORT").to_i,
+    user_name: ENV.fetch("SMTP_USER"),
+    password: ENV.fetch("SMTP_PASSWORD"),
+    domain: ENV.fetch("SMTP_DOMAIN", "mycoachvault.app"),
+    authentication: :login,
+    ssl: true,
+    enable_starttls_auto: false
   }
 
   config.action_mailer.default_options = {
