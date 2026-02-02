@@ -11,7 +11,7 @@ class EmailVerificationsController < ApplicationController
 
     if user && !user.email_verified?
       user.update_column(:verification_sent_at, Time.current)
-      UserMailer.email_verification(user).deliver_later
+      UserMailer.email_verification(user).deliver_now
     end
 
     redirect_to verify_email_pending_path(email: email.presence), notice: "If an account exists for #{email.present? ? email : 'that email'}, we sent a new verification link."

@@ -25,6 +25,6 @@ class RegistrationsController < ApplicationController
 
   def send_verification(user)
     user.update_column(:verification_sent_at, Time.current)
-    UserMailer.email_verification(user).deliver_later
+    UserMailer.email_verification(user).deliver_now
   end
 end

@@ -54,6 +54,6 @@ class PasswordResetsController < ApplicationController
 
   def send_reset(user)
     user.update_column(:password_reset_sent_at, Time.current) if user.respond_to?(:password_reset_sent_at)
-    UserMailer.password_reset(user).deliver_later
+    UserMailer.password_reset(user).deliver_now
   end
 end
