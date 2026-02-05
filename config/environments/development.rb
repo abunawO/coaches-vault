@@ -63,6 +63,13 @@ Rails.application.configure do
   # Suppress logger output for asset requests.
   config.assets.quiet = true
 
+  # Add the same structured tags used in production for easier debugging locally.
+  config.log_tags = [
+    ->(req) { "request_id:#{req.request_id}" },
+    ->(req) { "ip:#{req.remote_ip}" },
+    ->(_req) { id = Current.user_identifier; id ? "user:#{id}" : "user:guest" }
+  ]
+
   # Raises error for missing translations.
   # config.i18n.raise_on_missing_translations = true
 

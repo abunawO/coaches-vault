@@ -33,8 +33,12 @@ Rails.application.configure do
   # Skip http-to-https redirect for the default health check endpoint.
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
-  # Log to STDOUT with the current request id as a default log tag.
-  config.log_tags = [ :request_id ]
+  # Log to STDOUT with useful tags.
+  config.log_tags = [
+    ->(req) { "request_id:#{req.request_id}" },
+    ->(req) { "ip:#{req.remote_ip}" },
+    ->(_req) { id = Current.user_identifier; id ? "user:#{id}" : "user:guest" }
+  ]
   config.logger   = ActiveSupport::TaggedLogging.logger(STDOUT)
 
   # Change to "debug" to log everything (including potentially personally-identifiable information!).
