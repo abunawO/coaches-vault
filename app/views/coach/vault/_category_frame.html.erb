@@ -4,6 +4,13 @@
       <div>
         <h3 class="vault-name"><%= selected_category.name %></h3>
         <div class="muted"><%= selected_category.description.presence || "No description provided." %></div>
+        <%= form_with model: [:coach, selected_category], url: coach_category_path(selected_category), method: :patch, local: true, class: "inline-form", data: { turbo_frame: "_top" } do |f| %>
+          <div style="display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap;">
+            <%= f.label :name, "Edit name", class: "muted small-text" %>
+            <%= f.text_field :name, required: true, class: "input", style: "max-width: 320px;" %>
+            <%= f.submit "Save name", class: "btn btn-secondary btn-small" %>
+          </div>
+        <% end %>
       </div>
       <div class="vault-main__meta">
         <span class="pill-soft" id="vault_category_count"><%= pluralize(selected_category.lessons.count, "lesson") %></span>

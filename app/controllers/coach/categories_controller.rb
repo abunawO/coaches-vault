@@ -14,9 +14,9 @@ class Coach::CategoriesController < ApplicationController
 
   def update
     if @category.update(category_params)
-      redirect_to coach_vault_path, notice: "Category updated."
+      redirect_to coach_vault_path(category_id: @category.id), notice: "Category updated."
     else
-      redirect_to coach_vault_path, alert: @category.errors.full_messages.to_sentence
+      redirect_to coach_vault_path(category_id: @category.id), alert: @category.errors.full_messages.to_sentence
     end
   end
 
