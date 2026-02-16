@@ -39,6 +39,9 @@ jobs:
       - name: Scan for security vulnerabilities in JavaScript dependencies
         run: bin/importmap audit
 
+      - name: Enforce JavaScript runtime guardrails
+        run: bin/check_js_runtime_guardrails
+
   lint:
     runs-on: ubuntu-latest
     env:

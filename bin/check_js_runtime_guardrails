@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+errors=0
+
+fail() {
+  echo "JS runtime guardrail failed: $1" >&2
+  errors=$((errors + 1))
+}
+
+if ! rg -q '^pin "application", to: "main.js"$' config/importmap.rb; then
+  fail "config/importmap.rb must pin application to main.js."
+fi
+
+if [ -f package.json ]; then
+  if rg -q '"@uppy/' package.json; then
+    fail "package.json contains @uppy/* deps. Importmap is canonical runtime; keep Uppy versions only in config/importmap.rb."
+  fi
+
+  if rg -q '"build"\\s*:\\s*"[^"]*app/javascript/application\\.js' package.json; then
+    fail "package.json build script still targets app/javascript/application.js; use app/javascript/main.js."
+  fi
+fi
+
+if [ -f app/assets/builds/application.js ]; then
+  if rg -q 'uppy\.reset\(' app/assets/builds/application.js || rg -q '@uppy/' app/assets/builds/application.js; then
+    fail "stale bundled app/assets/builds/application.js appears to include Uppy/runtime code."
+  fi
+fi
+
+if [ "$errors" -gt 0 ]; then
+  exit 1
+fi
+
+echo "JS runtime guardrails passed."

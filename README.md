@@ -20,6 +20,14 @@ A subscription-based platform where coaches host private lesson vaults and stude
 - Ruby, Ruby on Rails 8
 - SQLite (development)
 - ERB views, minimal JS (Rails defaults), no frontend framework
+- Importmap is the canonical JavaScript runtime (not npm bundle output)
+
+## JavaScript Runtime Guardrails
+- Runtime source of truth is `config/importmap.rb`.
+- Importmap entrypoint is pinned to `app/javascript/main.js`.
+- Uppy versions are pinned in `config/importmap.rb` and should not be duplicated in `package.json`.
+- If video uploads regress, see `docs/s3_multipart_uploads.md` ("Known issue: video upload hangs while image upload works").
+- CI enforces these rules via `bin/check_js_runtime_guardrails`.
 
 ## Setup
 1. Clone the repo.

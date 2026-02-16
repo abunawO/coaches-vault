@@ -101,6 +101,25 @@ async function loadUppy() {
   return { Uppy, AwsS3Multipart };
 }
 
+function resetUploader(uppy) {
+  if (!uppy) return;
+
+  if (typeof uppy.reset === "function") {
+    uppy.reset();
+    return;
+  }
+
+  if (typeof uppy.cancelAll === "function") {
+    uppy.cancelAll();
+  }
+
+  if (typeof uppy.getFiles === "function" && typeof uppy.removeFile === "function") {
+    uppy.getFiles().forEach((file) => {
+      if (file?.id) uppy.removeFile(file.id);
+    });
+  }
+}
+
 async function applyUploader(input) {
   if (input.dataset.uploaderBound === "true") return;
 
@@ -119,8 +138,9 @@ async function applyUploader(input) {
 
     uppy.use(AwsS3Multipart, {
       limit: 3,
-      createMultipartUpload: (file) =>
-        postJson("/s3/multipart/create", {
+      createMultipartUpload: (file) => {
+        console.debug("[video-upload] starting multipart create");
+        return postJson("/s3/multipart/create", {
           filename: file.name,
           content_type: file.type,
           byte_size: file.size,
@@ -129,7 +149,8 @@ async function applyUploader(input) {
           file.meta.uploadId = data.upload_id;
           file.meta.key = data.key;
           return { uploadId: data.upload_id, key: data.key, bucket: data.bucket, region: data.region };
-        }),
+        });
+      },
       signPart: (file, { uploadId, key, partNumber }) =>
         postJson("/s3/multipart/sign_part", {
           upload_id: uploadId,
@@ -196,7 +217,7 @@ async function applyUploader(input) {
       input.name = "";
       input.disabled = false;
 
-      uppy.reset();
+      resetUploader(uppy);
       setState(input, "uploading");
       if (form) disableSubmit(form);
       setStatus(statusEl, "Starting upload…");
