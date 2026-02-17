@@ -13,9 +13,10 @@ module Coach
     end
 
     def create
-      @lesson = current_user.lessons.build(lesson_params.except(:allowed_subscriber_ids))
+      @lesson = current_user.lessons.build(lesson_params.except(:allowed_subscriber_ids, :remove_cover_image))
       ActiveRecord::Base.transaction do
         if @lesson.save
+          purge_cover_image_if_requested!(@lesson, lesson_params)
           log_video_upload_expectations(@lesson)
           reconcile_shares!(@lesson, lesson_params[:allowed_subscriber_ids])
           redirect_to coach_lessons_path, notice: "Lesson created successfully." and return
@@ -33,7 +34,8 @@ module Coach
 
     def update
       ActiveRecord::Base.transaction do
-        if @lesson.update(lesson_params.except(:allowed_subscriber_ids))
+        if @lesson.update(lesson_params.except(:allowed_subscriber_ids, :remove_cover_image))
+          purge_cover_image_if_requested!(@lesson, lesson_params)
           log_video_upload_expectations(@lesson)
           reconcile_shares!(@lesson, lesson_params[:allowed_subscriber_ids])
           redirect_to coach_lessons_path, notice: "Lesson updated successfully."
@@ -62,12 +64,22 @@ module Coach
         :title,
         :description,
         :video_url,
+        :cover_image,
+        :remove_cover_image,
         :visibility,
         :preview,
         :preview_text,
         allowed_subscriber_ids: [],
         lesson_media_attributes: %i[id kind video_url position _destroy image_file video_file]
       )
+    end
+
+    def purge_cover_image_if_requested!(lesson, permitted_params)
+      return unless permitted_params[:remove_cover_image] == "1"
+      return if permitted_params[:cover_image].present?
+      return unless lesson.cover_image.attached?
+
+      lesson.cover_image.purge
     end
 
     def require_coach

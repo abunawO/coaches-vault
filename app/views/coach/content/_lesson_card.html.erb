@@ -1,4 +1,14 @@
 <div class="mv-card lesson-card <%= 'lesson-card--restricted' if lesson.restricted? %>" data-controller="lesson-card">
+    <% thumb = lesson_thumbnail_url(lesson) %>
+    <div class="video-thumb lesson-card__thumb">
+        <% if thumb.present? %>
+        <img src="<%= thumb %>" alt="<%= lesson.title %> cover" class="video-thumb__img" loading="lazy" />
+        <% else %>
+        <div class="thumb-placeholder">
+            <span class="play-icon">▶</span>
+        </div>
+        <% end %>
+    </div>
     <div class="mv-card__header">
         <div>
             <h3 class="mv-card__title"><%= lesson.title %></h3>

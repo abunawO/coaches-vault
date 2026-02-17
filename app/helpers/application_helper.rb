@@ -25,15 +25,26 @@ module ApplicationHelper
   end
 
   def lesson_thumbnail_url(lesson)
-    url = lesson.video_url.to_s
+    return nil unless lesson
 
+    if lesson.respond_to?(:cover_image) && lesson.cover_image.attached?
+      return url_for(lesson.cover_image.variant(resize_to_limit: [1200, 675]))
+    end
+
+    if lesson.respond_to?(:lesson_media)
+      image_slide = lesson.lesson_media.detect { |m| m.image? && m.image_file.attached? }
+      if image_slide.present?
+        return url_for(image_slide.image_file.variant(resize_to_limit: [1200, 675]))
+      end
+    end
+
+    url = lesson.video_url.to_s
     if url =~ /youtu(?:\.be|be\.com)\/.*(?:v=|\/)([\w-]+)/
       "https://img.youtube.com/vi/#{$1}/hqdefault.jpg"
     elsif url =~ %r{vimeo\.com/(\d+)}
-      # Basic Vimeo placeholder using the video id; may not always resolve without API, so fallback.
       "https://vumbnail.com/#{$1}.jpg"
-    else
-      "https://via.placeholder.com/640x360?text=Lesson"
     end
+  rescue StandardError
+    nil
   end
 end

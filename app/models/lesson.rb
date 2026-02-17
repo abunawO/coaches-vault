@@ -1,5 +1,6 @@
 class Lesson < ApplicationRecord
   belongs_to :coach, class_name: "User"
+  has_one_attached :cover_image
 
   has_many :comments, dependent: :destroy
   has_many :favorites, dependent: :destroy
@@ -14,6 +15,7 @@ class Lesson < ApplicationRecord
   validates :title, presence: true
   validate :content_presence
   validate :slide_count_within_limit
+  validate :cover_image_type
 
   enum :visibility, { free: 0, subscribers: 1, restricted: 2 }, default: :subscribers
 
@@ -93,5 +95,14 @@ class Lesson < ApplicationRecord
     return if count <= max_slides
 
     errors.add(:base, "You can add up to #{max_slides} slides per lesson.")
+  end
+
+  def cover_image_type
+    return unless cover_image.attached?
+
+    allowed_types = %w[image/png image/jpeg image/webp]
+    return if allowed_types.include?(cover_image.content_type)
+
+    errors.add(:cover_image, "must be a PNG, JPEG, or WEBP image")
   end
 end
