@@ -1,4 +1,14 @@
 <div class="card lesson-card">
+  <% thumb = lesson_thumbnail_url(lesson) %>
+  <div class="video-thumb lesson-card__thumb">
+    <% if thumb.present? %>
+      <img src="<%= thumb %>" alt="<%= lesson.title %> cover" class="video-thumb__img" loading="lazy" />
+    <% else %>
+      <div class="thumb-placeholder">
+        <span class="play-icon">▶</span>
+      </div>
+    <% end %>
+  </div>
   <div class="card-header">
     <div>
       <div class="badge <%= locked ? "badge-warning" : "badge-success" %>"><%= locked ? "Locked" : "Unlocked" %></div>

@@ -14,7 +14,9 @@
 <%= link_to path, class: "up-next-card group flex gap-3 rounded-xl border bg-white p-3 shadow-sm hover:shadow-md transition" do %>
   <div class="up-next-thumb w-36 shrink-0 overflow-hidden rounded-lg border bg-gray-100">
     <% if thumb.present? %>
-      <div class="aspect-video bg-cover bg-center" style="background-image: url('<%= thumb %>')"></div>
+      <div class="aspect-video">
+        <img src="<%= thumb %>" alt="<%= lesson.title %> cover" class="up-next-thumb__img" loading="lazy" />
+      </div>
     <% else %>
       <div class="aspect-video grid place-items-center bg-gradient-to-br from-gray-900 to-gray-700">
         <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white">▶</span>

@@ -56,6 +56,20 @@
                         <%= form.label :description %>
                         <%= form.text_area :description, rows: 4, class: "textarea", placeholder: "What students will learn in this lesson..." %>
                     </div>
+                    <div class="form-row">
+                        <%= form.label :cover_image, "Cover image (optional)" %>
+                        <p class="muted small-text" style="margin:0 0 8px 0;">Shown in dashboard and feed cards.</p>
+                        <%= form.file_field :cover_image, class: "input", accept: "image/png,image/jpeg,image/webp,image/*" %>
+                        <% if @lesson.cover_image.attached? %>
+                        <div style="margin-top:10px; display:grid; gap:8px;">
+                            <%= image_tag url_for(@lesson.cover_image.variant(resize_to_limit: [600, 338])), alt: "Current cover image", style: "width: 220px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; border: 1px solid #e5e7eb;" %>
+                            <label class="muted small-text" style="display:flex; align-items:center; gap:8px;">
+                                <%= check_box_tag "lesson[remove_cover_image]", "1", false %>
+                                Remove current cover image
+                            </label>
+                        </div>
+                        <% end %>
+                    </div>
                 </section>
 
                 <section class="form-section">

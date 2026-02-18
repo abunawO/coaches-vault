@@ -31,7 +31,13 @@
       <% tile_path = locked ? locked_path : open_path %>
       <%= link_to tile_path, class: "tile-link #{'locked' if locked}", data: { track: "search_tile", lesson_id: lesson.id, turbo_frame: "_top" } do %>
         <article class="ig-tile <%= "is-locked" if locked %>">
-          <div class="ig-thumb" style="background-image: url('<%= thumb %>');"></div>
+          <div class="ig-thumb">
+            <% if thumb.present? %>
+              <img src="<%= thumb %>" alt="<%= lesson.title %> cover" class="ig-thumb__img" loading="lazy" />
+            <% else %>
+              <div class="ig-thumb__placeholder"></div>
+            <% end %>
+          </div>
           <div class="ig-overlay">
             <% if locked %>
               <p class="muted">Locked • Subscribe to unlock</p>

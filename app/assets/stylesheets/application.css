@@ -359,11 +359,16 @@ a:hover {
   width: 120px;
   aspect-ratio: 16 / 9;
   border-radius: 10px;
-  background-size: cover;
-  background-position: center;
-  background-color: #0f172a;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   position: relative;
   overflow: hidden;
+}
+
+.up-next-thumb__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .up-next-text {
@@ -800,9 +805,15 @@ video[data-inline-video]:not([controls])::-moz-media-controls {
 .video-thumb {
   position: relative;
   aspect-ratio: 16 / 9;
-  background-size: cover;
-  background-position: center;
-  background-color: #0f172a;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  overflow: hidden;
+}
+
+.video-thumb__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .thumb-placeholder {
@@ -812,7 +823,8 @@ video[data-inline-video]:not([controls])::-moz-media-controls {
   place-items: center;
   color: #fff;
   font-size: 2rem;
-  opacity: 0.8;
+  opacity: 0.85;
+  background: linear-gradient(135deg, #1f2937 0%, #0f172a 100%);
 }
 
 .thumb-overlay {
@@ -1005,9 +1017,20 @@ video[data-inline-video]:not([controls])::-moz-media-controls {
 .ig-thumb {
   position: absolute;
   inset: 0;
-  background-size: cover;
-  background-position: center;
   filter: brightness(0.98);
+}
+
+.ig-thumb__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ig-thumb__placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1f2937 0%, #0f172a 100%);
 }
 
 .ig-overlay {
@@ -6394,8 +6417,22 @@ body.auth-page .auth-card {
 
 .tile-thumb {
   height: 180px;
-  background-size: cover;
-  background-position: center;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #93c5fd 100%);
+}
+
+.tile-thumb__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tile-thumb__placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #93c5fd 100%);
 }
 
 .tile-overlay {
@@ -6455,6 +6492,28 @@ body.auth-page .auth-card {
   text-decoration: none;
   color: #0f172a;
   transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.latest-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #93c5fd 100%);
+  margin-bottom: 6px;
+}
+
+.latest-thumb__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.latest-thumb__placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #93c5fd 100%);
 }
 
 .latest-card:hover {

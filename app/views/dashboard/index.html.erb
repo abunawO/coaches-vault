@@ -154,8 +154,10 @@
           <% locked_path = coach_profile&.slug ? coach_path(coach_profile.slug) : coaches_path %>
           <% thumb = lesson_thumbnail_url(lesson) %>
           <%= link_to open_path, class: "video-card #{'video-card-locked' if access_level == :locked}" do %>
-            <div class="video-thumb" style="background-image: url('<%= thumb || '' %>');">
-              <% unless thumb.present? %>
+            <div class="video-thumb">
+              <% if thumb.present? %>
+                <img src="<%= thumb %>" alt="<%= lesson.title %> cover" class="video-thumb__img" loading="lazy" />
+              <% else %>
                 <div class="thumb-placeholder">
                   <span class="play-icon">▶</span>
                 </div>

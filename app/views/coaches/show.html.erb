@@ -87,9 +87,6 @@
       </div>
     </section>
 
-    <% featured_lessons = @coach.lessons.order(created_at: :desc).limit(6) %>
-    <% latest_lessons = @coach.lessons.order(created_at: :desc).limit(5) %>
-
     <section class="profile-section">
         <div class="profile-content">
             <div class="profile-featured">
@@ -98,11 +95,18 @@
                     <%= link_to "View all lessons →", public_coach_lessons_path(@coach_profile.slug), class: "view-all-link", aria: { label: "View all lessons" } %>
                 </div>
                 <div class="profile-grid">
-                    <% featured_lessons.each do |lesson| %>
+                    <% @featured_lessons.each do |lesson| %>
                     <% lesson_path_to_use = public_coach_lesson_path(@coach_profile.slug, lesson) %>
                     <% locked = !(subscribed_student || owning_coach) %>
+                    <% thumb = lesson_thumbnail_url(lesson) %>
                     <%= link_to lesson_path_to_use, class: "profile-tile #{'tile-locked' if locked}" do %>
-                    <div class="tile-thumb" style="background-image: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #93c5fd 100%);"></div>
+                    <div class="tile-thumb">
+                        <% if thumb.present? %>
+                        <img src="<%= thumb %>" alt="<%= lesson.title %> cover" class="tile-thumb__img" loading="lazy" />
+                        <% else %>
+                        <div class="tile-thumb__placeholder"></div>
+                        <% end %>
+                    </div>
                     <div class="tile-overlay">
                         <h3><%= lesson.title %></h3>
                         <p><%= truncate(lesson.description.to_s, length: 80) %></p>
@@ -120,8 +124,16 @@
                     <h3 class="section-title">Latest drops</h3>
                 </div>
                 <div class="latest-list">
-                    <% latest_lessons.each do |lesson| %>
+                    <% @latest_lessons.each do |lesson| %>
+                    <% thumb = lesson_thumbnail_url(lesson) %>
                     <%= link_to public_coach_lesson_path(@coach_profile.slug, lesson), class: "latest-card" do %>
+                    <div class="latest-thumb">
+                        <% if thumb.present? %>
+                        <img src="<%= thumb %>" alt="<%= lesson.title %> cover" class="latest-thumb__img" loading="lazy" />
+                        <% else %>
+                        <div class="latest-thumb__placeholder"></div>
+                        <% end %>
+                    </div>
                     <div class="latest-title"><%= lesson.title %></div>
                     <% if lesson.description.present? %>
                     <div class="latest-desc"><%= truncate(lesson.description, length: 90) %></div>
