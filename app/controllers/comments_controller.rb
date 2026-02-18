@@ -2,6 +2,8 @@ class CommentsController < ApplicationController
   before_action :require_login
   before_action :set_lesson
   before_action :set_parent_comment, only: :create
+  before_action :set_comment, only: %i[update destroy]
+  before_action :authorize_comment_owner!, only: %i[update destroy]
 
   def create
     unless authorized_to_comment?
@@ -18,6 +20,22 @@ class CommentsController < ApplicationController
     end
   end
 
+  def update
+    if @comment.update(comment_params)
+      redirect_back fallback_location: lesson_path(@lesson), notice: "Comment updated."
+    else
+      redirect_back fallback_location: lesson_path(@lesson), alert: "Could not update comment."
+    end
+  end
+
+  def destroy
+    if @comment.destroy
+      redirect_back fallback_location: lesson_path(@lesson), notice: "Comment deleted."
+    else
+      redirect_back fallback_location: lesson_path(@lesson), alert: "Could not delete comment."
+    end
+  end
+
   private
 
   def set_lesson
@@ -26,6 +44,10 @@ class CommentsController < ApplicationController
 
   def set_parent_comment
     @parent_comment = Comment.find_by(id: params[:comment][:parent_id]) if params[:comment]&.[](:parent_id).present?
+  end
+
+  def set_comment
+    @comment = @lesson.comments.find(params[:id])
   end
 
   def comment_params
@@ -40,6 +62,12 @@ class CommentsController < ApplicationController
     else
       current_user.student? && current_user.subscribed_to?(@lesson.coach)
     end
+  end
+
+  def authorize_comment_owner!
+    return if @comment.user_id == current_user.id
+
+    redirect_back fallback_location: lesson_path(@lesson), alert: "You can only modify your own comments."
   end
 
   def create_notification(comment)
