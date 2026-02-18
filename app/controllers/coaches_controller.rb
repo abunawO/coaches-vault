@@ -25,5 +25,19 @@ class CoachesController < ApplicationController
   def show
     @coach_profile = CoachProfile.includes(:user).find_by!(slug: params[:slug])
     @coach = @coach_profile.user
+    @featured_lessons = @coach.lessons
+                              .includes(
+                                { cover_image_attachment: :blob },
+                                { lesson_media: { image_file_attachment: :blob } }
+                              )
+                              .order(created_at: :desc)
+                              .limit(6)
+    @latest_lessons = @coach.lessons
+                            .includes(
+                              { cover_image_attachment: :blob },
+                              { lesson_media: { image_file_attachment: :blob } }
+                            )
+                            .order(created_at: :desc)
+                            .limit(5)
   end
 end

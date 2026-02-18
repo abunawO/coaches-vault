@@ -87,9 +87,6 @@
       </div>
     </section>
 
-    <% featured_lessons = @coach.lessons.order(created_at: :desc).limit(6) %>
-    <% latest_lessons = @coach.lessons.order(created_at: :desc).limit(5) %>
-
     <section class="profile-section">
         <div class="profile-content">
             <div class="profile-featured">
@@ -98,7 +95,7 @@
                     <%= link_to "View all lessons →", public_coach_lessons_path(@coach_profile.slug), class: "view-all-link", aria: { label: "View all lessons" } %>
                 </div>
                 <div class="profile-grid">
-                    <% featured_lessons.each do |lesson| %>
+                    <% @featured_lessons.each do |lesson| %>
                     <% lesson_path_to_use = public_coach_lesson_path(@coach_profile.slug, lesson) %>
                     <% locked = !(subscribed_student || owning_coach) %>
                     <% thumb = lesson_thumbnail_url(lesson) %>
@@ -127,7 +124,7 @@
                     <h3 class="section-title">Latest drops</h3>
                 </div>
                 <div class="latest-list">
-                    <% latest_lessons.each do |lesson| %>
+                    <% @latest_lessons.each do |lesson| %>
                     <% thumb = lesson_thumbnail_url(lesson) %>
                     <%= link_to public_coach_lesson_path(@coach_profile.slug, lesson), class: "latest-card" do %>
                     <div class="latest-thumb">

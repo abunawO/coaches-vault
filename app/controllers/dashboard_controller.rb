@@ -13,7 +13,12 @@ class DashboardController < ApplicationController
         @subscription_count = @subscription_coach_ids.size
       end
 
-      @feed_lessons = Lesson.includes(:lesson_shares, coach: :coach_profile)
+      @feed_lessons = Lesson.includes(
+                              :lesson_shares,
+                              { coach: :coach_profile },
+                              { cover_image_attachment: :blob },
+                              { lesson_media: { image_file_attachment: :blob } }
+                            )
                             .where.not(visibility: Lesson.visibilities[:restricted])
                             .order(created_at: :desc)
                             .limit(20)

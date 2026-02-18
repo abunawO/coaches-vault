@@ -9,7 +9,11 @@ class SearchController < ApplicationController
     @coach_results = []
 
     if @query.present?
-      lesson_results = Lesson.includes(coach: :coach_profile).search(@query)
+      lesson_results = Lesson.includes(
+        { coach: :coach_profile },
+        { cover_image_attachment: :blob },
+        { lesson_media: { image_file_attachment: :blob } }
+      ).search(@query)
       @lesson_cards = lesson_results.map do |lesson|
         { lesson: lesson, coach_profile: lesson.coach&.coach_profile, locked: lesson_locked?(lesson) }
       end
