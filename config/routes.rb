@@ -72,7 +72,7 @@ Rails.application.routes.draw do
   get "/search", to: "search#index", as: :search
 
   resources :lessons, only: [] do
-    resources :comments, only: [:create]
+    resources :comments, only: [:create, :update, :destroy]
   end
 
   resources :conversations, only: [:index, :show, :create, :destroy] do
