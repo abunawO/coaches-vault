@@ -48,7 +48,31 @@ function setStatus(statusEl, text) {
 
 function resetFieldNames(input, hidden, originalName) {
   if (hidden) hidden.name = "";
-  if (input) input.name = originalName;
+  if (input && originalName) input.name = originalName;
+}
+
+function resolveOriginalInputName(input, hiddenField) {
+  const directName = input?.getAttribute("name");
+  if (directName) {
+    input.dataset.multipartOriginalName = directName;
+    return directName;
+  }
+
+  const cachedName = input?.dataset?.multipartOriginalName;
+  if (cachedName) return cachedName;
+
+  const hiddenName = hiddenField?.name;
+  if (hiddenName) return hiddenName;
+
+  const row = input?.closest?.("[data-slide-row]");
+  const rowVideoInput = row?.querySelector?.("[data-video-multipart-upload='true']");
+  const rowName = rowVideoInput?.getAttribute("name");
+  if (rowName) {
+    input.dataset.multipartOriginalName = rowName;
+    return rowName;
+  }
+
+  return null;
 }
 
 const uploadState = new WeakMap();
@@ -84,6 +108,36 @@ function enableSubmit(form) {
   });
 }
 
+const MULTIPART_CHUNK_SIZE_BYTES = 15 * 1024 * 1024;
+const MAX_ACTIVE_UPLOADS = 2;
+let activeUploadSlots = 0;
+const uploadSlotWaiters = [];
+
+async function acquireUploadSlot() {
+  if (activeUploadSlots < MAX_ACTIVE_UPLOADS) {
+    activeUploadSlots += 1;
+    return makeSlotReleaser();
+  }
+
+  return new Promise((resolve) => {
+    uploadSlotWaiters.push(() => {
+      activeUploadSlots += 1;
+      resolve(makeSlotReleaser());
+    });
+  });
+}
+
+function makeSlotReleaser() {
+  let released = false;
+  return function releaseUploadSlot() {
+    if (released) return;
+    released = true;
+    activeUploadSlots = Math.max(0, activeUploadSlots - 1);
+    const next = uploadSlotWaiters.shift();
+    if (next) next();
+  };
+}
+
 let warnedFallback = false;
 function warnFallbackOnce(error) {
   if (warnedFallback) return;
@@ -116,18 +170,30 @@ async function applyUploader(input) {
   try {
     const statusEl = ensureStatusElement(input);
     const hiddenField = ensureHiddenField(input);
-    const originalName = input.getAttribute("name");
     const form = input.closest("form");
     const { Uppy, AwsS3Multipart } = await loadUppy();
+    let uploadRunToken = 0;
+    let heldSlot = null;
+    let currentOriginalName = resolveOriginalInputName(input, hiddenField);
+
+    const releaseHeldSlot = (token = null) => {
+      if (!heldSlot) return;
+      if (token !== null && heldSlot.token !== token) return;
+      const releaser = heldSlot.release;
+      heldSlot = null;
+      releaser();
+    };
 
     const uppy = new Uppy({
-      autoProceed: true,
+      autoProceed: false,
       allowMultipleUploadBatches: false,
       restrictions: { maxNumberOfFiles: 1, allowedFileTypes: ["video/mp4", "video/quicktime"] }
     });
 
     uppy.use(AwsS3Multipart, {
       limit: 3,
+      // Uppy aws-s3-multipart (v3.x) supports getChunkSize(file); set 15 MiB to reduce sign_part overhead.
+      getChunkSize: () => MULTIPART_CHUNK_SIZE_BYTES,
       createMultipartUpload: (file) =>
         postJson("/s3/multipart/create", {
           filename: file.name,
@@ -170,7 +236,14 @@ async function applyUploader(input) {
 
     uppy.on("upload-success", (_file, response) => {
       const signedId = response?.body?.signed_id;
+      const originalName = currentOriginalName || resolveOriginalInputName(input, hiddenField);
       if (signedId && hiddenField) {
+        if (!originalName) {
+          setStatus(statusEl, "Missing input name; please reload and retry.");
+          setState(input, "failed");
+          if (form) enableSubmit(form);
+          return;
+        }
         hiddenField.value = signedId;
         hiddenField.name = originalName;
         input.removeAttribute("name");
@@ -185,6 +258,8 @@ async function applyUploader(input) {
     uppy.on("upload-error", (_file, error) => {
       setStatus(statusEl, `Upload failed: ${error?.message || error}`);
       setState(input, "failed");
+      hiddenField.value = "";
+      const originalName = currentOriginalName || resolveOriginalInputName(input, hiddenField);
       resetFieldNames(input, hiddenField, originalName);
       if (form) enableSubmit(form);
     });
@@ -192,29 +267,83 @@ async function applyUploader(input) {
     uppy.on("error", (error) => {
       setStatus(statusEl, `Error: ${error?.message || error}`);
       setState(input, "failed");
+      hiddenField.value = "";
+      const originalName = currentOriginalName || resolveOriginalInputName(input, hiddenField);
       resetFieldNames(input, hiddenField, originalName);
       if (form) enableSubmit(form);
     });
 
-    input.addEventListener("change", () => {
+    input.addEventListener("change", async () => {
       const [file] = input.files || [];
-      if (!file) return;
+      if (!file) {
+        const restoreName = currentOriginalName || resolveOriginalInputName(input, hiddenField);
+        hiddenField.value = "";
+        hiddenField.name = "";
+        input.disabled = false;
+        if (restoreName) input.name = restoreName;
+        setState(input, "idle", null);
+        releaseHeldSlot();
+        return;
+      }
+
+      uploadRunToken += 1;
+      const thisRunToken = uploadRunToken;
+      currentOriginalName = resolveOriginalInputName(input, hiddenField);
+      if (!currentOriginalName) {
+        setStatus(statusEl, "Missing input name; please reload and retry.");
+        setState(input, "failed");
+        if (form) enableSubmit(form);
+        return;
+      }
 
       hiddenField.value = "";
       hiddenField.name = "";
-      input.name = "";
       input.disabled = false;
+      input.name = "";
 
+      releaseHeldSlot();
+
+      uppy.cancelAll();
       uppy.reset();
-      setState(input, "uploading");
+      setState(input, "queued");
       if (form) disableSubmit(form);
-      setStatus(statusEl, "Starting upload…");
-      uppy.addFile({
-        name: file.name,
-        type: file.type,
-        data: file,
-        meta: { checksum: null }
-      });
+      setStatus(statusEl, "Queued for upload…");
+
+      let slotReleaser;
+      try {
+        slotReleaser = await acquireUploadSlot();
+        if (thisRunToken !== uploadRunToken) {
+          slotReleaser();
+          return;
+        }
+
+        heldSlot = { release: slotReleaser, token: thisRunToken };
+        setState(input, "uploading");
+        if (form) disableSubmit(form);
+        setStatus(statusEl, "Starting upload…");
+
+        uppy.addFile({
+          name: file.name,
+          type: file.type,
+          data: file,
+          meta: { checksum: null }
+        });
+
+        await uppy.upload();
+      } catch (error) {
+        setStatus(statusEl, `Upload failed: ${error?.message || error}`);
+        setState(input, "failed");
+        hiddenField.value = "";
+        const originalName = currentOriginalName || resolveOriginalInputName(input, hiddenField);
+        resetFieldNames(input, hiddenField, originalName);
+        if (form) enableSubmit(form);
+      } finally {
+        if (heldSlot && heldSlot.token === thisRunToken) {
+          releaseHeldSlot(thisRunToken);
+        } else if (slotReleaser) {
+          slotReleaser();
+        }
+      }
     });
 
     input.dataset.uploaderBound = "true";
