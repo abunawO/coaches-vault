@@ -92,6 +92,15 @@ function warnFallbackOnce(error) {
   console.warn("Multipart video uploader failed to initialize; falling back to normal form upload.", error);
 }
 
+function debugMultipart(...args) {
+  try {
+    if (new URLSearchParams(window.location.search).get("debug_lesson_form") !== "1") return;
+  } catch (_e) {
+    return;
+  }
+  console.debug("[multipart]", ...args);
+}
+
 let uppyModulesPromise;
 async function loadUppy() {
   if (!uppyModulesPromise) {
@@ -209,6 +218,7 @@ async function applyUploader(input) {
     });
 
     input.dataset.uploaderBound = "true";
+    debugMultipart("bound input", { name: input.name });
   } catch (error) {
     warnFallbackOnce(error);
   }
@@ -216,7 +226,8 @@ async function applyUploader(input) {
 
 export function initVideoMultipartUploads(root = document) {
   try {
-    const inputs = Array.from(root.querySelectorAll("[data-video-multipart-upload='true']"));
+    const scope = root && typeof root.querySelectorAll === "function" ? root : document;
+    const inputs = Array.from(scope.querySelectorAll("[data-video-multipart-upload='true']"));
     if (inputs.length === 0) return;
     inputs.forEach((input) => applyUploader(input).catch((err) => warnFallbackOnce(err)));
     addFormGuards(inputs);
