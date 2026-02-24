@@ -1,11 +1,56 @@
 const csrfToken = () => document.querySelector("meta[name='csrf-token']")?.content;
 
-async function postJson(path, payload) {
+function perfNowMs() {
+  try {
+    if (globalThis.performance && typeof globalThis.performance.now === "function") {
+      return globalThis.performance.now();
+    }
+  } catch (_e) {}
+  return Date.now();
+}
+
+function uploadPerfEnabled() {
+  try {
+    return new URLSearchParams(window.location.search).get("debug_upload_perf") === "1";
+  } catch (_e) {
+    return false;
+  }
+}
+
+function debugUploadPerf(...args) {
+  if (!uploadPerfEnabled()) return;
+  console.debug("[upload-perf]", ...args);
+}
+
+function makeUploadTraceId() {
+  return `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+}
+
+function timedPostJson(path, payload, options = {}) {
+  const startedAt = perfNowMs();
+  return postJson(path, payload, options)
+    .then((data) => {
+      if (typeof options.onComplete === "function") {
+        options.onComplete({ ok: true, ms: perfNowMs() - startedAt, data });
+      }
+      return data;
+    })
+    .catch((error) => {
+      if (typeof options.onComplete === "function") {
+        options.onComplete({ ok: false, ms: perfNowMs() - startedAt, error });
+      }
+      throw error;
+    });
+}
+
+async function postJson(path, payload, options = {}) {
+  const extraHeaders = options.headers || {};
   const response = await fetch(path, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "X-CSRF-Token": csrfToken()
+      "X-CSRF-Token": csrfToken(),
+      ...extraHeaders
     },
     body: JSON.stringify(payload)
   });
@@ -138,6 +183,30 @@ function makeSlotReleaser() {
   };
 }
 
+function buildPerfSummary(metrics, status) {
+  if (!metrics) return null;
+  const signCount = metrics.sign_part_count || 0;
+  const signTotal = metrics.sign_part_ms_total || 0;
+  return {
+    status,
+    trace_id: metrics.trace_id,
+    file_name: metrics.file_name,
+    file_size: metrics.file_size,
+    mime: metrics.mime,
+    input_name: metrics.input_name,
+    chunk_size_bytes: MULTIPART_CHUNK_SIZE_BYTES,
+    max_active_uploads: MAX_ACTIVE_UPLOADS,
+    queue_wait_ms: metrics.queue_wait_ms != null ? Math.round(metrics.queue_wait_ms) : null,
+    upload_total_ms: metrics.upload_total_ms != null ? Math.round(metrics.upload_total_ms) : null,
+    create_ms: metrics.create_ms != null ? Math.round(metrics.create_ms) : null,
+    sign_part_count: signCount,
+    sign_part_ms_total: Math.round(signTotal),
+    sign_part_ms_avg: signCount > 0 ? Math.round(signTotal / signCount) : null,
+    complete_ms: metrics.complete_ms != null ? Math.round(metrics.complete_ms) : null,
+    parts_count: metrics.parts_count != null ? metrics.parts_count : null
+  };
+}
+
 let warnedFallback = false;
 function warnFallbackOnce(error) {
   if (warnedFallback) return;
@@ -175,6 +244,7 @@ async function applyUploader(input) {
     let uploadRunToken = 0;
     let heldSlot = null;
     let currentOriginalName = resolveOriginalInputName(input, hiddenField);
+    let currentPerfMetrics = null;
 
     const releaseHeldSlot = (token = null) => {
       if (!heldSlot) return;
@@ -182,6 +252,20 @@ async function applyUploader(input) {
       const releaser = heldSlot.release;
       heldSlot = null;
       releaser();
+    };
+
+    const logPerfSummary = (status, token, extras = {}) => {
+      if (!currentPerfMetrics) return;
+      if (token == null) return;
+      if (currentPerfMetrics.token !== token) return;
+      if (currentPerfMetrics.summaryLogged) return;
+      currentPerfMetrics.summaryLogged = true;
+      if (currentPerfMetrics.upload_started_at != null) {
+        currentPerfMetrics.upload_total_ms = perfNowMs() - currentPerfMetrics.upload_started_at;
+      }
+      const summary = buildPerfSummary({ ...currentPerfMetrics, ...extras }, status);
+      if (summary) debugUploadPerf(summary);
+      currentPerfMetrics = null;
     };
 
     const uppy = new Uppy({
@@ -195,37 +279,74 @@ async function applyUploader(input) {
       // Uppy aws-s3-multipart (v3.x) supports getChunkSize(file); set 15 MiB to reduce sign_part overhead.
       getChunkSize: () => MULTIPART_CHUNK_SIZE_BYTES,
       createMultipartUpload: (file) =>
-        postJson("/s3/multipart/create", {
-          filename: file.name,
-          content_type: file.type,
-          byte_size: file.size,
-          checksum: file.meta?.checksum
-        }).then((data) => {
+        timedPostJson(
+          "/s3/multipart/create",
+          {
+            filename: file.name,
+            content_type: file.type,
+            byte_size: file.size,
+            checksum: file.meta?.checksum
+          },
+          {
+            headers: currentPerfMetrics?.trace_id ? { "X-Upload-Trace": currentPerfMetrics.trace_id } : {},
+            onComplete: ({ ms }) => {
+              if (currentPerfMetrics) currentPerfMetrics.create_ms = ms;
+            }
+          }
+        ).then((data) => {
           file.meta.uploadId = data.upload_id;
           file.meta.key = data.key;
           return { uploadId: data.upload_id, key: data.key, bucket: data.bucket, region: data.region };
         }),
       signPart: (file, { uploadId, key, partNumber }) =>
-        postJson("/s3/multipart/sign_part", {
-          upload_id: uploadId,
-          key: key,
-          part_number: partNumber
-        }),
+        timedPostJson(
+          "/s3/multipart/sign_part",
+          {
+            upload_id: uploadId,
+            key: key,
+            part_number: partNumber
+          },
+          {
+            headers: currentPerfMetrics?.trace_id ? { "X-Upload-Trace": currentPerfMetrics.trace_id } : {},
+            onComplete: ({ ms }) => {
+              if (!currentPerfMetrics) return;
+              currentPerfMetrics.sign_part_count = (currentPerfMetrics.sign_part_count || 0) + 1;
+              currentPerfMetrics.sign_part_ms_total = (currentPerfMetrics.sign_part_ms_total || 0) + ms;
+            }
+          }
+        ),
       completeMultipartUpload: (file, { uploadId, key, parts }) =>
-        postJson("/s3/multipart/complete", {
-          upload_id: uploadId,
-          key: key,
-          filename: file.name,
-          content_type: file.type,
-          byte_size: file.size,
-          checksum: file.meta?.checksum,
-          parts: parts.map((p) => ({ part_number: p.partNumber, etag: p.etag }))
-        }),
+        timedPostJson(
+          "/s3/multipart/complete",
+          {
+            upload_id: uploadId,
+            key: key,
+            filename: file.name,
+            content_type: file.type,
+            byte_size: file.size,
+            checksum: file.meta?.checksum,
+            parts: parts.map((p) => ({ part_number: p.partNumber, etag: p.etag }))
+          },
+          {
+            headers: currentPerfMetrics?.trace_id ? { "X-Upload-Trace": currentPerfMetrics.trace_id } : {},
+            onComplete: ({ ms }) => {
+              if (!currentPerfMetrics) return;
+              currentPerfMetrics.complete_ms = ms;
+              currentPerfMetrics.parts_count = Array.isArray(parts) ? parts.length : null;
+            }
+          }
+        ),
       abortMultipartUpload: (file, uploadData) =>
-        postJson("/s3/multipart/abort", {
-          upload_id: uploadData?.uploadId || file?.meta?.uploadId,
-          key: uploadData?.key || file?.meta?.key
-        })
+        timedPostJson(
+          "/s3/multipart/abort",
+          {
+            upload_id: uploadData?.uploadId || file?.meta?.uploadId,
+            key: uploadData?.key || file?.meta?.key
+          },
+          {
+            headers: currentPerfMetrics?.trace_id ? { "X-Upload-Trace": currentPerfMetrics.trace_id } : {}
+          }
+        )
     });
 
     uppy.on("progress", (progress) => {
@@ -252,6 +373,7 @@ async function applyUploader(input) {
       }
       setState(input, "complete", signedId);
       setStatus(statusEl, "Upload complete");
+      logPerfSummary("success", currentPerfMetrics?.token);
       if (form && allUploadsReady(form)) enableSubmit(form);
     });
 
@@ -261,6 +383,7 @@ async function applyUploader(input) {
       hiddenField.value = "";
       const originalName = currentOriginalName || resolveOriginalInputName(input, hiddenField);
       resetFieldNames(input, hiddenField, originalName);
+      logPerfSummary("error", currentPerfMetrics?.token);
       if (form) enableSubmit(form);
     });
 
@@ -270,12 +393,19 @@ async function applyUploader(input) {
       hiddenField.value = "";
       const originalName = currentOriginalName || resolveOriginalInputName(input, hiddenField);
       resetFieldNames(input, hiddenField, originalName);
+      logPerfSummary("error", currentPerfMetrics?.token);
       if (form) enableSubmit(form);
+    });
+
+    uppy.on("cancel-all", () => {
+      logPerfSummary("canceled", heldSlot?.token);
+      releaseHeldSlot();
     });
 
     input.addEventListener("change", async () => {
       const [file] = input.files || [];
       if (!file) {
+        logPerfSummary("canceled", currentPerfMetrics?.token);
         const restoreName = currentOriginalName || resolveOriginalInputName(input, hiddenField);
         hiddenField.value = "";
         hiddenField.name = "";
@@ -292,15 +422,36 @@ async function applyUploader(input) {
       if (!currentOriginalName) {
         setStatus(statusEl, "Missing input name; please reload and retry.");
         setState(input, "failed");
+        currentPerfMetrics = null;
         if (form) enableSubmit(form);
         return;
       }
+
+      const previousPerfToken = currentPerfMetrics?.token;
+      logPerfSummary("canceled", previousPerfToken);
+
+      currentPerfMetrics = {
+        token: thisRunToken,
+        trace_id: uploadPerfEnabled() ? makeUploadTraceId() : null,
+        file_name: file.name,
+        file_size: file.size,
+        mime: file.type,
+        input_name: currentOriginalName,
+        sign_part_count: 0,
+        sign_part_ms_total: 0,
+        create_ms: null,
+        complete_ms: null,
+        parts_count: null,
+        queue_wait_ms: null,
+        upload_total_ms: null,
+        upload_started_at: null,
+        summaryLogged: false
+      };
 
       hiddenField.value = "";
       hiddenField.name = "";
       input.disabled = false;
       input.name = "";
-
       releaseHeldSlot();
 
       uppy.cancelAll();
@@ -310,6 +461,7 @@ async function applyUploader(input) {
       setStatus(statusEl, "Queued for upload…");
 
       let slotReleaser;
+      const queueWaitStartedAt = perfNowMs();
       try {
         slotReleaser = await acquireUploadSlot();
         if (thisRunToken !== uploadRunToken) {
@@ -318,6 +470,10 @@ async function applyUploader(input) {
         }
 
         heldSlot = { release: slotReleaser, token: thisRunToken };
+        if (currentPerfMetrics && currentPerfMetrics.token === thisRunToken) {
+          currentPerfMetrics.queue_wait_ms = perfNowMs() - queueWaitStartedAt;
+          currentPerfMetrics.upload_started_at = perfNowMs();
+        }
         setState(input, "uploading");
         if (form) disableSubmit(form);
         setStatus(statusEl, "Starting upload…");
@@ -336,6 +492,7 @@ async function applyUploader(input) {
         hiddenField.value = "";
         const originalName = currentOriginalName || resolveOriginalInputName(input, hiddenField);
         resetFieldNames(input, hiddenField, originalName);
+        logPerfSummary("error", thisRunToken);
         if (form) enableSubmit(form);
       } finally {
         if (heldSlot && heldSlot.token === thisRunToken) {
