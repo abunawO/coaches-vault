@@ -43,6 +43,19 @@ function timedPostJson(path, payload, options = {}) {
     });
 }
 
+function normalizeCompletedParts(parts) {
+  return (Array.isArray(parts) ? parts : [])
+    .map((p) => ({
+      part_number: p?.partNumber ?? p?.PartNumber ?? p?.part_number,
+      etag: p?.etag ?? p?.ETag ?? p?.eTag
+    }))
+    .map((p) => ({
+      part_number: p.part_number == null ? null : Number(p.part_number),
+      etag: typeof p.etag === "string" ? p.etag : null
+    }))
+    .filter((p) => Number.isInteger(p.part_number) && p.part_number > 0 && p.etag);
+}
+
 async function postJson(path, payload, options = {}) {
   const extraHeaders = options.headers || {};
   const response = await fetch(path, {
@@ -56,11 +69,32 @@ async function postJson(path, payload, options = {}) {
   });
 
   if (!response.ok) {
-    const message = await response.text();
-    throw new Error(message || `Request failed (${response.status})`);
+    const contentType = response.headers.get("content-type") || "";
+    const rawBody = await response.text();
+
+    if (contentType.includes("application/json")) {
+      try {
+        const json = JSON.parse(rawBody);
+        const message = json?.error || json?.message;
+        throw new Error(message || `Request failed (${response.status})`);
+      } catch (_parseError) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+    }
+
+    if (/<(?:!DOCTYPE\s+html|html)\b/i.test(rawBody)) {
+      // eslint-disable-next-line no-console
+      console.error("[multipart] Non-JSON error response", { path, status: response.status, body: rawBody.slice(0, 2000) });
+      throw new Error(`Upload service error (${response.status}). Please retry. If it persists, check server logs.`);
+    }
+
+    throw new Error(rawBody || `Request failed (${response.status})`);
   }
 
-  return response.json();
+  if (response.status === 204) return null;
+  const body = await response.text();
+  if (!body) return null;
+  return JSON.parse(body);
 }
 
 function ensureStatusElement(input) {
@@ -76,6 +110,45 @@ function ensureStatusElement(input) {
   return status;
 }
 
+function ensureProgressElement(input) {
+  const host = input.closest("[data-slide-row]") || input.parentElement;
+  if (!host) return null;
+  let progress = host.querySelector("[data-upload-progress]");
+  if (!progress) {
+    progress = document.createElement("div");
+    progress.dataset.uploadProgress = "true";
+    progress.className = "upload-progress";
+    progress.hidden = true;
+    progress.setAttribute("role", "progressbar");
+    progress.setAttribute("aria-label", "Video upload progress");
+    progress.setAttribute("aria-valuemin", "0");
+    progress.setAttribute("aria-valuemax", "100");
+    progress.style.display = "block";
+    progress.style.width = "100%";
+    progress.style.height = "8px";
+    progress.style.margin = "6px 0 4px";
+    progress.style.borderRadius = "999px";
+    progress.style.background = "#e5e7eb";
+    progress.style.overflow = "hidden";
+
+    const fill = document.createElement("div");
+    fill.dataset.uploadProgressFill = "true";
+    fill.style.width = "0%";
+    fill.style.height = "100%";
+    fill.style.background = "linear-gradient(90deg, #2563eb, #3b82f6)";
+    fill.style.transition = "width 160ms ease";
+    progress.appendChild(fill);
+
+    const status = ensureStatusElement(input);
+    if (status && status.parentElement === host) {
+      status.insertAdjacentElement("beforebegin", progress);
+    } else {
+      host.appendChild(progress);
+    }
+  }
+  return progress;
+}
+
 function ensureHiddenField(input) {
   const existing = input.closest("[data-slide-row]")?.querySelector("[data-video-signed-id]");
   if (existing) return existing;
@@ -87,13 +160,51 @@ function ensureHiddenField(input) {
   return hidden;
 }
 
+function preventRawFileSubmit(input, options = {}) {
+  if (!input) return;
+  const clearValue = options.clearValue !== false;
+  const keepDisabled = options.keepDisabled === true;
+  if (input.name && !input.dataset.multipartOriginalName) {
+    input.dataset.multipartOriginalName = input.name;
+  }
+  input.removeAttribute("name");
+  input.disabled = keepDisabled;
+  if (clearValue) {
+    try {
+      input.value = "";
+    } catch (_e) {}
+  }
+}
+
 function setStatus(statusEl, text) {
   if (statusEl) statusEl.textContent = text;
 }
 
-function resetFieldNames(input, hidden, originalName) {
-  if (hidden) hidden.name = "";
-  if (input && originalName) input.name = originalName;
+function showUploadProgress(input, percent = null) {
+  const progressEl = ensureProgressElement(input);
+  if (!progressEl) return;
+  progressEl.hidden = false;
+  const fillEl = progressEl.querySelector("[data-upload-progress-fill]");
+  if (typeof percent === "number" && Number.isFinite(percent)) {
+    const clamped = Math.max(0, Math.min(100, percent));
+    progressEl.dataset.uploadPercent = String(Math.round(clamped));
+    progressEl.setAttribute("aria-valuenow", String(Math.round(clamped)));
+    if (fillEl) fillEl.style.width = `${clamped}%`;
+  } else {
+    progressEl.dataset.uploadPercent = "";
+    progressEl.removeAttribute("aria-valuenow");
+    if (fillEl) fillEl.style.width = "12%";
+  }
+}
+
+function hideUploadProgress(input) {
+  const progressEl = ensureProgressElement(input);
+  if (!progressEl) return;
+  progressEl.hidden = true;
+  progressEl.dataset.uploadPercent = "";
+  progressEl.removeAttribute("aria-valuenow");
+  const fillEl = progressEl.querySelector("[data-upload-progress-fill]");
+  if (fillEl) fillEl.style.width = "0%";
 }
 
 function resolveOriginalInputName(input, hiddenField) {
@@ -151,6 +262,27 @@ function enableSubmit(form) {
       if (btn.tagName === "INPUT") btn.value = btn.dataset.originalText;
     }
   });
+}
+
+function hasPendingMultipartUploads(form) {
+  if (!form) return false;
+  const inputs = Array.from(form.querySelectorAll("[data-video-multipart-upload='true']"));
+  return inputs.some((input) => {
+    const { state, signedId } = getState(input);
+    const hasFile = (input.files?.length || 0) > 0;
+    if (state === "queued" || state === "uploading") return true;
+    if (hasFile && (state !== "complete" || !signedId)) return true;
+    return false;
+  });
+}
+
+function syncSubmitDisabledForMultipart(form) {
+  if (!form) return;
+  if (hasPendingMultipartUploads(form)) {
+    disableSubmit(form, "Uploading…");
+  } else {
+    enableSubmit(form);
+  }
 }
 
 const MULTIPART_CHUNK_SIZE_BYTES = 15 * 1024 * 1024;
@@ -227,14 +359,22 @@ function debugMultipart(...args) {
 let uppyModulesPromise;
 async function loadUppy() {
   if (!uppyModulesPromise) {
-    uppyModulesPromise = Promise.all([import("@uppy/core"), import("@uppy/aws-s3-multipart")]);
+    uppyModulesPromise = import("uppy_bundle").then((bundled) => {
+      if (bundled?.Uppy && bundled?.AwsS3Multipart) {
+        return { Uppy: bundled.Uppy, AwsS3Multipart: bundled.AwsS3Multipart };
+      }
+      throw new Error("Local uppy_bundle is missing Uppy exports");
+    });
   }
-  const [{ default: Uppy }, { default: AwsS3Multipart }] = await uppyModulesPromise;
-  return { Uppy, AwsS3Multipart };
+  return uppyModulesPromise;
 }
 
 async function applyUploader(input) {
   if (input.dataset.uploaderBound === "true") return;
+  if (!resolveOriginalInputName(input, null)) {
+    debugMultipart("defer uploader bind until input has name", { id: input.id || null });
+    return;
+  }
 
   try {
     const statusEl = ensureStatusElement(input);
@@ -275,7 +415,8 @@ async function applyUploader(input) {
     });
 
     uppy.use(AwsS3Multipart, {
-      limit: 3,
+      // Reduce concurrent S3 PUTs to improve reliability on flaky local networks/VPNs.
+      limit: 1,
       // Uppy aws-s3-multipart (v3.x) supports getChunkSize(file); set 15 MiB to reduce sign_part overhead.
       getChunkSize: () => MULTIPART_CHUNK_SIZE_BYTES,
       createMultipartUpload: (file) =>
@@ -325,7 +466,7 @@ async function applyUploader(input) {
             content_type: file.type,
             byte_size: file.size,
             checksum: file.meta?.checksum,
-            parts: parts.map((p) => ({ part_number: p.partNumber, etag: p.etag }))
+            parts: normalizeCompletedParts(parts)
           },
           {
             headers: currentPerfMetrics?.trace_id ? { "X-Upload-Trace": currentPerfMetrics.trace_id } : {},
@@ -351,7 +492,8 @@ async function applyUploader(input) {
 
     uppy.on("progress", (progress) => {
       setState(input, "uploading");
-      if (form) disableSubmit(form);
+      if (form) syncSubmitDisabledForMultipart(form);
+      showUploadProgress(input, progress);
       setStatus(statusEl, `Uploading… ${Math.floor(progress)}%`);
     });
 
@@ -367,34 +509,35 @@ async function applyUploader(input) {
         }
         hiddenField.value = signedId;
         hiddenField.name = originalName;
-        input.removeAttribute("name");
-        input.value = "";
-        input.disabled = true;
+        preventRawFileSubmit(input);
       }
       setState(input, "complete", signedId);
+      showUploadProgress(input, 100);
       setStatus(statusEl, "Upload complete");
       logPerfSummary("success", currentPerfMetrics?.token);
-      if (form && allUploadsReady(form)) enableSubmit(form);
+      if (form) syncSubmitDisabledForMultipart(form);
     });
 
     uppy.on("upload-error", (_file, error) => {
       setStatus(statusEl, `Upload failed: ${error?.message || error}`);
       setState(input, "failed");
+      hideUploadProgress(input);
       hiddenField.value = "";
-      const originalName = currentOriginalName || resolveOriginalInputName(input, hiddenField);
-      resetFieldNames(input, hiddenField, originalName);
+      hiddenField.name = "";
+      preventRawFileSubmit(input, { clearValue: false });
       logPerfSummary("error", currentPerfMetrics?.token);
-      if (form) enableSubmit(form);
+      if (form) syncSubmitDisabledForMultipart(form);
     });
 
     uppy.on("error", (error) => {
       setStatus(statusEl, `Error: ${error?.message || error}`);
       setState(input, "failed");
+      hideUploadProgress(input);
       hiddenField.value = "";
-      const originalName = currentOriginalName || resolveOriginalInputName(input, hiddenField);
-      resetFieldNames(input, hiddenField, originalName);
+      hiddenField.name = "";
+      preventRawFileSubmit(input, { clearValue: false });
       logPerfSummary("error", currentPerfMetrics?.token);
-      if (form) enableSubmit(form);
+      if (form) syncSubmitDisabledForMultipart(form);
     });
 
     uppy.on("cancel-all", () => {
@@ -402,17 +545,21 @@ async function applyUploader(input) {
       releaseHeldSlot();
     });
 
-    input.addEventListener("change", async () => {
+    const startUploadForSelectedFile = async () => {
       const [file] = input.files || [];
       if (!file) {
         logPerfSummary("canceled", currentPerfMetrics?.token);
         const restoreName = currentOriginalName || resolveOriginalInputName(input, hiddenField);
         hiddenField.value = "";
         hiddenField.name = "";
-        input.disabled = false;
-        if (restoreName) input.name = restoreName;
+        hideUploadProgress(input);
+        if (restoreName && !input.dataset.multipartOriginalName) {
+          input.dataset.multipartOriginalName = restoreName;
+        }
+        preventRawFileSubmit(input, { clearValue: false });
         setState(input, "idle", null);
         releaseHeldSlot();
+        if (form) syncSubmitDisabledForMultipart(form);
         return;
       }
 
@@ -423,7 +570,7 @@ async function applyUploader(input) {
         setStatus(statusEl, "Missing input name; please reload and retry.");
         setState(input, "failed");
         currentPerfMetrics = null;
-        if (form) enableSubmit(form);
+        if (form) syncSubmitDisabledForMultipart(form);
         return;
       }
 
@@ -451,13 +598,13 @@ async function applyUploader(input) {
       hiddenField.value = "";
       hiddenField.name = "";
       input.disabled = false;
-      input.name = "";
+      input.removeAttribute("name");
       releaseHeldSlot();
 
       uppy.cancelAll();
-      uppy.reset();
       setState(input, "queued");
-      if (form) disableSubmit(form);
+      if (form) syncSubmitDisabledForMultipart(form);
+      showUploadProgress(input);
       setStatus(statusEl, "Queued for upload…");
 
       let slotReleaser;
@@ -475,7 +622,8 @@ async function applyUploader(input) {
           currentPerfMetrics.upload_started_at = perfNowMs();
         }
         setState(input, "uploading");
-        if (form) disableSubmit(form);
+        if (form) syncSubmitDisabledForMultipart(form);
+        showUploadProgress(input);
         setStatus(statusEl, "Starting upload…");
 
         uppy.addFile({
@@ -489,11 +637,12 @@ async function applyUploader(input) {
       } catch (error) {
         setStatus(statusEl, `Upload failed: ${error?.message || error}`);
         setState(input, "failed");
+        hideUploadProgress(input);
         hiddenField.value = "";
-        const originalName = currentOriginalName || resolveOriginalInputName(input, hiddenField);
-        resetFieldNames(input, hiddenField, originalName);
+        hiddenField.name = "";
+        preventRawFileSubmit(input, { clearValue: false });
         logPerfSummary("error", thisRunToken);
-        if (form) enableSubmit(form);
+        if (form) syncSubmitDisabledForMultipart(form);
       } finally {
         if (heldSlot && heldSlot.token === thisRunToken) {
           releaseHeldSlot(thisRunToken);
@@ -501,10 +650,49 @@ async function applyUploader(input) {
           slotReleaser();
         }
       }
+    };
+
+    input.addEventListener("change", () => {
+      startUploadForSelectedFile().catch((error) => {
+        setStatus(statusEl, `Upload failed: ${error?.message || error}`);
+        setState(input, "failed");
+        hideUploadProgress(input);
+        hiddenField.value = "";
+        hiddenField.name = "";
+        preventRawFileSubmit(input, { clearValue: false });
+        if (form) enableSubmit(form);
+      });
     });
 
     input.dataset.uploaderBound = "true";
+    // Keep the file picker usable; removing `name` is what prevents form submission.
+    preventRawFileSubmit(input, { clearValue: false });
     debugMultipart("bound input", { name: input.name });
+
+    // If the user selected a file before Uppy finished binding, replay the missed change event.
+    if ((input.files?.length || 0) > 0) {
+      const { state } = getState(input);
+      if (state === "idle") {
+        setStatus(statusEl, "Preparing upload…");
+        showUploadProgress(input);
+        if (form) syncSubmitDisabledForMultipart(form);
+        window.setTimeout(() => {
+          if (!document.contains(input)) return;
+          if ((input.files?.length || 0) === 0) return;
+          const currentState = getState(input).state;
+          if (currentState !== "idle") return;
+          startUploadForSelectedFile().catch((error) => {
+            setStatus(statusEl, `Upload failed: ${error?.message || error}`);
+            setState(input, "failed");
+            hideUploadProgress(input);
+            hiddenField.value = "";
+            hiddenField.name = "";
+            preventRawFileSubmit(input, { clearValue: false });
+            if (form) enableSubmit(form);
+          });
+        }, 0);
+      }
+    }
   } catch (error) {
     warnFallbackOnce(error);
   }
@@ -549,16 +737,26 @@ function addFormGuards(inputs) {
         let block = false;
 
         videoInputs.forEach((input) => {
-          // If uploader never bound (e.g., script failed to load), allow normal submit.
-          if (input.dataset.uploaderBound !== "true") return;
-
           const statusEl = ensureStatusElement(input);
           const { state, signedId } = getState(input);
           const hasFile = (input.files?.length || 0) > 0;
+          const multipartEnabled = input.dataset.uploaderBound === "true";
+
+          if (hasFile || multipartEnabled) {
+            preventRawFileSubmit(input, { clearValue: false });
+          }
 
           if (state === "failed") {
             block = true;
             setStatus(statusEl, "Video upload failed. Please retry the upload before saving.");
+            input.focus();
+            input.scrollIntoView({ behavior: "smooth", block: "center" });
+            return;
+          }
+
+          if (hasFile && !multipartEnabled) {
+            block = true;
+            setStatus(statusEl, "Video uploader did not start. Please wait a moment, then reselect the file.");
             input.focus();
             input.scrollIntoView({ behavior: "smooth", block: "center" });
             return;
@@ -574,8 +772,9 @@ function addFormGuards(inputs) {
 
         if (block) {
           event.preventDefault();
-          enableSubmit(form);
+          event.stopImmediatePropagation();
+          syncSubmitDisabledForMultipart(form);
         }
-      });
+      }, true);
     });
 }

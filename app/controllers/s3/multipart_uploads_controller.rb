@@ -133,15 +133,18 @@ module S3
 
     def create_blob_from_params!(attrs)
       key = attrs.fetch(:key)
-      ActiveStorage::Blob.create!(
+      # Multipart S3 uploads do not currently provide a full-file checksum from the client.
+      # Mark blob metadata as composed so ActiveStorage skips checksum validation for attach/save flows.
+      blob_attrs = {
         filename: attrs.fetch(:filename),
         content_type: attrs[:content_type],
         byte_size: attrs.fetch(:byte_size).to_i,
         checksum: attrs[:checksum],
         key: key,
         service_name: ActiveStorage::Blob.service.name,
-        metadata: {}
-      )
+        metadata: { composed: true }
+      }
+      ActiveStorage::Blob.create!(blob_attrs)
     end
   end
 end

@@ -1,5 +1,5 @@
 class S3MultipartService
-  DEFAULT_EXPIRY = 15.minutes
+  DEFAULT_EXPIRY_SECONDS = 15.minutes.to_i
 
   def initialize(client: nil, bucket: nil, region: nil)
     @client = client || Aws::S3::Client.new
@@ -35,7 +35,7 @@ class S3MultipartService
         key: key,
         upload_id: upload_id,
         part_number: part_number,
-        expires_in: DEFAULT_EXPIRY
+        expires_in: DEFAULT_EXPIRY_SECONDS
       )
     end
 
@@ -87,7 +87,11 @@ class S3MultipartService
 
   def default_region
     service = ActiveStorage::Blob.service
-    return service.client.config.region if service.respond_to?(:client)
+    if service.respond_to?(:client)
+      s3_client = service.client
+      return s3_client.config.region if s3_client.respond_to?(:config)
+      return s3_client.client.config.region if s3_client.respond_to?(:client) && s3_client.client.respond_to?(:config)
+    end
 
     ENV["AWS_REGION"] || raise("Missing AWS region")
   end
@@ -102,8 +106,8 @@ class S3MultipartService
   end
 
   def metadata_for(filename:, checksum:, byte_size:)
-    meta = { filename: filename, byte_size: byte_size }
-    meta[:checksum] = checksum if checksum.present?
+    meta = { filename: filename.to_s, byte_size: byte_size.to_i.to_s }
+    meta[:checksum] = checksum.to_s if checksum.present?
     meta
   end
 
