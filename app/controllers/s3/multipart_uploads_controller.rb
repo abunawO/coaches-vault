@@ -1,6 +1,7 @@
 module S3
   class MultipartUploadsController < ApplicationController
     protect_from_forgery with: :exception
+    wrap_parameters false
 
     def create
       attrs = create_params

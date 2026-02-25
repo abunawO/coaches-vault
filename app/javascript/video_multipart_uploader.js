@@ -207,6 +207,24 @@ function hideUploadProgress(input) {
   if (fillEl) fillEl.style.width = "0%";
 }
 
+function formatMultipartUploadError(error) {
+  const raw = error?.message || String(error || "");
+  const msg = String(raw || "").trim();
+  const lower = msg.toLowerCase();
+
+  if (
+    msg === "Unknown error" ||
+    lower.includes("networkerror") ||
+    lower.includes("failed to fetch") ||
+    lower.includes("connection reset") ||
+    lower.includes("xhr error")
+  ) {
+    return "Connection to storage was interrupted. Please retry (VPN/extensions can cause this).";
+  }
+
+  return msg || "Unknown error";
+}
+
 function resolveOriginalInputName(input, hiddenField) {
   const directName = input?.getAttribute("name");
   if (directName) {
@@ -519,7 +537,7 @@ async function applyUploader(input) {
     });
 
     uppy.on("upload-error", (_file, error) => {
-      setStatus(statusEl, `Upload failed: ${error?.message || error}`);
+      setStatus(statusEl, `Upload failed: ${formatMultipartUploadError(error)}`);
       setState(input, "failed");
       hideUploadProgress(input);
       hiddenField.value = "";
@@ -530,7 +548,7 @@ async function applyUploader(input) {
     });
 
     uppy.on("error", (error) => {
-      setStatus(statusEl, `Error: ${error?.message || error}`);
+      setStatus(statusEl, `Error: ${formatMultipartUploadError(error)}`);
       setState(input, "failed");
       hideUploadProgress(input);
       hiddenField.value = "";
@@ -635,7 +653,7 @@ async function applyUploader(input) {
 
         await uppy.upload();
       } catch (error) {
-        setStatus(statusEl, `Upload failed: ${error?.message || error}`);
+        setStatus(statusEl, `Upload failed: ${formatMultipartUploadError(error)}`);
         setState(input, "failed");
         hideUploadProgress(input);
         hiddenField.value = "";
@@ -654,7 +672,7 @@ async function applyUploader(input) {
 
     input.addEventListener("change", () => {
       startUploadForSelectedFile().catch((error) => {
-        setStatus(statusEl, `Upload failed: ${error?.message || error}`);
+        setStatus(statusEl, `Upload failed: ${formatMultipartUploadError(error)}`);
         setState(input, "failed");
         hideUploadProgress(input);
         hiddenField.value = "";
@@ -682,7 +700,7 @@ async function applyUploader(input) {
           const currentState = getState(input).state;
           if (currentState !== "idle") return;
           startUploadForSelectedFile().catch((error) => {
-            setStatus(statusEl, `Upload failed: ${error?.message || error}`);
+            setStatus(statusEl, `Upload failed: ${formatMultipartUploadError(error)}`);
             setState(input, "failed");
             hideUploadProgress(input);
             hiddenField.value = "";
