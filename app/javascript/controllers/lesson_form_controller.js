@@ -1,4 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
+import { createLessonMediaRow } from "services/lesson_media_row_factory"
+import { LessonMediaBulkCoordinator } from "services/lesson_media_bulk_coordinator"
+import { LessonMediaRowAdapter } from "adapters/lesson_media_row_adapter"
 
 export default class extends Controller {
   connect() {
@@ -14,6 +17,12 @@ export default class extends Controller {
     this.bulkFeedbackTimer = null
     this.nestedIndex = Number(this.element.dataset.lessonFormNestedIndex || Date.now())
     this.objectUrls = new Map()
+    this.bulkRemainingSlots = 0
+    this.bulkCoordinator = new LessonMediaBulkCoordinator({
+      appendRowForKind: (kind) => this.appendRowForBulk(kind),
+      assignFileToRow: (row, kind, file) => this.assignBulkFileToRow(row, kind, file),
+      triggerVideoUploadIfBound: (input) => this.triggerVideoUploadIfBound(input)
+    })
 
     this.cacheElements()
     this.visibilityRadios ||= []
@@ -128,7 +137,8 @@ export default class extends Controller {
 
   setThumbToImage(row, file) {
     if (!row || !file) return
-    const thumb = row.querySelector(".slide-thumb")
+    const adapter = new LessonMediaRowAdapter(row)
+    const thumb = adapter.thumbEl
     if (!thumb) return
     this.revokeRowObjectUrl(row, "imageUrl")
     const url = URL.createObjectURL(file)
@@ -142,7 +152,8 @@ export default class extends Controller {
 
   setThumbToVideo(row, file) {
     if (!row || !file) return
-    const thumb = row.querySelector(".slide-thumb")
+    const adapter = new LessonMediaRowAdapter(row)
+    const thumb = adapter.thumbEl
     if (!thumb) return
     this.revokeRowObjectUrl(row, "videoUrl")
     const url = URL.createObjectURL(file)
@@ -160,7 +171,8 @@ export default class extends Controller {
 
   setInlineMeta(row, file) {
     if (!row || !file) return
-    const fields = row.querySelector(".slide-fields")
+    const adapter = new LessonMediaRowAdapter(row)
+    const fields = adapter.fieldsEl
     if (!fields) return
     let meta = fields.querySelector("[data-local-file-meta]")
     if (!meta) {
@@ -179,7 +191,8 @@ export default class extends Controller {
   }
 
   clearInlineMeta(row) {
-    const fields = row?.querySelector(".slide-fields")
+    const adapter = new LessonMediaRowAdapter(row)
+    const fields = adapter.fieldsEl
     const meta = fields?.querySelector("[data-local-file-meta]")
     if (meta) meta.remove()
   }
@@ -375,71 +388,11 @@ export default class extends Controller {
     this.dirtyIndicator.textContent = this.isDirty() ? "Unsaved changes" : "Changes are saved when you click Save."
   }
 
-  mediaTemplate(kind, index) {
-    const positionField = `<input type="hidden" name="lesson[lesson_media_attributes][${index}][position]" class="position-field" value="0" />`
-
-    if (kind === "image") {
-      return `
-        <div class="slide-card" data-slide-row>
-          <div class="slide-thumb">
-            <div class="thumb-video">Image</div>
-          </div>
-          <div class="slide-body">
-            <div class="slide-badge">
-              <span class="pill-soft">Image slide</span>
-            </div>
-            <div class="slide-fields">
-              <input type="hidden" name="lesson[lesson_media_attributes][${index}][kind]" value="image" />
-              ${positionField}
-              <label class="muted small-text">Image file</label>
-              <input type="file" name="lesson[lesson_media_attributes][${index}][image_file]" class="input" />
-            </div>
-          </div>
-          <div class="slide-controls">
-            <button type="button" class="icon-btn" data-move="up" aria-label="Move up">↑</button>
-            <button type="button" class="icon-btn" data-move="down" aria-label="Move down">↓</button>
-            <button type="button" class="icon-btn icon-btn--danger" data-remove-row aria-label="Remove slide">🗑</button>
-            <input type="checkbox" name="lesson[lesson_media_attributes][${index}][_destroy]" style="display:none;" data-destroy-field="true" />
-          </div>
-        </div>
-      `
-    }
-
-    return `
-      <div class="slide-card" data-slide-row>
-        <div class="slide-thumb">
-          <div class="thumb-video">Video</div>
-        </div>
-        <div class="slide-body">
-          <div class="slide-badge">
-            <span class="pill-soft">Video slide</span>
-          </div>
-          <div class="slide-fields">
-            <input type="hidden" name="lesson[lesson_media_attributes][${index}][kind]" value="video" />
-            ${positionField}
-            <label class="muted small-text">Video URL</label>
-            <input type="text" name="lesson[lesson_media_attributes][${index}][video_url]" class="input" placeholder="https://www.youtube.com/watch?v=..." />
-            <label class="muted small-text" style="margin-top:8px;">Or upload video</label>
-            <input type="file" name="lesson[lesson_media_attributes][${index}][video_file]" class="input" accept="video/mp4,video/quicktime" data-video-multipart-upload="true" />
-            <div class="muted small-text upload-status" data-upload-status></div>
-            <p class="muted small-text">Use a YouTube/Vimeo URL OR upload an MP4/MOV file.</p>
-          </div>
-        </div>
-        <div class="slide-controls">
-          <button type="button" class="icon-btn" data-move="up" aria-label="Move up">↑</button>
-          <button type="button" class="icon-btn" data-move="down" aria-label="Move down">↓</button>
-          <button type="button" class="icon-btn icon-btn--danger" data-remove-row aria-label="Remove slide">🗑</button>
-          <input type="checkbox" name="lesson[lesson_media_attributes][${index}][_destroy]" style="display:none;" data-destroy-field="true" />
-        </div>
-      </div>
-    `
-  }
-
   reindexPositions() {
     if (!this.mediaList) return
     const rows = Array.from(this.mediaList.querySelectorAll("[data-slide-row]"))
     rows.forEach((row, idx) => {
-      const posField = row.querySelector(".position-field")
+      const posField = new LessonMediaRowAdapter(row).positionField
       if (posField) posField.value = idx
     })
   }
@@ -448,7 +401,7 @@ export default class extends Controller {
     if (!this.mediaList) return 0
     return Array.from(this.mediaList.querySelectorAll("[data-slide-row]")).filter((row) => {
       if (row.classList.contains("is-destroyed")) return false
-      const destroyField = row.querySelector("[data-destroy-field]")
+      const destroyField = new LessonMediaRowAdapter(row).destroyField
       return !(destroyField && destroyField.checked)
     }).length
   }
@@ -473,12 +426,13 @@ export default class extends Controller {
   }
 
   attachRowHandlers(row, isNew = false) {
-    const up = row.querySelector("[data-move='up']")
-    const down = row.querySelector("[data-move='down']")
-    const removeBtn = row.querySelector("[data-remove-row]")
-    const destroyField = row.querySelector("[data-destroy-field]")
-    const imageInput = row.querySelector("input[type='file']:not([data-video-multipart-upload='true'])")
-    const videoInput = row.querySelector("[data-video-multipart-upload='true']")
+    const adapter = new LessonMediaRowAdapter(row)
+    const up = adapter.moveUpButton
+    const down = adapter.moveDownButton
+    const removeBtn = adapter.removeButton
+    const destroyField = adapter.destroyField
+    const imageInput = adapter.imageFileInput
+    const videoInput = adapter.videoFileInput
 
     this.on(imageInput, "change", () => {
       const file = imageInput?.files?.[0]
@@ -583,13 +537,14 @@ export default class extends Controller {
     }
 
     const index = this.nextNestedIndex()
-    this.mediaList.insertAdjacentHTML("beforeend", this.mediaTemplate(this.draftKind, index))
-    const newRow = this.mediaList.lastElementChild
+    const newRow = createLessonMediaRow({ index, kind: this.draftKind, initialData: {} })
+    this.mediaList.appendChild(newRow)
     if (!newRow) return
+    const newRowAdapter = new LessonMediaRowAdapter(newRow)
 
     if (this.draftKind === "image") {
       const draftFile = this.draftImageInput?.files?.[0]
-      const target = newRow.querySelector("input[type='file']")
+      const target = newRowAdapter.imageFileInput
       if (target && this.draftImageInput) {
         this.draftImageInput.name = target.name
         target.replaceWith(this.draftImageInput)
@@ -605,8 +560,8 @@ export default class extends Controller {
       if (draftFile) this.setThumbToImage(newRow, draftFile)
     } else {
       const draftVideoFile = this.draftVideoFileInput?.files?.[0]
-      const targetUrl = newRow.querySelector("input[type='text']")
-      const targetFile = newRow.querySelector("input[type='file']")
+      const targetUrl = newRowAdapter.videoUrlInput
+      const targetFile = newRowAdapter.videoFileInput
 
       if (hasVideoFile && targetFile && this.draftVideoFileInput) {
         this.draftVideoFileInput.name = targetFile.name
@@ -652,75 +607,58 @@ export default class extends Controller {
       return
     }
 
-    const supported = []
-    let unsupportedCount = 0
-
-    files.forEach((file) => {
-      const kind = this.kindForFile(file)
-      if (kind) {
-        supported.push({ file, kind })
-      } else {
-        unsupportedCount += 1
-      }
-    })
-
-    const toAdd = supported.slice(0, remaining)
-    const overflowCount = Math.max(supported.length - toAdd.length, 0)
-    let assignmentFailures = 0
-
-    for (const item of toAdd) {
-      const row = this.appendRowForKind(item.kind)
-      if (!row) continue
-      this.debug("bulk: inserted row", { kind: item.kind, file: item.file?.name, size: item.file?.size })
-
-      const assigned = this.assignFileToRow(row, item.kind, item.file)
-      if (!assigned) {
-        row.remove()
-        assignmentFailures += 1
-        continue
-      }
-
-      if (item.kind === "image") {
-        this.setThumbToImage(row, item.file)
-      } else {
-        this.setThumbToVideo(row, item.file)
-        this.setInlineMeta(row, item.file)
-      }
-
-      this.attachRowHandlers(row, true)
-      this.initMultipart(row)
-      this.debug("bulk: initMultipart called", { kind: item.kind })
-
-      if (item.kind === "video") {
-        const fileInput = row.querySelector("[data-video-multipart-upload='true']")
-        await this.triggerVideoUploadIfBound(fileInput)
-      }
+    let processResult = { supportedCount: 0, unsupportedCount: 0, assignmentFailures: 0, addedCount: 0 }
+    this.bulkRemainingSlots = remaining
+    try {
+      processResult = await this.bulkCoordinator.processFiles(files)
+    } finally {
+      this.bulkRemainingSlots = 0
     }
 
     this.reindexPositions()
     this.updateSlideLimitState()
     this.markDirty()
 
+    const overflowCount = Math.max(processResult.supportedCount - remaining, 0)
     const messages = []
-    if (toAdd.length - assignmentFailures > 0) messages.push(`Added ${toAdd.length - assignmentFailures} slide${toAdd.length - assignmentFailures === 1 ? "" : "s"}.`)
+    if (processResult.addedCount > 0) messages.push(`Added ${processResult.addedCount} slide${processResult.addedCount === 1 ? "" : "s"}.`)
     if (overflowCount > 0) messages.push(`Only the first ${remaining} file${remaining === 1 ? "" : "s"} were added (max 5 slides).`)
-    if (unsupportedCount > 0) messages.push(`${unsupportedCount} unsupported file${unsupportedCount === 1 ? "" : "s"} skipped.`)
-    if (assignmentFailures > 0) messages.push("Your browser requires adding some files one at a time for uploads.")
+    if (processResult.unsupportedCount > 0) messages.push(`${processResult.unsupportedCount} unsupported file${processResult.unsupportedCount === 1 ? "" : "s"} skipped.`)
+    if (processResult.assignmentFailures > 0) messages.push("Your browser requires adding some files one at a time for uploads.")
     this.showBulkFeedback(messages.join(" "))
   }
 
-  kindForFile(file) {
-    const type = (file?.type || "").toLowerCase()
-    if (type.startsWith("image/")) return "image"
-    if (type === "video/mp4" || type === "video/quicktime") return "video"
-    return null
+  appendRowForBulk(kind) {
+    if (!this.mediaList || this.bulkRemainingSlots <= 0) return null
+    this.bulkRemainingSlots -= 1
+    return this.appendRowForKind(kind)
+  }
+
+  assignBulkFileToRow(row, kind, file) {
+    const rowAdapter = new LessonMediaRowAdapter(row)
+    const assigned = this.assignFileToRow(row, kind, file, rowAdapter)
+    if (!assigned) return false
+
+    if (kind === "image") {
+      this.setThumbToImage(row, file)
+    } else {
+      this.setThumbToVideo(row, file)
+      this.setInlineMeta(row, file)
+    }
+
+    this.attachRowHandlers(row, true)
+    this.initMultipart(row)
+    this.debug("bulk: initMultipart called", { kind })
+    return true
   }
 
   appendRowForKind(kind) {
     if (!this.mediaList) return null
     const index = this.nextNestedIndex()
-    this.mediaList.insertAdjacentHTML("beforeend", this.mediaTemplate(kind, index))
-    return this.mediaList.lastElementChild
+    const row = createLessonMediaRow({ index, kind, initialData: {} })
+    if (!row) return null
+    this.mediaList.appendChild(row)
+    return row
   }
 
   nextNestedIndex() {
@@ -730,12 +668,13 @@ export default class extends Controller {
     return this.nestedIndex
   }
 
-  assignFileToRow(row, kind, file) {
+  assignFileToRow(row, kind, file, adapter = null) {
     if (!row || !file) return false
+    const rowAdapter = adapter || new LessonMediaRowAdapter(row)
     const fileInput =
       kind === "video"
-        ? row.querySelector("[data-video-multipart-upload='true']")
-        : row.querySelector("input[type='file']")
+        ? rowAdapter.videoFileInput
+        : rowAdapter.fileInput
 
     if (!fileInput) return false
     return this.assignFileToInput(fileInput, file)

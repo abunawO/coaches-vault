@@ -11,10 +11,10 @@
  /.env*
 
 # Ignore all logfiles and tempfiles.
- /log/*
+ /log/*.log
  /tmp/*
- !/log/.keep
  !/tmp/.keep
+ !/tmp/pids/.keep
 
 # Ignore pidfiles, but keep the directory.
  /tmp/pids/*
@@ -46,3 +46,5 @@ yarn.lock
 
 # But allow the production Uppy bundle
 !/app/assets/builds/uppy_bundle.js
+# Env
+.env
