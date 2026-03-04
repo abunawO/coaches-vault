@@ -287,11 +287,26 @@ export class VideoMultipartUploaderService {
 
     this.uppy.on("upload-success", (_file, response) => {
       const signedId = response?.body?.signed_id;
+      if (!signedId) {
+        this.dom.setStatus("Upload finished but no signed file reference was returned. Please retry.");
+        this.setState("failed");
+        this.dom.hideUploadProgress();
+        this.dom.clearHiddenSignedId(this.hiddenField);
+        this.dom.preventRawFileSubmit({ clearValue: false });
+        this.logPerfSummary("error", this.currentPerfMetrics?.token);
+        this.onSyncSubmit(this.form);
+        return;
+      }
+
       const originalName = this.currentOriginalName || this.dom.resolveOriginalInputName(this.hiddenField);
-      if (signedId && this.hiddenField) {
+      if (this.hiddenField) {
         if (!originalName) {
           this.dom.setStatus("Missing input name; please reload and retry.");
           this.setState("failed");
+          this.dom.hideUploadProgress();
+          this.dom.clearHiddenSignedId(this.hiddenField);
+          this.dom.preventRawFileSubmit({ clearValue: false });
+          this.logPerfSummary("error", this.currentPerfMetrics?.token);
           this.onSyncSubmit(this.form);
           return;
         }

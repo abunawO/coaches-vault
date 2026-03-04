@@ -26,12 +26,18 @@ function warnFallbackOnce(error) {
 
 async function loadUppy() {
   if (!uppyModulesPromise) {
-    uppyModulesPromise = import("uppy_bundle").then((bundled) => {
-      if (bundled?.Uppy && bundled?.AwsS3Multipart) {
-        return { Uppy: bundled.Uppy, AwsS3Multipart: bundled.AwsS3Multipart };
-      }
-      throw new Error("Local uppy_bundle is missing Uppy exports");
-    });
+    uppyModulesPromise = import("uppy_bundle")
+      .then((bundled) => {
+        if (bundled?.Uppy && bundled?.AwsS3Multipart) {
+          return { Uppy: bundled.Uppy, AwsS3Multipart: bundled.AwsS3Multipart };
+        }
+        throw new Error("Local uppy_bundle is missing Uppy exports");
+      })
+      .catch((error) => {
+        // Allow future retries after transient bundle-load failures.
+        uppyModulesPromise = null;
+        throw error;
+      });
   }
   return uppyModulesPromise;
 }

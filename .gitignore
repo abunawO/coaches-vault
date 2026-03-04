@@ -26,12 +26,16 @@ Thumbs.db
 
 # Keep these runtime directories in git, ignore their generated contents
 /tmp/pids/*
+!/tmp/pids/
 !/tmp/pids/.keep
 /tmp/cache/*
+!/tmp/cache/
 !/tmp/cache/.keep
 /tmp/sockets/*
+!/tmp/sockets/
 !/tmp/sockets/.keep
 /tmp/storage/*
+!/tmp/storage/
 !/tmp/storage/.keep
 
 # Uploaded files
