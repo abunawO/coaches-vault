@@ -514,7 +514,8 @@ a:hover {
 .ig-carousel .ig-frame {
   position: relative;
   background: #0f172a;
-  min-height: 320px;
+  aspect-ratio: 16 / 9;
+  min-height: 0;
   max-height: min(60vh, 520px);
   display: grid;
   width: 100%;
@@ -590,7 +591,7 @@ a:hover {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  min-height: 320px;
+  min-height: 0;
   overflow: hidden;
   border-radius: 14px;
   background: #000;
@@ -4676,6 +4677,10 @@ a {
 }
 
 @media (max-width: 640px) {
+  .ig-carousel .ig-frame {
+    max-height: none;
+  }
+
   .container {
     padding: 0 14px;
   }
