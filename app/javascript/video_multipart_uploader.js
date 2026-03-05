@@ -47,6 +47,14 @@ function syncSubmitDisabledForMultipart(form) {
   syncFormSubmitState(form);
 }
 
+function setMultipartFooterMessage(formEl, message) {
+  if (!formEl) return;
+  const statusEl = formEl.querySelector("[data-form-submit-lock-target='status']");
+  if (!statusEl) return;
+  statusEl.textContent = message || "";
+  statusEl.style.display = message ? "inline" : "none";
+}
+
 function blockingReasonForInput(input) {
   const { state, signedId } = stateStore.get(input);
 
@@ -75,9 +83,11 @@ function syncFormSubmitState(formEl) {
   const blockingReason = inputs.map(blockingReasonForInput).find(Boolean);
 
   if (blockingReason) {
-    disableSubmit(formEl, blockingReason);
+    disableSubmit(formEl, "Uploading...");
+    setMultipartFooterMessage(formEl, blockingReason);
   } else {
     enableSubmit(formEl);
+    setMultipartFooterMessage(formEl, "");
   }
 }
 

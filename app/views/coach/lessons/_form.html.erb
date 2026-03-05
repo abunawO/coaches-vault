@@ -62,7 +62,11 @@
                         <%= form.file_field :cover_image, class: "input", accept: "image/png,image/jpeg,image/webp,image/*" %>
                         <% if @lesson.cover_image.attached? %>
                         <div style="margin-top:10px; display:grid; gap:8px;">
+                            <% if @lesson.cover_image.blob&.persisted? %>
                             <%= image_tag url_for(@lesson.cover_image.variant(resize_to_limit: [600, 338])), alt: "Current cover image", style: "width: 220px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; border: 1px solid #e5e7eb;" %>
+                            <% else %>
+                            <p class="muted small-text" style="margin:0;">Cover image selected. Preview will appear after save.</p>
+                            <% end %>
                             <label class="muted small-text" style="display:flex; align-items:center; gap:8px;">
                                 <%= check_box_tag "lesson[remove_cover_image]", "1", false %>
                                 Remove current cover image
