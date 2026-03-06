@@ -514,7 +514,8 @@ a:hover {
 .ig-carousel .ig-frame {
   position: relative;
   background: #0f172a;
-  min-height: 320px;
+  aspect-ratio: 16 / 9;
+  min-height: 0;
   max-height: min(60vh, 520px);
   display: grid;
   width: 100%;
@@ -590,7 +591,7 @@ a:hover {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  min-height: 320px;
+  min-height: 0;
   overflow: hidden;
   border-radius: 14px;
   background: #000;
@@ -1830,7 +1831,7 @@ video[data-inline-video]:not([controls])::-moz-media-controls {
   justify-content: space-between;
 }
 
-.access-footer .btn {
+.access-footer .card-actions {
   margin-left: auto;
 }
 
@@ -2437,6 +2438,7 @@ details[open] .vault-caret {
   display: grid;
   gap: 10px;
   box-shadow: 0 8px 20px rgba(16, 24, 40, 0.03);
+  min-width: 0;
 }
 
 .vault-panel__header {
@@ -2590,7 +2592,6 @@ details[open] .vault-caret {
 .vault-main-card {
   display: grid;
   gap: 14px;
-  width: 119%;
 }
 
 .vault-main__header {
@@ -2648,6 +2649,8 @@ details[open] .vault-caret {
   border-radius: 14px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   position: relative;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .vault-addlessons__top {
@@ -2686,6 +2689,8 @@ details[open] .vault-caret {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .vault-addlessons__list {
@@ -2704,6 +2709,7 @@ details[open] .vault-caret {
   gap: 10px;
   transition: all 0.15s ease, box-shadow 0.15s ease;
   cursor: pointer;
+  min-width: 0;
 }
 
 .vault-pill input {
@@ -2711,7 +2717,11 @@ details[open] .vault-caret {
 }
 
 .vault-pill__text {
+  flex: 1 1 auto;
+  min-width: 0;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-weight: 600;
 }
 
@@ -2761,6 +2771,22 @@ details[open] .vault-caret {
   .vault-main__header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .vault-body-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .vault-addlessons__top {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .vault-addlessons__actions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 }
 .mv-card__overlay-close {
@@ -3539,6 +3565,27 @@ details[open] .vault-caret {
   z-index: 10;
 }
 
+.lesson-form-actions .card-actions {
+  margin-left: auto;
+  min-width: 0;
+  align-items: center;
+}
+
+.lesson-form-actions .card-actions .btn {
+  margin-left: 0;
+  max-width: 100%;
+}
+
+.lesson-form-actions .form-submit-lock__status {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.lesson-form-actions [data-form-submit-lock-target="status"] {
+  white-space: normal;
+  line-height: 1.25;
+}
+
 .form-submit-lock__overlay {
   position: fixed;
   inset: 0;
@@ -4077,6 +4124,27 @@ details[open] .vault-caret {
   }
 }
 
+@media (max-width: 640px) {
+  .lesson-form-actions.access-footer {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .lesson-form-actions .card-actions {
+    width: 100%;
+    margin-left: 0;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .lesson-form-actions .form-submit-lock__status {
+    grid-column: 1 / -1;
+    margin-right: 0 !important;
+  }
+}
+
 .visibility-options {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -4609,6 +4677,10 @@ a {
 }
 
 @media (max-width: 640px) {
+  .ig-carousel .ig-frame {
+    max-height: none;
+  }
+
   .container {
     padding: 0 14px;
   }
