@@ -4745,6 +4745,40 @@ a {
   flex: 0 0 auto;
 }
 
+.topnav__student-quick {
+  display: none;
+}
+
+.topnav__student-quick-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  color: #111827;
+  font-weight: 600;
+  font-size: 0.78rem;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.topnav__student-quick-link:hover {
+  background: rgba(37, 99, 235, 0.06);
+}
+
+.topnav__student-quick-link.is-active {
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+}
+
+.topnav__student-quick-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  font-size: 0.65rem;
+}
+
 .topnav__user {
   display: flex;
   align-items: baseline;
@@ -4836,8 +4870,25 @@ a {
 }
 
 @media (max-width: 900px) {
+  .topnav__inner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .topnav__bar {
+    width: 100%;
+  }
+
   .topnav__nav {
     display: none;
+  }
+
+  .topnav__student-quick {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    margin-right: 4px;
   }
 
   .topnav__hamburger {
@@ -4867,6 +4918,10 @@ a {
     padding: 16px;
     border-top: 1px solid rgba(0, 0, 0, 0.06);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .topnav--mobile-open .topnav__student-quick {
+    display: none;
   }
 
   .topnav__link,
