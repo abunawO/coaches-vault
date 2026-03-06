@@ -4826,6 +4826,7 @@ a {
   flex-direction: column;
   justify-content: center;
   gap: 4px;
+  position: relative;
   width: 40px;
   height: 40px;
   border-radius: 12px;
@@ -4844,6 +4845,19 @@ a {
   width: 18px;
   background: #111827;
   border-radius: 999px;
+}
+
+.topnav__hamburger-alert {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #2563eb;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18);
+  pointer-events: none;
 }
 
 .btn-full {
