@@ -1,0 +1,48 @@
+<aside class="lesson-support-rail">
+  <section class="lesson-support-rail__card card">
+    <header class="lesson-support-rail__header">
+      <p class="lesson-support-rail__kicker">Current Lesson</p>
+      <h3 class="section-title">Lesson contents</h3>
+    </header>
+
+    <% if access_level == :full && media_slides.any? %>
+      <div class="lesson-step-list">
+        <% media_slides.each_with_index do |slide, idx| %>
+          <% kind = slide.respond_to?(:kind) ? slide.kind : slide[:kind] %>
+          <% step_hint = lesson_media_step_hint(slide) %>
+          <button
+            type="button"
+            class="lesson-step-item <%= 'is-active' if idx.zero? %>"
+            data-lesson-viewer-target="stepButton"
+            data-index="<%= idx %>"
+            data-action="lesson-viewer#goToStep"
+            aria-label="Open step <%= idx + 1 %>">
+            <span class="lesson-step-item__top">
+              <span class="lesson-step-item__index">Step <%= idx + 1 %></span>
+              <span class="lesson-step-item__kind"><%= lesson_media_kind_label(kind) %></span>
+            </span>
+            <span class="lesson-step-item__title"><%= lesson_media_step_title(slide, idx) %></span>
+            <% if step_hint.present? %>
+              <span class="lesson-step-item__hint"><%= step_hint %></span>
+            <% end %>
+          </button>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="muted">Unlock this lesson to view the full step sequence.</p>
+    <% end %>
+  </section>
+
+  <section class="lesson-support-rail__card card">
+    <header class="lesson-support-rail__header">
+      <p class="lesson-support-rail__kicker">Continue Learning</p>
+      <h3 class="section-title">Up next</h3>
+    </header>
+
+    <div class="up-next-list">
+      <% up_next.each do |other| %>
+        <%= render "shared/up_next_card", lesson: other %>
+      <% end %>
+    </div>
+  </section>
+</aside>

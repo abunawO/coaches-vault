@@ -1,0 +1,33 @@
+<% notes_text =
+  if access_level == :full
+    lesson.description.presence || "No lesson notes yet."
+  elsif access_level == :preview
+    lesson.preview_text.presence || "Preview available. Subscribe to unlock full lesson notes."
+  else
+    locked_message
+  end %>
+
+<section class="lesson-notes card">
+  <header class="lesson-notes__header">
+    <div>
+      <p class="lesson-notes__kicker">Coach Guidance</p>
+      <h2 class="lesson-notes__title">Lesson Notes</h2>
+    </div>
+    <div class="lesson-notes__meta">
+      <%= render "shared/lesson_badge", visibility: lesson.visibility %>
+      <span class="muted"><%= time_ago_in_words(lesson.created_at) %> ago</span>
+    </div>
+  </header>
+
+  <div id="lesson-notes-body" class="lesson-notes__body about-collapsed" data-lesson-viewer-target="aboutBody">
+    <p class="muted"><%= notes_text %></p>
+  </div>
+
+  <button
+    type="button"
+    class="btn btn-ghost btn-small is-hidden"
+    data-lesson-viewer-target="aboutToggle"
+    data-action="lesson-viewer#toggleAbout">
+    Show more
+  </button>
+</section>

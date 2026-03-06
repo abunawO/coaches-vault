@@ -1,0 +1,40 @@
+<% section_id = section[:category].id %>
+<section
+  class="vault-section card <%= 'is-active' if selected %>"
+  data-student-vault-target="sectionPanel"
+  data-section-id="<%= section_id %>"
+  data-total-lessons="<%= section[:total_lessons] %>"
+>
+  <header class="vault-section__header">
+    <div class="vault-section__title-wrap">
+      <div class="vault-section__labels">
+        <% if section[:taxonomy_label].present? %>
+          <span class="pill-soft vault-section__type"><%= section[:taxonomy_label] %></span>
+        <% end %>
+        <span class="pill-soft"><%= pluralize(section[:total_lessons], "lesson") %></span>
+      </div>
+      <h2 class="vault-section__title"><%= section[:category].name %></h2>
+      <% if section[:category].description.present? %>
+        <p class="muted vault-section__description"><%= section[:category].description %></p>
+      <% end %>
+      <% if section[:preview_titles].any? %>
+        <p class="muted tiny-text vault-section__preview">Focus lessons: <%= section[:preview_titles].join(" • ") %></p>
+      <% end %>
+    </div>
+    <div class="vault-section__progress">
+      <span class="small-text muted">Visible now</span>
+      <strong data-student-vault-target="sectionVisibleCount"><%= section[:total_lessons] %></strong>
+      <span class="small-text muted">of <%= section[:total_lessons] %></span>
+    </div>
+  </header>
+
+  <% if section[:lessons].empty? %>
+    <p class="muted">No lessons in this section yet.</p>
+  <% else %>
+    <div class="vault-lessons-grid">
+      <% section[:lessons].each do |lesson| %>
+        <%= render "coaches/vaults/lesson_card", lesson: lesson, coach: coach, coach_profile: coach_profile, section_id: section_id %>
+      <% end %>
+    </div>
+  <% end %>
+</section>

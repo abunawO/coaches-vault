@@ -1,0 +1,31 @@
+<% lesson_count_label = pluralize(media_slides.size, "step") %>
+
+<header class="lesson-shell-header card">
+  <div class="lesson-shell-header__content">
+    <p class="lesson-shell-header__kicker">Lesson Workspace</p>
+    <h1 class="lesson-shell-header__title"><%= lesson.title %></h1>
+
+    <div class="lesson-shell-header__meta">
+      <span class="muted">
+        by <%= coach_profile ? link_to(coach_name, coach_path(coach_profile.slug), class: "muted strong-link") : coach_name %>
+      </span>
+      <%= render "shared/lesson_badge", visibility: lesson.visibility %>
+      <span class="muted"><%= time_ago_in_words(lesson.created_at) %> ago</span>
+      <span class="lesson-shell-header__divider" aria-hidden="true">•</span>
+      <span class="muted"><%= lesson_count_label %></span>
+    </div>
+  </div>
+
+  <div class="lesson-shell-header__actions">
+    <% if access_level == :full && current_user&.student? %>
+      <% favorited = Favorite.exists?(student_id: current_user.id, lesson_id: lesson.id) %>
+      <% if favorited %>
+        <%= button_to "Unfavorite", unfavorite_lesson_path(lesson), method: :delete, class: "btn btn-secondary btn-small" %>
+      <% else %>
+        <%= button_to "Favorite", favorite_lesson_path(lesson), method: :post, class: "btn btn-primary btn-small" %>
+      <% end %>
+    <% end %>
+    <button class="btn btn-ghost btn-small" disabled>Save</button>
+    <button class="btn btn-ghost btn-small" disabled>Share</button>
+  </div>
+</header>
