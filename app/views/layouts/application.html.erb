@@ -40,7 +40,15 @@
       <div class="topnav__inner">
         <div class="topnav__bar">
           <div class="topnav__brand">
-            <% brand_path = (logged_in? && current_user.coach?) ? coach_vault_path : root_path %>
+            <% brand_path =
+              if logged_in? && current_user.student?
+                student_my_vaults_path
+              elsif logged_in? && current_user.coach?
+                coach_vault_path
+              else
+                root_path
+              end
+            %>
             <%= link_to "MyVault", brand_path, class: "topnav__brand-link" %>
           </div>
 

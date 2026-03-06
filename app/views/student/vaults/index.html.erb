@@ -1,0 +1,98 @@
+<div class="container coaches-page">
+  <div class="coaches-hero">
+    <div>
+      <h1 class="page-title">Your Vaults</h1>
+      <p class="page-subtitle">Continue learning from the coaches you follow.</p>
+    </div>
+  </div>
+
+  <% if @has_subscriptions %>
+    <div class="coaches-toolbar card">
+      <%= form_with url: student_my_vaults_path, method: :get, local: true, class: "coaches-search-form" do |f| %>
+        <div class="coaches-search-input">
+          <span class="muted">🔍</span>
+          <%= f.search_field :q, value: @q, placeholder: "Search your coaches by name, handle, or bio…", class: "input" %>
+          <% if @q.present? %>
+            <%= link_to "Clear", student_my_vaults_path, class: "btn btn-ghost btn-small" %>
+          <% end %>
+        </div>
+        <div class="coaches-sort">
+          <select class="input" disabled>
+            <option>Sort: Most recent</option>
+          </select>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if !@has_subscriptions %>
+    <div class="card empty-state-card">
+      <h3>You are not subscribed to any coach vaults yet.</h3>
+      <p class="muted">Explore coaches to find a vault and start learning.</p>
+      <div class="card-actions">
+        <%= link_to "Browse coaches", coaches_path, class: "btn btn-primary" %>
+      </div>
+    </div>
+  <% elsif @subscriptions.empty? %>
+    <div class="card empty-state-card">
+      <h3>No vaults found<%= @q.present? ? " for “#{@q}”" : "" %>.</h3>
+      <p class="muted">Try a different search to find a subscribed coach vault.</p>
+      <div class="card-actions">
+        <%= link_to "Clear search", student_my_vaults_path, class: "btn btn-primary" %>
+      </div>
+    </div>
+  <% else %>
+    <div class="coaches-grid">
+      <% @subscriptions.each do |subscription| %>
+        <% coach = subscription.coach %>
+        <% profile = coach&.coach_profile %>
+        <% display_name = profile&.display_name.presence || coach&.email || "Coach" %>
+        <% handle = profile&.slug.presence %>
+        <% headline = profile&.headline.presence %>
+        <% bio = profile&.bio.presence %>
+        <% avatar_text = display_name.to_s.first.presence || handle.to_s.first.presence || "C" %>
+        <% lessons_count = @lesson_counts_by_coach_id[coach.id].to_i %>
+        <% vault_path = handle.present? ? coach_public_vault_path(handle) : nil %>
+
+        <div class="coach-card card">
+          <div class="coach-card-header">
+            <div class="avatar-circle">
+              <% if profile&.avatar&.attached? %>
+                <%= image_tag profile.avatar.variant(resize_to_fill: [48, 48]), alt: display_name, class: "avatar-img" %>
+              <% else %>
+                <div class="avatar-fallback"><%= avatar_text.upcase %></div>
+              <% end %>
+            </div>
+            <div class="coach-card__meta">
+              <div class="coach-name"><%= display_name %></div>
+              <% if handle.present? %>
+                <div class="muted">@<%= handle %></div>
+              <% end %>
+              <% if headline.present? %>
+                <div class="coach-card__headline"><%= headline %></div>
+              <% end %>
+            </div>
+          </div>
+
+          <% if bio.present? %>
+            <p class="muted coach-bio-snippet"><%= truncate(bio, length: 140) %></p>
+          <% else %>
+            <p class="muted coach-bio-snippet">No bio provided yet.</p>
+          <% end %>
+
+          <div class="coach-stats">
+            <span class="pill pill-soft">Lessons: <strong><%= lessons_count %></strong></span>
+          </div>
+
+          <div class="card-actions">
+            <% if vault_path.present? %>
+              <%= link_to "Enter Vault", vault_path, class: "btn btn-primary" %>
+            <% else %>
+              <span class="btn btn-secondary disabled" aria-disabled="true">Vault unavailable</span>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

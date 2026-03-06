@@ -64,6 +64,7 @@ Rails.application.routes.draw do
   post "/coaches/:coach_id/subscription", to: "subscriptions#create", as: :coach_subscription
   delete "/coaches/:coach_id/subscription", to: "subscriptions#destroy", as: :cancel_coach_subscription
   get "/subscriptions", to: "subscriptions#index", as: :subscriptions
+  get "/my-vaults", to: "student/vaults#index", as: :student_my_vaults
 
   post "/lessons/:lesson_id/favorite", to: "favorites#create", as: :favorite_lesson
   delete "/lessons/:lesson_id/favorite", to: "favorites#destroy", as: :unfavorite_lesson
