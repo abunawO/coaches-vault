@@ -1,6 +1,6 @@
 <% access = lesson.viewer_access_level(current_user) %>
 <% locked = access != :full %>
-<% link_target = locked ? (logged_in? ? coach_subscription_path(coach) : login_path) : public_coach_lesson_path(coach_profile.slug, lesson) %>
+<% link_target = locked ? (logged_in? ? coach_subscription_path(coach) : login_path) : public_coach_lesson_path(coach_profile.slug, lesson, category_id: section_id) %>
 <% link_options = locked && logged_in? ? { method: :post } : {} %>
 <% searchable = [lesson.title, lesson.description].compact.join(" ").downcase %>
 

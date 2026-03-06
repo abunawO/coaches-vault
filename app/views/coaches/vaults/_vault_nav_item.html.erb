@@ -3,29 +3,18 @@
 
 <button
   type="button"
-  class="vault-rail__item <%= 'vault-rail__item--start' if start_here %> <%= 'is-active' if selected %>"
+  class="vault-rail__item <%= 'is-active' if selected %>"
   data-student-vault-target="navItem"
   data-section-id="<%= section_id %>"
-  data-start-here="<%= start_here ? 'true' : 'false' %>"
   data-action="student-vault#selectSection"
 >
   <span class="vault-rail__item-top">
     <span class="vault-rail__item-name"><%= section[:category].name %></span>
     <span class="vault-rail__item-count">
-      <span data-student-vault-target="navVisibleCount"><%= section[:total_lessons] %></span>/<%= section[:total_lessons] %>
+      <span data-student-vault-target="navVisibleCount"><%= section[:total_lessons] %></span> <%= section[:total_lessons] == 1 ? "lesson" : "lessons" %>
     </span>
   </span>
-  <% if start_here %>
-    <span class="vault-rail__item-meta">
-      <span class="vault-rail__item-reco">Recommended start</span>
-      <% if section[:taxonomy_label].present? %>
-        <span class="vault-rail__item-type"><%= section[:taxonomy_label] %></span>
-      <% end %>
-    </span>
-    <% if section[:preview_titles].any? %>
-      <span class="vault-rail__item-preview"><%= section[:preview_titles].first %></span>
-    <% end %>
-  <% elsif section[:taxonomy_label].present? %>
+  <% if section[:taxonomy_label].present? %>
     <span class="vault-rail__item-index-meta"><%= section[:taxonomy_label] %></span>
   <% end %>
 </button>

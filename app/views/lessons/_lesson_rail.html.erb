@@ -1,4 +1,8 @@
 <aside class="lesson-support-rail">
+  <% current_category_id = up_next_section&.id %>
+  <% continue_heading = up_next_mode == :section && up_next_section.present? ? "Next in #{up_next_section.name}" : "Up next" %>
+  <% continue_subcopy = up_next_mode == :section && up_next_section.present? ? "More lessons from this section." : "More lessons from this coach." %>
+
   <section class="lesson-support-rail__card card">
     <header class="lesson-support-rail__header">
       <p class="lesson-support-rail__kicker">Current Lesson</p>
@@ -36,13 +40,18 @@
   <section class="lesson-support-rail__card card">
     <header class="lesson-support-rail__header">
       <p class="lesson-support-rail__kicker">Continue Learning</p>
-      <h3 class="section-title">Up next</h3>
+      <h3 class="section-title"><%= continue_heading %></h3>
+      <p class="muted small-text"><%= continue_subcopy %></p>
     </header>
 
-    <div class="up-next-list">
-      <% up_next.each do |other| %>
-        <%= render "shared/up_next_card", lesson: other %>
-      <% end %>
-    </div>
+    <% if up_next.any? %>
+      <div class="up-next-list">
+        <% up_next.each do |other| %>
+          <%= render "shared/up_next_card", lesson: other, current_category_id: current_category_id %>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="muted small-text">No additional lessons are available right now.</p>
+    <% end %>
   </section>
 </aside>

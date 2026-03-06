@@ -29,16 +29,10 @@ class LessonsController < ApplicationController
     @can_comment = @authorized && current_user&.student? && current_user.subscribed_to?(@lesson.coach)
     @can_reply = @authorized && current_user&.coach? && current_user.id == @lesson.coach_id
     @media_slides = @lesson.lesson_media.order(:position)
-
-    # Up next: other lessons from the same coach that the viewer can at least preview/full
-    @up_next = Lesson
-               .includes(:coach, :lesson_shares)
-               .where(coach_id: @lesson.coach_id)
-               .where.not(id: @lesson.id)
-               .order(created_at: :desc)
-               .limit(12)
-               .select { |l| [:full, :preview].include?(l.viewer_access_level(current_user)) }
-               .first(6)
+    @up_next_section = current_section_for_continue_learning
+    @up_next = section_scoped_up_next(@up_next_section)
+    @up_next_mode = @up_next.any? ? :section : :coach
+    @up_next = coach_scoped_up_next if @up_next_mode == :coach
   end
 
   private
@@ -78,5 +72,57 @@ class LessonsController < ApplicationController
     when :not_shared
       flash.now[:alert] = "This lesson is private and not shared with your account."
     end
+  end
+
+  def current_section_for_continue_learning
+    requested_category_id = params[:category_id].to_i
+    if requested_category_id.positive?
+      requested = @lesson
+                  .categories
+                  .where(coach_id: @lesson.coach_id)
+                  .find_by(id: requested_category_id)
+      return requested if requested
+    end
+
+    @lesson
+      .category_lessons
+      .joins(:category)
+      .includes(:category)
+      .where(categories: { coach_id: @lesson.coach_id })
+      .order(Arel.sql("COALESCE(category_lessons.position, 2147483647) ASC"), "categories.position ASC", "categories.created_at ASC")
+      .first
+      &.category
+  end
+
+  def section_scoped_up_next(category)
+    return [] unless category
+
+    category
+      .category_lessons
+      .joins(:lesson)
+      .includes(lesson: [:coach, :lesson_shares])
+      .where.not(lesson_id: @lesson.id)
+      .where(lessons: { coach_id: @lesson.coach_id })
+      .order(Arel.sql("COALESCE(category_lessons.position, 2147483647) ASC"), "lessons.created_at DESC")
+      .limit(24)
+      .map(&:lesson)
+      .compact
+      .select { |lesson| viewable_in_continue_learning?(lesson) }
+      .first(6)
+  end
+
+  def coach_scoped_up_next
+    Lesson
+      .includes(:coach, :lesson_shares)
+      .where(coach_id: @lesson.coach_id)
+      .where.not(id: @lesson.id)
+      .order(created_at: :desc)
+      .limit(24)
+      .select { |lesson| viewable_in_continue_learning?(lesson) }
+      .first(6)
+  end
+
+  def viewable_in_continue_learning?(lesson)
+    [:full, :preview].include?(lesson.viewer_access_level(current_user))
   end
 end

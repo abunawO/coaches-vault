@@ -1,11 +1,12 @@
 <%# locals: lesson %>
 <% coach_profile = lesson.coach&.coach_profile %>
+<% category_param = local_assigns[:current_category_id].present? ? { category_id: local_assigns[:current_category_id] } : {} %>
 
 <% path =
   if coach_profile&.slug && lesson.respond_to?(:slug) && lesson.slug.present?
-    public_coach_lesson_path(coach_profile.slug, lesson.slug)
+    public_coach_lesson_path(coach_profile.slug, lesson.slug, category_param)
   else
-    lesson_path(lesson)
+    lesson_path(lesson, category_param)
   end
 %>
 
