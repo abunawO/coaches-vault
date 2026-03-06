@@ -1,0 +1,131 @@
+<section class="lesson-viewer card">
+  <% if access_level == :full %>
+    <% if media_slides.any? %>
+      <% first_kind = media_slides.first.respond_to?(:kind) ? media_slides.first.kind : media_slides.first[:kind] %>
+      <header class="lesson-viewer__header">
+        <div>
+          <p class="lesson-viewer__kicker">Lesson Sequence</p>
+          <h2 class="lesson-viewer__title">Current step</h2>
+        </div>
+        <div class="lesson-viewer__status">
+          <span class="lesson-viewer__counter">
+            Step <span data-lesson-viewer-target="counterCurrent">1</span> of <span data-lesson-viewer-target="counterTotal"><%= media_slides.size %></span>
+          </span>
+          <span class="lesson-viewer__kind" data-lesson-viewer-target="currentKind"><%= lesson_media_kind_label(first_kind) %></span>
+        </div>
+      </header>
+
+      <div class="lesson-carousel" data-lesson-viewer-target="carousel">
+        <div class="lesson-carousel__frame" data-lesson-viewer-target="frame">
+          <div class="lesson-carousel__track" data-lesson-viewer-target="track">
+            <% media_slides.each_with_index do |slide, idx| %>
+              <% kind = slide.respond_to?(:kind) ? slide.kind : slide[:kind] %>
+              <% video_url = slide.respond_to?(:video_url) ? slide.video_url : slide[:video_url] %>
+              <% video_file = slide.respond_to?(:video_file) ? slide.video_file : slide[:video_file] %>
+              <% video_attached = video_file.respond_to?(:attached?) ? video_file.attached? : false %>
+              <% image_file = slide.respond_to?(:image_file) ? slide.image_file : slide[:image_file] %>
+              <% image_attached = image_file.respond_to?(:attached?) ? image_file.attached? : false %>
+
+              <article
+                class="lesson-carousel__slide <%= 'is-active' if idx.zero? %>"
+                data-lesson-viewer-target="slide"
+                data-index="<%= idx %>"
+                data-kind="<%= kind.to_s %>">
+                <% if kind.to_s == "image" && image_attached %>
+                  <div class="lesson-carousel__media lesson-carousel__media--image">
+                    <%= image_tag(image_file, alt: "#{lesson.title} step #{idx + 1}") %>
+                  </div>
+                <% elsif kind.to_s == "video" && video_attached %>
+                  <div class="lesson-carousel__media lesson-carousel__media--video">
+                    <video preload="metadata" playsinline data-inline-video>
+                      <source src="<%= url_for(video_file) %>">
+                    </video>
+                    <button
+                      type="button"
+                      class="video-inline-overlay"
+                      data-action="lesson-viewer#playInlineVideo"
+                      aria-label="Play video">
+                      <span class="video-poster__overlay" aria-hidden="true">
+                        <span class="video-play-icon"></span>
+                        <span class="video-poster__label">Play</span>
+                      </span>
+                    </button>
+                  </div>
+                <% elsif video_url.present? %>
+                  <% embed = embed_url_for(video_url) %>
+                  <% if embed %>
+                    <% youtube_id = embed[%r{youtube\.com/embed/([^/?]+)}, 1] %>
+                    <% poster = youtube_id ? "https://i.ytimg.com/vi/#{youtube_id}/hqdefault.jpg" : nil %>
+                    <div class="player-frame">
+                      <button
+                        class="video-poster"
+                        type="button"
+                        data-action="lesson-viewer#loadEmbed"
+                        data-video-embed="<%= embed %>"
+                        data-video-provider="<%= youtube_id ? 'youtube' : 'vimeo' %>"
+                        aria-label="Play video">
+                        <% if poster %>
+                          <img src="<%= poster %>" alt="Video thumbnail" loading="lazy" decoding="async">
+                        <% end %>
+                        <span class="video-poster__overlay" aria-hidden="true">
+                          <span class="video-play-icon"></span>
+                          <span class="video-poster__label">Play</span>
+                        </span>
+                      </button>
+                    </div>
+                  <% else %>
+                    <div class="player-frame lesson-carousel__fallback">
+                      <%= link_to "Watch video", video_url, class: "btn btn-primary", target: "_blank", rel: "noopener" %>
+                    </div>
+                  <% end %>
+                <% else %>
+                  <div class="player-frame lesson-carousel__fallback">
+                    <p class="muted">Step unavailable</p>
+                  </div>
+                <% end %>
+              </article>
+            <% end %>
+          </div>
+
+          <% if media_slides.size > 1 %>
+            <button type="button" class="lesson-carousel__arrow lesson-carousel__arrow--left" data-action="lesson-viewer#prev" aria-label="Previous step">‹</button>
+            <button type="button" class="lesson-carousel__arrow lesson-carousel__arrow--right" data-action="lesson-viewer#next" aria-label="Next step">›</button>
+          <% end %>
+        </div>
+
+        <% if media_slides.size > 1 %>
+          <div class="lesson-carousel__dots">
+            <% media_slides.each_with_index do |_slide, idx| %>
+              <button
+                type="button"
+                class="lesson-carousel__dot <%= 'is-active' if idx.zero? %>"
+                data-lesson-viewer-target="dot"
+                data-index="<%= idx %>"
+                data-action="lesson-viewer#goToDot"
+                aria-label="Go to step <%= idx + 1 %>">
+              </button>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="lesson-carousel__empty">
+        <p class="muted">No lesson media yet.</p>
+      </div>
+    <% end %>
+  <% elsif access_level == :preview %>
+    <%= render "shared/locked_player",
+        message: "Preview available. Subscribe to unlock full lesson.",
+        cta_path: logged_in? && current_user.student? ? coach_subscription_path(lesson.coach) : login_path,
+        cta_method: (logged_in? && current_user.student? ? :post : nil),
+        secondary_path: coach_profile ? coach_path(coach_profile.slug) : coaches_path,
+        cta_label: "Subscribe" %>
+  <% else %>
+    <%= render "shared/locked_player",
+        message: locked_message,
+        cta_path: (lock_reason == :not_logged_in ? login_path : coach_subscription_path(lesson.coach)),
+        cta_method: (lock_reason == :not_logged_in ? nil : :post),
+        secondary_path: coach_profile ? coach_path(coach_profile.slug) : coaches_path,
+        cta_label: (lock_reason == :not_logged_in ? "Log in" : "Subscribe") %>
+  <% end %>
+</section>

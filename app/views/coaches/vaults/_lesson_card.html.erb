@@ -1,0 +1,27 @@
+<% access = lesson.viewer_access_level(current_user) %>
+<% locked = access != :full %>
+<% link_target = locked ? (logged_in? ? coach_subscription_path(coach) : login_path) : public_coach_lesson_path(coach_profile.slug, lesson) %>
+<% link_options = locked && logged_in? ? { method: :post } : {} %>
+<% searchable = [lesson.title, lesson.description].compact.join(" ").downcase %>
+
+<%= link_to link_target, link_options.merge(class: "vault-lesson-card #{'is-locked' if locked}", data: { student_vault_target: "lessonCard", search: searchable, section_id: section_id }) do %>
+  <div class="vault-lesson-card__title"><%= lesson.title %></div>
+  <% if lesson.description.present? %>
+    <p class="muted small-text vault-lesson-card__description"><%= truncate(lesson.description, length: 135) %></p>
+  <% else %>
+    <p class="muted small-text vault-lesson-card__description">No description yet.</p>
+  <% end %>
+
+  <div class="vault-lesson-card__meta muted small-text">
+    <span class="vault-lesson-card__date"><%= l(lesson.created_at, format: :short) %></span>
+    <% if locked %>
+      <span class="pill-soft pill-warning">Locked</span>
+    <% else %>
+      <span class="pill-soft pill-success">Unlocked</span>
+    <% end %>
+  </div>
+
+  <% if locked %>
+    <div class="vault-lesson-card__lock" aria-hidden="true">🔒</div>
+  <% end %>
+<% end %>
