@@ -22,7 +22,6 @@ module Coaches
 
       @total_lessons = @vault_sections.sum { |section| section[:total_lessons] }
       @selected_section_id = resolved_selected_section_id
-      @start_here_sections = build_start_here_sections
     end
 
     private
@@ -33,16 +32,6 @@ module Coaches
       return candidate if valid_ids.include?(candidate)
 
       valid_ids.first
-    end
-
-    def build_start_here_sections
-      return [] if @vault_sections.empty?
-
-      foundations = @vault_sections.select { |section| section[:taxonomy_label] == "Fundamentals" }
-      list = foundations.first(2)
-      remaining = @vault_sections.reject { |section| list.include?(section) }
-
-      list.concat(remaining.first(2)).uniq.first(3)
     end
 
     def taxonomy_label_for(category)

@@ -19,16 +19,16 @@
   <% else %>
     <div class="coach-vault__toolbar card">
       <div class="coach-vault__toolbar-summary" data-student-vault-target="resultsSummary">
-        Browse <strong data-student-vault-target="resultsCount"><%= @total_lessons %></strong> lessons across <%= pluralize(@vault_sections.size, "section") %>
+        Explore <strong data-student-vault-target="resultsCount"><%= @total_lessons %></strong> lessons across this vault
       </div>
       <div class="coach-vault__toolbar-search">
-        <label class="small-text muted" for="vault-search-input">Search lessons in this library</label>
+        <label class="small-text muted" for="vault-search-input">Search lessons in this vault</label>
         <div class="coach-vault__search-row">
           <input
             id="vault-search-input"
             type="search"
             class="input coach-vault__search"
-            placeholder="Search lessons, concepts, systems..."
+            placeholder="Search lessons, concepts, or systems..."
             data-student-vault-target="searchInput"
             data-action="input->student-vault#filter"
             aria-label="Search lessons in this coach vault"
@@ -47,21 +47,11 @@
 
     <div class="coach-vault__workspace">
       <aside class="vault-rail card" aria-label="Vault sections">
-        <div class="vault-rail__group">
-          <h3 class="vault-rail__heading">Start Here</h3>
-          <p class="muted small-text">Recommended entry points into this coach’s framework.</p>
-          <div class="vault-rail__list vault-rail__list--start">
-            <% @start_here_sections.each do |section| %>
-              <%= render "coaches/vaults/vault_nav_item", section: section, selected_section_id: @selected_section_id, start_here: true %>
-            <% end %>
-          </div>
-        </div>
-
-        <div class="vault-rail__group">
-          <h3 class="vault-rail__heading">All Sections</h3>
+        <div>
+          <h3 class="vault-rail__heading">Section Index</h3>
           <div class="vault-rail__list">
             <% @vault_sections.each do |section| %>
-              <%= render "coaches/vaults/vault_nav_item", section: section, selected_section_id: @selected_section_id, start_here: false %>
+              <%= render "coaches/vaults/vault_nav_item", section: section, selected_section_id: @selected_section_id %>
             <% end %>
           </div>
         </div>

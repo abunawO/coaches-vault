@@ -3802,18 +3802,6 @@ details[open] .vault-caret {
   overflow: auto;
 }
 
-.vault-rail__group {
-  display: grid;
-  gap: 8px;
-}
-
-.vault-rail__group:first-child {
-  padding: 10px 10px 8px;
-  border-radius: 12px;
-  border: 1px solid #dbe7ff;
-  background: linear-gradient(180deg, #f8fbff 0%, #f1f6ff 100%);
-}
-
 .vault-rail__heading {
   margin: 0;
   font-size: 0.85rem;
@@ -3874,50 +3862,9 @@ details[open] .vault-caret {
   white-space: nowrap;
 }
 
-.vault-rail__item-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.vault-rail__item-reco {
-  font-size: 0.69rem;
-  font-weight: 700;
-  color: #1d4ed8;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.vault-rail__item-type {
-  font-size: 0.72rem;
-  color: #64748b;
-}
-
-.vault-rail__item-preview {
-  color: #64748b;
-  font-size: 0.77rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .vault-rail__item-index-meta {
   color: #94a3b8;
   font-size: 0.72rem;
-}
-
-.vault-rail__group:nth-child(2) .vault-rail__item {
-  border-radius: 8px;
-  border-color: #e5e7eb;
-  background: transparent;
-}
-
-.vault-rail__group:nth-child(2) .vault-rail__item:hover {
-  background: #f8fafc;
-}
-
-.vault-rail__group:nth-child(2) .vault-rail__item.is-active {
-  background: #eef4ff;
 }
 
 .vault-main {

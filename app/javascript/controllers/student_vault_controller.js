@@ -108,7 +108,7 @@ export default class extends Controller {
       if (termActive) {
         this.resultsSummaryTarget.innerHTML = `Search results for <strong>"${this.escapeHtml(term)}"</strong>: <strong>${totalVisible}</strong> lesson${totalVisible === 1 ? "" : "s"}`
       } else {
-        this.resultsSummaryTarget.innerHTML = `Browse <strong>${totalVisible}</strong> lessons across the coach vault sections`
+        this.resultsSummaryTarget.innerHTML = `Explore <strong>${totalVisible}</strong> lessons across this vault`
       }
     }
 
