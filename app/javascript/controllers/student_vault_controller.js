@@ -25,7 +25,16 @@ export default class extends Controller {
   connect() {
     const initialSectionId = this.resolveInitialSectionId()
     if (initialSectionId) this.selectedSectionIdValue = initialSectionId
+    this.syncInitialGroupState()
     this.filter()
+  }
+
+  toggleGroup(event) {
+    const group = event.currentTarget.closest('[data-student-vault-target="typeGroup"]')
+    if (!group) return
+
+    const isExpanded = group.classList.contains("is-expanded")
+    this.setGroupExpanded(group, !isExpanded)
   }
 
   selectSection(event) {
@@ -150,6 +159,7 @@ export default class extends Controller {
     }
 
     this.renderTypeGroups()
+    this.syncExpandedGroupsAfterFilter()
   }
 
   applyVisibilityMetadata(visibleBySection) {
@@ -193,6 +203,44 @@ export default class extends Controller {
       const hasVisibleItems = itemElements.some((item) => Number(item.dataset.visibleCount || "0") > 0)
       group.classList.toggle("is-hidden", !hasVisibleItems)
     })
+  }
+
+  syncInitialGroupState() {
+    if (!this.hasTypeGroupTarget) return
+
+    const selectedGroup = this.hasSelectedSectionIdValue ? this.groupForSectionId(this.selectedSectionIdValue) : null
+
+    this.typeGroupTargets.forEach((group) => {
+      this.setGroupExpanded(group, group === selectedGroup)
+    })
+  }
+
+  syncExpandedGroupsAfterFilter() {
+    if (!this.hasTypeGroupTarget) return
+
+    const filtersActive = this.searchTerm().length > 0 || this.selectedType() !== "all"
+    if (filtersActive) {
+      this.typeGroupTargets.forEach((group) => {
+        if (!group.classList.contains("is-hidden")) this.setGroupExpanded(group, true)
+      })
+    }
+  }
+
+  groupForSectionId(sectionId) {
+    if (!sectionId) return null
+
+    const item = this.navItemTargets.find((navItem) => this.sectionIdFromElement(navItem) === sectionId)
+    if (!item) return null
+
+    return item.closest('[data-student-vault-target="typeGroup"]')
+  }
+
+  setGroupExpanded(group, expanded) {
+    if (!group) return
+
+    group.classList.toggle("is-expanded", expanded)
+    const toggle = group.querySelector(".vault-rail__group-toggle")
+    if (toggle) toggle.setAttribute("aria-expanded", expanded ? "true" : "false")
   }
 
   totalVisibleLessons() {
