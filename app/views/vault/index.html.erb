@@ -9,6 +9,9 @@
         <summary class="vault-summary">
             <div class="vault-summary__left">
                 <span class="vault-name"><%= category.name %></span>
+                <% if category.category_type.present? %>
+                  <span class="pill-soft"><%= category.category_type %></span>
+                <% end %>
                 <span class="muted"><%= pluralize(category.lessons.count, "lesson") %></span>
             </div>
         </summary>

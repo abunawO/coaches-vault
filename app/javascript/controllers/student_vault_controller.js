@@ -3,7 +3,9 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = [
     "searchInput",
+    "typeFilter",
     "navItem",
+    "typeGroup",
     "sectionPanel",
     "lessonCard",
     "resultsSummary",
@@ -16,7 +18,8 @@ export default class extends Controller {
 
   static values = {
     initialSectionId: Number,
-    selectedSectionId: Number
+    selectedSectionId: Number,
+    selectedType: { type: String, default: "all" }
   }
 
   connect() {
@@ -37,6 +40,12 @@ export default class extends Controller {
     this.renderState()
   }
 
+  selectType(event) {
+    const nextType = (event.currentTarget.dataset.type || "all").trim()
+    this.selectedTypeValue = nextType.length > 0 ? nextType : "all"
+    this.filter()
+  }
+
   clearSearch() {
     if (this.hasSearchInputTarget) this.searchInputTarget.value = ""
     this.filter()
@@ -44,26 +53,36 @@ export default class extends Controller {
 
   filter() {
     const term = this.searchTerm()
+    const typeFilter = this.selectedType()
     const visibleBySection = new Map()
+    const allowedSections = new Set()
 
     this.sectionPanelTargets.forEach((panel) => {
       const sectionId = this.sectionIdFromElement(panel)
-      if (sectionId) visibleBySection.set(sectionId, 0)
+      if (!sectionId) return
+
+      visibleBySection.set(sectionId, 0)
+      const sectionType = (panel.dataset.categoryType || "").trim()
+      if (typeFilter === "all" || sectionType === typeFilter) {
+        allowedSections.add(sectionId)
+      }
     })
 
     this.lessonCardTargets.forEach((card) => {
       const haystack = (card.dataset.search || "").toLowerCase()
-      const match = term.length === 0 || haystack.includes(term)
+      const sectionId = this.sectionIdFromElement(card)
+      const inSelectedType = sectionId ? allowedSections.has(sectionId) : false
+      const match = inSelectedType && (term.length === 0 || haystack.includes(term))
       card.classList.toggle("is-hidden", !match)
 
       if (!match) return
 
-      const sectionId = this.sectionIdFromElement(card)
       if (!sectionId) return
       visibleBySection.set(sectionId, (visibleBySection.get(sectionId) || 0) + 1)
     })
 
-    if (term.length > 0 && this.selectedSectionIdValue) {
+    const filtersActive = term.length > 0 || typeFilter !== "all"
+    if (filtersActive && this.selectedSectionIdValue) {
       const selectedVisible = visibleBySection.get(this.selectedSectionIdValue) || 0
       if (selectedVisible === 0) {
         const firstMatching = Array.from(visibleBySection.entries()).find(([, count]) => count > 0)
@@ -77,9 +96,17 @@ export default class extends Controller {
 
   renderState() {
     const term = this.searchTerm()
+    const typeFilter = this.selectedType()
     const termActive = term.length > 0
+    const typeFilterActive = typeFilter !== "all"
     const totalVisible = this.totalVisibleLessons()
     const selectedId = this.hasSelectedSectionIdValue ? this.selectedSectionIdValue : null
+
+    this.typeFilterTargets.forEach((filterButton) => {
+      const filterType = (filterButton.dataset.type || "all").trim()
+      filterButton.classList.toggle("is-active", filterType === typeFilter)
+      filterButton.setAttribute("aria-pressed", filterType === typeFilter ? "true" : "false")
+    })
 
     this.navItemTargets.forEach((item) => {
       const sectionId = this.sectionIdFromElement(item)
@@ -94,7 +121,7 @@ export default class extends Controller {
       const isSelected = selectedId && sectionId === selectedId
 
       let shouldShow = isSelected
-      if (termActive) shouldShow = isSelected && visibleCount > 0
+      if (termActive || typeFilterActive) shouldShow = isSelected && visibleCount > 0
 
       panel.classList.toggle("is-active", !!shouldShow)
       panel.classList.toggle("is-hidden", !shouldShow)
@@ -118,8 +145,11 @@ export default class extends Controller {
 
     if (this.hasNoResultsTarget) {
       const showNoResults = termActive && totalVisible === 0
-      this.noResultsTarget.classList.toggle("is-hidden", !showNoResults)
+      const showNoResultsByType = typeFilterActive && totalVisible === 0
+      this.noResultsTarget.classList.toggle("is-hidden", !(showNoResults || showNoResultsByType))
     }
+
+    this.renderTypeGroups()
   }
 
   applyVisibilityMetadata(visibleBySection) {
@@ -144,8 +174,24 @@ export default class extends Controller {
       const countEl = item.querySelector('[data-student-vault-target="navVisibleCount"]')
       if (countEl) countEl.textContent = String(visible)
 
-      const shouldDim = this.searchTerm().length > 0 && visible === 0
+      const shouldDim = (this.searchTerm().length > 0 || this.selectedType() !== "all") && visible === 0
       item.classList.toggle("is-dimmed", shouldDim)
+    })
+  }
+
+  renderTypeGroups() {
+    if (!this.hasTypeGroupTarget) return
+
+    const filtersActive = this.searchTerm().length > 0 || this.selectedType() !== "all"
+    this.typeGroupTargets.forEach((group) => {
+      if (!filtersActive) {
+        group.classList.remove("is-hidden")
+        return
+      }
+
+      const itemElements = Array.from(group.querySelectorAll('[data-student-vault-target="navItem"]'))
+      const hasVisibleItems = itemElements.some((item) => Number(item.dataset.visibleCount || "0") > 0)
+      group.classList.toggle("is-hidden", !hasVisibleItems)
     })
   }
 
@@ -166,6 +212,10 @@ export default class extends Controller {
 
   searchTerm() {
     return (this.searchInputTarget?.value || "").toLowerCase().trim()
+  }
+
+  selectedType() {
+    return (this.selectedTypeValue || "all").trim()
   }
 
   escapeHtml(text) {

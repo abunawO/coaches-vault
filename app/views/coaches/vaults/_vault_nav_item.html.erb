@@ -6,6 +6,7 @@
   class="vault-rail__item <%= 'is-active' if selected %>"
   data-student-vault-target="navItem"
   data-section-id="<%= section_id %>"
+  data-category-type="<%= section[:category_type] %>"
   data-action="student-vault#selectSection"
 >
   <span class="vault-rail__item-top">
@@ -14,7 +15,4 @@
       <span data-student-vault-target="navVisibleCount"><%= section[:total_lessons] %></span> <%= section[:total_lessons] == 1 ? "lesson" : "lessons" %>
     </span>
   </span>
-  <% if section[:taxonomy_label].present? %>
-    <span class="vault-rail__item-index-meta"><%= section[:taxonomy_label] %></span>
-  <% end %>
 </button>

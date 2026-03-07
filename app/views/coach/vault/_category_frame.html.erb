@@ -3,12 +3,51 @@
     <div class="vault-main__header">
       <div>
         <h3 class="vault-name"><%= selected_category.name %></h3>
-        <div class="muted"><%= selected_category.description.presence || "No description provided." %></div>
-        <%= form_with model: [:coach, selected_category], url: coach_category_path(selected_category), method: :patch, local: true, class: "inline-form", data: { turbo_frame: "_top" } do |f| %>
-          <div style="display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap;">
-            <%= f.label :name, "Edit name", class: "muted small-text" %>
-            <%= f.text_field :name, required: true, class: "input", style: "max-width: 320px;" %>
-            <%= f.submit "Save name", class: "btn btn-secondary btn-small" %>
+        <div class="muted">
+          <span class="pill-soft"><%= selected_category.category_type %></span>
+          <%= selected_category.description.presence || "No description provided." %>
+        </div>
+        <% selected_type_value = selected_category.built_in_category_type? ? selected_category.category_type : "__custom__" %>
+        <% custom_type_value = selected_category.built_in_category_type? ? "" : selected_category.category_type %>
+        <%= form_with model: [:coach, selected_category], url: coach_category_path(selected_category), method: :patch, local: true, class: "inline-form", data: { turbo_frame: "_top", controller: "category-type-field" } do |f| %>
+          <div style="display:grid; gap:8px; margin-top:10px; max-width: 560px;">
+            <div>
+              <%= f.label :name, "Category name", class: "muted small-text" %>
+              <%= f.text_field :name, required: true, class: "input" %>
+            </div>
+            <div>
+              <%= f.label :category_type, "Category type", class: "muted small-text" %>
+              <%= f.hidden_field :category_type, value: selected_type_value, data: { category_type_field_target: "valueInput" } %>
+              <div class="vault-type-picker" role="group" aria-label="Category type options">
+                <% (Category::CATEGORY_TYPES + ["Custom"]).each do |type| %>
+                  <% value = type == "Custom" ? "__custom__" : type %>
+                  <button
+                    type="button"
+                    class="vault-type-picker__option <%= "is-active" if value == selected_type_value %>"
+                    data-category-type-field-target="option"
+                    data-value="<%= value %>"
+                    data-action="category-type-field#select"
+                  >
+                    <%= type %>
+                  </button>
+                <% end %>
+              </div>
+            </div>
+            <div class="<%= "is-hidden" if selected_type_value != "__custom__" %>" data-category-type-field-target="customWrap">
+              <%= f.label :custom_category_type, "Custom category type", class: "muted small-text" %>
+              <%= f.text_field :custom_category_type,
+                    class: "input",
+                    placeholder: "e.g., Clinch",
+                    value: custom_type_value,
+                    data: { category_type_field_target: "customInput" } %>
+            </div>
+            <div>
+              <%= f.label :description, "Description", class: "muted small-text" %>
+              <%= f.text_field :description, class: "input", placeholder: "Optional short note" %>
+            </div>
+            <div style="display:flex; justify-content:flex-start;">
+              <%= f.submit "Save category", class: "btn btn-secondary btn-small" %>
+            </div>
           </div>
         <% end %>
       </div>

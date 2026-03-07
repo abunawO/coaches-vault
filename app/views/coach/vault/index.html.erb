@@ -21,12 +21,39 @@
         </div>
 
         <div id="new-category-card" class="vault-sidebar__create is-hidden" data-vault-explorer-target="createPanel">
-          <%= form_with model: [:coach, Category.new], url: coach_categories_path, local: true, id: "new-category-form", class: "inline-form" do |f| %>
+          <%= form_with model: [:coach, Category.new], url: coach_categories_path, local: true, id: "new-category-form", class: "inline-form", data: { controller: "category-type-field" } do |f| %>
             <div class="vault-form">
               <div class="field">
                 <%= f.label :name, "Category name" %>
                 <%= f.text_field :name, required: true, class: "input", placeholder: "e.g., Guard Passing", data: { vault_explorer_target: "categoryNameInput" } %>
                 <p class="muted small-text vault-hint">Give your category a short, clear name.</p>
+              </div>
+              <div class="field">
+                <%= f.label :category_type, "Category type" %>
+                <%= f.hidden_field :category_type, value: Category::CATEGORY_TYPES.first, data: { category_type_field_target: "valueInput" } %>
+                <div class="vault-type-picker" role="group" aria-label="Category type options">
+                  <% (Category::CATEGORY_TYPES + ["Custom"]).each do |type| %>
+                    <% value = type == "Custom" ? "__custom__" : type %>
+                    <button
+                      type="button"
+                      class="vault-type-picker__option <%= "is-active" if value == Category::CATEGORY_TYPES.first %>"
+                      data-category-type-field-target="option"
+                      data-value="<%= value %>"
+                      data-action="category-type-field#select"
+                    >
+                      <%= type %>
+                    </button>
+                  <% end %>
+                </div>
+                <p class="muted small-text vault-hint">Choose the training area this category belongs to.</p>
+              </div>
+              <div class="field is-hidden" data-category-type-field-target="customWrap">
+                <%= f.label :custom_category_type, "Custom category type" %>
+                <%= f.text_field :custom_category_type,
+                      class: "input",
+                      placeholder: "e.g., Clinch",
+                      data: { category_type_field_target: "customInput" } %>
+                <p class="muted small-text vault-hint">Enter a custom type label for this category.</p>
               </div>
               <div class="field">
                 <%= f.label :description, "Description (optional)" %>
@@ -56,7 +83,7 @@
                             action: "click->vault-explorer#pushState",
                             vault_explorer_target: "categoryItem",
                             category_id: category.id,
-                            search: "#{category.name} #{category.description}"
+                            search: "#{category.name} #{category.category_type} #{category.description}"
                           },
                           aria: { current: selected ? "true" : "false" } do %>
                 <div class="vault-list__title-row">
@@ -66,6 +93,7 @@
                 <% if category.description.present? %>
                   <div class="muted vault-desc-preview"><%= truncate(category.description, length: 80) %></div>
                 <% end %>
+                <div class="muted small-text"><%= category.category_type %></div>
               <% end %>
             <% end %>
           </div>
