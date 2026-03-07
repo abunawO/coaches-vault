@@ -16,11 +16,20 @@ module Coaches
           lessons: lessons,
           total_lessons: lessons.size,
           preview_titles: lessons.first(3).map(&:title),
-          taxonomy_label: taxonomy_label_for(category)
+          category_type: category.category_type
         }
       end
 
       @total_lessons = @vault_sections.sum { |section| section[:total_lessons] }
+      present_types = @vault_sections.map { |section| section[:category_type] }.uniq
+      built_in_present = Category::CATEGORY_TYPES.select { |type| present_types.include?(type) }
+      custom_present = (present_types - Category::CATEGORY_TYPES).sort
+      @available_types = built_in_present + custom_present
+
+      @sections_by_type = @available_types.each_with_object({}) do |type, grouped|
+        sections = @vault_sections.select { |section| section[:category_type] == type }
+        grouped[type] = sections if sections.any?
+      end
       @selected_section_id = resolved_selected_section_id
     end
 
@@ -34,16 +43,5 @@ module Coaches
       valid_ids.first
     end
 
-    def taxonomy_label_for(category)
-      source = [category.name, category.description].compact.join(" ").downcase
-      return "Fundamentals" if source.match?(/\b(fundamental|foundation|basic|intro|beginner)\b/)
-      return "Striking" if source.match?(/\b(striking|boxing|kick|muay thai|punch)\b/)
-      return "Grappling" if source.match?(/\b(grappling|wrestling|jiu[- ]?jitsu|bjj|guard|sweep|submission|takedown)\b/)
-      return "Conditioning" if source.match?(/\b(conditioning|fitness|strength|mobility|recovery|endurance)\b/)
-      return "System" if source.match?(/\b(system|framework|sequence|chain)\b/)
-      return "Concept" if source.match?(/\b(concept|principle|theory|idea|mindset)\b/)
-
-      nil
-    end
   end
 end

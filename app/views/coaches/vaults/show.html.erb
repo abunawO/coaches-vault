@@ -42,6 +42,28 @@
             Clear
           </button>
         </div>
+        <div class="coach-vault__type-filters" role="group" aria-label="Filter by training area">
+          <button
+            type="button"
+            class="pill-soft coach-vault__type-filter is-active"
+            data-student-vault-target="typeFilter"
+            data-type="all"
+            data-action="student-vault#selectType"
+          >
+            All
+          </button>
+          <% @available_types.each do |category_type| %>
+            <button
+              type="button"
+              class="pill-soft coach-vault__type-filter"
+              data-student-vault-target="typeFilter"
+              data-type="<%= category_type %>"
+              data-action="student-vault#selectType"
+            >
+              <%= category_type %>
+            </button>
+          <% end %>
+        </div>
       </div>
     </div>
 
@@ -49,11 +71,16 @@
       <aside class="vault-rail card" aria-label="Vault sections">
         <div>
           <h3 class="vault-rail__heading">Section Index</h3>
-          <div class="vault-rail__list">
-            <% @vault_sections.each do |section| %>
-              <%= render "coaches/vaults/vault_nav_item", section: section, selected_section_id: @selected_section_id %>
-            <% end %>
-          </div>
+          <% @sections_by_type.each do |category_type, sections| %>
+            <section data-student-vault-target="typeGroup">
+              <h4 class="vault-rail__heading"><%= category_type %></h4>
+              <div class="vault-rail__list">
+                <% sections.each do |section| %>
+                  <%= render "coaches/vaults/vault_nav_item", section: section, selected_section_id: @selected_section_id %>
+                <% end %>
+              </div>
+            </section>
+          <% end %>
         </div>
       </aside>
 

@@ -3,13 +3,14 @@
   class="vault-section card <%= 'is-active' if selected %>"
   data-student-vault-target="sectionPanel"
   data-section-id="<%= section_id %>"
+  data-category-type="<%= section[:category_type] %>"
   data-total-lessons="<%= section[:total_lessons] %>"
 >
   <header class="vault-section__header">
     <div class="vault-section__title-wrap">
       <div class="vault-section__labels">
-        <% if section[:taxonomy_label].present? %>
-          <span class="pill-soft vault-section__type"><%= section[:taxonomy_label] %></span>
+        <% if section[:category_type].present? %>
+          <span class="pill-soft vault-section__type"><%= section[:category_type] %></span>
         <% end %>
         <span class="pill-soft"><%= pluralize(section[:total_lessons], "lesson") %></span>
       </div>
