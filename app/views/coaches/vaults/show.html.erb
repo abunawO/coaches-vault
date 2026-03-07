@@ -1,5 +1,5 @@
 <div
-  class="container coach-vault"
+  class="container coach-vault coach-vault--student"
   data-controller="student-vault"
   data-student-vault-initial-section-id-value="<%= @selected_section_id %>"
 >
@@ -70,10 +70,18 @@
     <div class="coach-vault__workspace">
       <aside class="vault-rail card" aria-label="Vault sections">
         <div>
-          <h3 class="vault-rail__heading">Section Index</h3>
+          <h3 class="vault-rail__heading vault-rail__title">Section Index</h3>
           <% @sections_by_type.each do |category_type, sections| %>
-            <section data-student-vault-target="typeGroup">
-              <h4 class="vault-rail__heading"><%= category_type %></h4>
+            <section class="vault-rail__group is-expanded" data-student-vault-target="typeGroup" data-category-type="<%= category_type %>">
+              <button
+                type="button"
+                class="vault-rail__group-toggle"
+                data-action="student-vault#toggleGroup"
+                aria-expanded="true"
+              >
+                <span class="vault-rail__heading vault-rail__group-label"><%= category_type %></span>
+                <span class="vault-rail__group-chevron" aria-hidden="true"></span>
+              </button>
               <div class="vault-rail__list">
                 <% sections.each do |section| %>
                   <%= render "coaches/vaults/vault_nav_item", section: section, selected_section_id: @selected_section_id %>
