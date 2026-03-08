@@ -228,13 +228,6 @@ export default class extends Controller {
 
   syncExpandedGroupsAfterFilter() {
     if (!this.hasTypeGroupTarget) return
-
-    const filtersActive = this.searchTerm().length > 0 || this.selectedType() !== "all"
-    if (filtersActive) {
-      this.typeGroupTargets.forEach((group) => {
-        if (!group.classList.contains("is-hidden")) this.setGroupExpanded(group, true)
-      })
-    }
   }
 
   groupForSectionId(sectionId) {
