@@ -12,6 +12,7 @@ export default class extends Controller {
     "resultsCount",
     "sectionVisibleCount",
     "navVisibleCount",
+    "noSelection",
     "noResults",
     "clearButton"
   ]
@@ -91,9 +92,14 @@ export default class extends Controller {
     })
 
     const filtersActive = term.length > 0 || typeFilter !== "all"
-    if (filtersActive && this.selectedSectionIdValue) {
-      const selectedVisible = visibleBySection.get(this.selectedSectionIdValue) || 0
-      if (selectedVisible === 0) {
+    if (filtersActive) {
+      if (this.hasSelectedSectionIdValue) {
+        const selectedVisible = visibleBySection.get(this.selectedSectionIdValue) || 0
+        if (selectedVisible === 0) {
+          const firstMatching = Array.from(visibleBySection.entries()).find(([, count]) => count > 0)
+          if (firstMatching) this.selectedSectionIdValue = firstMatching[0]
+        }
+      } else {
         const firstMatching = Array.from(visibleBySection.entries()).find(([, count]) => count > 0)
         if (firstMatching) this.selectedSectionIdValue = firstMatching[0]
       }
@@ -152,10 +158,17 @@ export default class extends Controller {
       this.clearButtonTarget.classList.toggle("is-hidden", !termActive)
     }
 
+    let showNoResults = false
+    let showNoResultsByType = false
     if (this.hasNoResultsTarget) {
-      const showNoResults = termActive && totalVisible === 0
-      const showNoResultsByType = typeFilterActive && totalVisible === 0
+      showNoResults = termActive && totalVisible === 0
+      showNoResultsByType = typeFilterActive && totalVisible === 0
       this.noResultsTarget.classList.toggle("is-hidden", !(showNoResults || showNoResultsByType))
+    }
+
+    if (this.hasNoSelectionTarget) {
+      const showNoSelection = !selectedId && !(showNoResults || showNoResultsByType)
+      this.noSelectionTarget.classList.toggle("is-hidden", !showNoSelection)
     }
 
     this.renderTypeGroups()
@@ -208,10 +221,8 @@ export default class extends Controller {
   syncInitialGroupState() {
     if (!this.hasTypeGroupTarget) return
 
-    const selectedGroup = this.hasSelectedSectionIdValue ? this.groupForSectionId(this.selectedSectionIdValue) : null
-
     this.typeGroupTargets.forEach((group) => {
-      this.setGroupExpanded(group, group === selectedGroup)
+      this.setGroupExpanded(group, false)
     })
   }
 
@@ -250,8 +261,7 @@ export default class extends Controller {
   resolveInitialSectionId() {
     if (this.hasInitialSectionIdValue && this.initialSectionIdValue > 0) return this.initialSectionIdValue
 
-    if (this.navItemTargets.length === 0) return null
-    return this.sectionIdFromElement(this.navItemTargets[0])
+    return null
   }
 
   sectionIdFromElement(element) {

@@ -1,7 +1,9 @@
+<% initial_selected_section_id = params[:category_id].present? ? @selected_section_id : nil %>
+
 <div
   class="container coach-vault coach-vault--student"
   data-controller="student-vault"
-  data-student-vault-initial-section-id-value="<%= @selected_section_id %>"
+  data-student-vault-initial-section-id-value="<%= initial_selected_section_id %>"
 >
   <%= render "coaches/vaults/vault_header",
       coach_profile: @coach_profile,
@@ -72,19 +74,19 @@
         <div>
           <h3 class="vault-rail__heading vault-rail__title">Section Index</h3>
           <% @sections_by_type.each do |category_type, sections| %>
-            <section class="vault-rail__group is-expanded" data-student-vault-target="typeGroup" data-category-type="<%= category_type %>">
+            <section class="vault-rail__group" data-student-vault-target="typeGroup" data-category-type="<%= category_type %>">
               <button
                 type="button"
                 class="vault-rail__group-toggle"
                 data-action="student-vault#toggleGroup"
-                aria-expanded="true"
+                aria-expanded="false"
               >
                 <span class="vault-rail__heading vault-rail__group-label"><%= category_type %></span>
                 <span class="vault-rail__group-chevron" aria-hidden="true"></span>
               </button>
               <div class="vault-rail__list">
                 <% sections.each do |section| %>
-                  <%= render "coaches/vaults/vault_nav_item", section: section, selected_section_id: @selected_section_id %>
+                  <%= render "coaches/vaults/vault_nav_item", section: section, selected_section_id: initial_selected_section_id %>
                 <% end %>
               </div>
             </section>
@@ -93,12 +95,17 @@
       </aside>
 
       <section class="vault-main" aria-live="polite">
+        <div class="card coach-vault__empty-state" data-student-vault-target="noSelection">
+          <h3 class="coach-vault__empty-title">Select a section to begin</h3>
+          <p class="muted">Expand a category in Section Index and choose a section to view lessons.</p>
+        </div>
+
         <% @vault_sections.each do |section| %>
           <%= render "coaches/vaults/vault_section",
               section: section,
               coach: @coach,
               coach_profile: @coach_profile,
-              selected: section[:category].id == @selected_section_id %>
+              selected: section[:category].id == initial_selected_section_id %>
         <% end %>
 
         <div class="card coach-vault__empty-state is-hidden" data-student-vault-target="noResults">
