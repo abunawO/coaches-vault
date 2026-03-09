@@ -1,0 +1,137 @@
+<div class="container">
+  <%= render "shared/page_header",
+        breadcrumbs: [["Dashboard", root_path], ["Insights", coach_insights_path]],
+        title: content_tag(:span, "📈", class: "page-title-icon") + " Insights",
+        subtitle: "Subscriber engagement based on subscriptions, favorites, comments, and student messages.",
+        meta: [{ label: "Window", value: "Last #{@window_days} days" }] %>
+  <p class="muted small-text insights-definition-note">
+    Activity is based on favorites, comments, and student messages in the selected window.
+  </p>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Key Metrics</h2>
+    </div>
+    <div class="insights-kpi-grid">
+      <div class="mv-card">
+        <div class="muted">Active Subscribers</div>
+        <h3 class="mv-card__title"><%= @active_subscribers_count %></h3>
+      </div>
+      <div class="mv-card">
+        <div class="muted">New Subscribers (30d)</div>
+        <h3 class="mv-card__title"><%= @new_subscribers_count %></h3>
+      </div>
+      <div class="mv-card">
+        <div class="muted">Cancellations (30d)</div>
+        <h3 class="mv-card__title"><%= @cancellations_count %></h3>
+      </div>
+      <div class="mv-card">
+        <div class="muted">Favorites (30d)</div>
+        <div class="muted tiny-text">Across your lessons</div>
+        <h3 class="mv-card__title"><%= @favorites_count %></h3>
+      </div>
+      <div class="mv-card">
+        <div class="muted">Comments (30d)</div>
+        <div class="muted tiny-text">Across your lessons</div>
+        <h3 class="mv-card__title"><%= @comments_count %></h3>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Top Lessons by Engagement (30d)</h2>
+    </div>
+    <div class="mv-card">
+      <% if @top_lessons.any? %>
+        <div class="insights-list">
+          <% @top_lessons.each_with_index do |row, idx| %>
+            <div class="insights-list__row">
+              <div>
+                <div class="insights-list__title">
+                  <span class="insights-rank">#<%= idx + 1 %></span>
+                  <%= link_to row[:lesson].title, lesson_path(row[:lesson]) %>
+                </div>
+                <div class="muted small-text">
+                  Favorites: <strong><%= row[:favorites_count] %></strong>
+                  •
+                  Comments: <strong><%= row[:comments_count] %></strong>
+                </div>
+              </div>
+              <span class="chip chip--neutral">Engagement: <strong><%= row[:engagement_count] %></strong></span>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="muted">No favorites or comments in the last <%= @window_days %> days.</p>
+      <% end %>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Recent Student Activity</h2>
+    </div>
+    <div class="mv-card">
+      <% if @recent_activity.any? %>
+        <div class="insights-list">
+          <% @recent_activity.each do |item| %>
+            <% student = item[:student] %>
+            <% student_name = student&.student_profile&.display_name.presence || student&.email || "Student" %>
+            <% activity_label = item[:type] == :favorite ? "Favorited" : (item[:type] == :comment ? "Commented" : "Messaged") %>
+            <div class="insights-list__row">
+              <div>
+                <div class="insights-activity__headline">
+                  <span class="insights-activity-chip insights-activity-chip--<%= item[:type] %>"><%= activity_label %></span>
+                  <span class="insights-list__title"><strong><%= student_name %></strong></span>
+                </div>
+                <div class="muted small-text insights-activity__context">
+                  <% if item[:lesson] %>
+                    <% if item[:type] == :comment %>
+                      On lesson <%= link_to item[:lesson].title, lesson_path(item[:lesson]) %>
+                    <% else %>
+                      Lesson <%= link_to item[:lesson].title, lesson_path(item[:lesson]) %>
+                    <% end %>
+                  <% elsif item[:conversation_id] %>
+                    In <%= link_to "conversation ##{item[:conversation_id]}", conversation_path(item[:conversation_id]) %>
+                  <% else %>
+                    Student activity
+                  <% end %>
+                </div>
+              </div>
+              <span class="muted small-text"><%= l(item[:occurred_at], format: :short) %></span>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="muted">No recent student activity in the last <%= @window_days %> days.</p>
+      <% end %>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Inactive Subscribers (30d)</h2>
+      <%= link_to "Open Subscribers", subscribers_path, class: "btn btn-secondary btn-small" %>
+    </div>
+    <div class="mv-card">
+      <% if @inactive_subscriptions.any? %>
+        <div class="insights-list">
+          <% @inactive_subscriptions.each do |subscription| %>
+            <% student = subscription.student %>
+            <% student_name = student&.student_profile&.display_name.presence || student&.email || "Student" %>
+            <div class="insights-list__row">
+              <div>
+                <div class="insights-list__title"><strong><%= student_name %></strong></div>
+                <div class="muted small-text">No recent favorites, comments, or student-sent messages.</div>
+              </div>
+              <span class="muted small-text">Subscribed <%= l(subscription.started_at, format: :short) %></span>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <p class="muted">All active subscribers have at least one tracked activity in the last <%= @window_days %> days.</p>
+      <% end %>
+    </div>
+  </section>
+</div>
