@@ -3708,6 +3708,19 @@ details[open] .vault-caret {
   background: linear-gradient(145deg, #ffffff 0%, #f6f8ff 100%);
 }
 
+.vault-preview-banner {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.vault-preview-banner__copy {
+  min-width: 0;
+}
+
 .vault-header__identity {
   display: grid;
   grid-template-columns: auto 1fr;

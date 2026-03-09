@@ -1,4 +1,14 @@
 <div class="vault-header card">
+  <% if preview_mode %>
+    <div class="card vault-preview-banner">
+      <div class="vault-preview-banner__copy">
+        <strong>Student View Preview</strong>
+        <div class="muted small-text">You are previewing this vault as students see it.</div>
+      </div>
+      <%= link_to "Back to Coach View", preview_return_to, class: "btn btn-secondary btn-small" %>
+    </div>
+  <% end %>
+
   <div class="vault-header__identity">
     <% if coach_profile.avatar.attached? %>
       <% begin %>
