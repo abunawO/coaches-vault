@@ -5897,6 +5897,115 @@ body.auth-page .auth-card {
   align-items: start;
 }
 
+.insights-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.insights-list {
+  display: grid;
+  gap: 10px;
+}
+
+.insights-list__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e8edf5;
+}
+
+.insights-list__row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.insights-list__title {
+  line-height: 1.35;
+}
+
+.insights-definition-note {
+  margin-top: -6px;
+}
+
+.insights-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid #d5def0;
+  background: #f8fbff;
+  color: #475569;
+  font-size: 0.74rem;
+  font-weight: 700;
+  margin-right: 8px;
+}
+
+.insights-activity__headline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.insights-activity__context {
+  margin-top: 3px;
+}
+
+.insights-activity-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid #dbe4f6;
+  background: #f8fbff;
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 3px 8px;
+  line-height: 1;
+}
+
+.insights-activity-chip--comment {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #3730a3;
+}
+
+.insights-activity-chip--favorite {
+  background: #fef9c3;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.insights-activity-chip--message {
+  background: #ecfeff;
+  border-color: #bae6fd;
+  color: #0c4a6e;
+}
+
+@media (max-width: 1300px) {
+  .insights-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .insights-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .insights-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .lesson-card {
   min-height: 200px;
   transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;

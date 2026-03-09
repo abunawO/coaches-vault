@@ -53,6 +53,7 @@ Rails.application.routes.draw do
 
   namespace :coach do
     get "content", to: "content#index", as: :content
+    get "insights", to: "insights#index", as: :insights
     resources :lessons do
       member do
         get :access, to: "lesson_access#edit"
