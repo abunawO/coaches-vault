@@ -1,8 +1,19 @@
 <div class="container">
+  <% student_view_path =
+      if current_user.coach_profile&.slug.present?
+        coach_public_vault_path(
+          current_user.coach_profile.slug,
+          preview: 1,
+          return_to: coach_vault_path
+        )
+      end %>
   <%= render "shared/page_header",
         breadcrumbs: [["Dashboard", root_path], ["Vault", coach_vault_path]],
         title: content_tag(:span, "📚", class: "page-title-icon") + " Vault",
         subtitle: "Organize lessons into categories for students.",
+        secondary_actions: [
+          (student_view_path.present? ? { label: "Student View", url: student_view_path } : nil)
+        ].compact,
         primary_action: nil %>
 
   <div class="vault-explorer" data-controller="vault-explorer" data-vault-explorer-selected-id-value="<%= @selected_category&.id %>">

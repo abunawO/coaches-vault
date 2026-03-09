@@ -6,6 +6,8 @@ module Coaches
       @categories = @coach.categories.ordered.includes(category_lessons: { lesson: [:coach, :lesson_media] })
       @subscribed = current_user&.student? && current_user.subscribed_to?(@coach)
       @owning_coach = current_user&.coach? && current_user.id == @coach.id
+      @preview_mode = params[:preview].present? && @owning_coach
+      @preview_return_to = safe_internal_return_path(params[:return_to], coach_vault_path)
 
       @vault_sections = @categories.map do |category|
         ordered_category_lessons = category.category_lessons.sort_by { |category_lesson| category_lesson.position || 0 }
@@ -43,5 +45,13 @@ module Coaches
       valid_ids.first
     end
 
+    def safe_internal_return_path(candidate, default_path)
+      value = candidate.to_s.strip
+      return default_path if value.blank?
+      return default_path unless value.start_with?("/")
+      return default_path if value.start_with?("//")
+
+      value
+    end
   end
 end
