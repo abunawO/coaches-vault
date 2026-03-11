@@ -3,7 +3,15 @@ module Coaches
     def show
       @coach_profile = CoachProfile.find_by!(slug: params[:slug])
       @coach = @coach_profile.user
-      @categories = @coach.categories.ordered.includes(category_lessons: { lesson: [:coach, :lesson_media] })
+      @categories = @coach.categories.ordered.includes(
+        category_lessons: {
+          lesson: [
+            :coach,
+            { cover_image_attachment: :blob },
+            { lesson_media: { image_file_attachment: :blob } }
+          ]
+        }
+      )
       @subscribed = current_user&.student? && current_user.subscribed_to?(@coach)
       @owning_coach = current_user&.coach? && current_user.id == @coach.id
       @preview_mode = params[:preview].present? && @owning_coach
