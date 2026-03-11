@@ -11,6 +11,10 @@ class DashboardController < ApplicationController
       if current_user.student?
         @subscription_coach_ids = Subscription.active.where(student_id: current_user.id).pluck(:coach_id)
         @subscription_count = @subscription_coach_ids.size
+        @recommended_system = Dashboard::SystemRecommendationQuery.new(
+          user: current_user,
+          subscription_coach_ids: @subscription_coach_ids
+        ).call
       end
 
       @feed_lessons = Lesson.includes(

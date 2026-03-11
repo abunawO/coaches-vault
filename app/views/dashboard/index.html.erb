@@ -131,6 +131,76 @@
       </div>
     </section>
 
+    <% if @recommended_system.present? %>
+      <% system_category = @recommended_system[:category] %>
+      <% system_coach_profile = @recommended_system[:coach_profile] %>
+      <% system_thumb = lesson_thumbnail_url(@recommended_system[:representative_lesson], size: [1200, 675]) %>
+      <% system_path = coach_public_vault_path(system_coach_profile.slug, category_id: system_category.id) %>
+      <% recommendation_mode = @recommended_system[:mode].to_s %>
+      <% recommendation_heading =
+           case recommendation_mode
+           when "continue" then "Continue This System"
+           when "new_in_vault" then "New in Your Vault"
+           else "Study This System"
+           end %>
+      <% recommendation_copy =
+           case recommendation_mode
+           when "continue" then "Pick up where you left off in the vault."
+           when "new_in_vault" then "This system has fresh lessons ready to study."
+           else "Enter the vault through a focused system instead of random lessons."
+           end %>
+      <% recommendation_cta =
+           case recommendation_mode
+           when "continue" then "Continue in Vault"
+           when "new_in_vault" then "See What’s New"
+           else "Study in Vault"
+           end %>
+      <section class="section study-system">
+        <div class="study-system__header section-header">
+          <div>
+            <p class="study-system__eyebrow muted">Structured Learning</p>
+            <h2 class="study-system__title"><%= recommendation_heading %></h2>
+            <p class="muted"><%= recommendation_copy %></p>
+          </div>
+        </div>
+
+        <%= link_to system_path, class: "study-system__card card" do %>
+          <div class="study-system__media">
+            <% if system_thumb.present? %>
+              <img src="<%= system_thumb %>" alt="<%= system_category.name %> system preview" class="study-system__image" loading="lazy" decoding="async" />
+            <% else %>
+              <div class="study-system__image-placeholder" aria-hidden="true">
+                <span>System Preview</span>
+              </div>
+            <% end %>
+          </div>
+
+          <div class="study-system__body">
+            <div class="study-system__meta">
+              <span class="pill-soft"><%= system_category.category_type %></span>
+              <span class="pill-soft"><%= pluralize(@recommended_system[:lesson_count], "lesson") %></span>
+            </div>
+            <h3 class="study-system__name"><%= system_category.name %></h3>
+            <p class="study-system__coach muted">by <%= @recommended_system[:coach_name] %></p>
+            <% if system_category.description.present? %>
+              <p class="study-system__description muted"><%= truncate(system_category.description, length: 120) %></p>
+            <% end %>
+            <% if @recommended_system[:preview_titles].any? %>
+              <div class="study-system__lessons muted">
+                <p class="study-system__lessons-label">Focus lessons</p>
+                <ul class="study-system__lessons-list">
+                  <% @recommended_system[:preview_titles].first(2).each do |title| %>
+                    <li><%= title %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+            <span class="study-system__cta"><%= recommendation_cta %></span>
+          </div>
+        <% end %>
+      </section>
+    <% end %>
+
     <section class="section">
       <div class="section-header">
         <div>
@@ -151,9 +221,7 @@
                case learning_state
                when :locked then "Locked"
                when :new then "New"
-               when :watch then "Watch"
-               when :watched_again then "Watch Again"
-               else "Watch"
+               else nil
                end %>
           <% open_path = if coach_profile&.slug && lesson.respond_to?(:slug) && lesson.slug.present?
                            public_coach_lesson_path(coach_profile.slug, lesson.slug)
@@ -174,14 +242,16 @@
                 </div>
               <% end %>
               <div class="thumb-overlay">
-                <span class="badge video-card__status video-card__status--<%= learning_state_class %>"><%= learning_state_label %></span>
+                <% if learning_state_label.present? %>
+                  <span class="badge video-card__status video-card__status--<%= learning_state_class %>"><%= learning_state_label %></span>
+                <% end %>
               </div>
             </div>
             <div class="video-meta">
               <div class="video-title"><%= truncate(lesson.title, length: 70) %></div>
               <div class="video-subtitle">by <%= coach_name %></div>
               <div class="video-info">
-                <%= learning_state_label %>
+                <%= learning_state_label || "Available now" %>
                 <span class="muted">• <%= time_ago_in_words(lesson.created_at) %> ago</span>
               </div>
               <% if learning_state == :locked && access_level == :preview && lesson.preview_text.present? %>
