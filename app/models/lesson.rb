@@ -107,7 +107,7 @@ class Lesson < ApplicationRecord
   end
 
   def slide_count_within_limit
-    max_slides = 5
+    max_slides = 10
     count = lesson_media.reject(&:marked_for_destruction?).size
     return if count <= max_slides
 

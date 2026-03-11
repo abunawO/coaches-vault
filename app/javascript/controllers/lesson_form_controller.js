@@ -12,7 +12,7 @@ export default class extends Controller {
 
     this.form = this.element
     this.cleanups = []
-    this.MAX_SLIDES = 5
+    this.MAX_SLIDES = 10
     this.draftKind = null
     this.bulkFeedbackTimer = null
     this.nestedIndex = Number(this.element.dataset.lessonFormNestedIndex || Date.now())
@@ -417,7 +417,7 @@ export default class extends Controller {
     if (this.slideLimitMessage) {
       this.slideLimitMessage.textContent = limitReached
         ? "Slide limit reached (5). Remove a slide to add another."
-        : "You can add up to 5 slides per lesson."
+        : "You can add up to 10 slides per lesson."
     }
 
     if (this.bulkUsage) {
