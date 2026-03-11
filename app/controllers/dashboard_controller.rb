@@ -3,8 +3,11 @@ class DashboardController < ApplicationController
     @subscription_coach_ids = []
 
     if current_user.coach?
-      @my_lessons = current_user.lessons.order(created_at: :desc)
-      @lesson_count = @my_lessons.size
+      @my_lessons = current_user.lessons.includes(
+        { cover_image_attachment: :blob },
+        { lesson_media: { image_file_attachment: :blob } }
+      ).order(created_at: :desc)
+      @lesson_count = current_user.lessons.count
       @recent_lessons = @my_lessons.limit(6)
       @subscriber_count = Subscription.active.where(coach_id: current_user.id).distinct.count(:student_id)
     else

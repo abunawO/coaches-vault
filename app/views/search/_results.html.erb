@@ -12,7 +12,7 @@
     <p class="muted">Try simplifying your search or checking spelling.</p>
   </div>
 <% else %>
-  <div class="ig-grid">
+  <div class="ig-grid search-results-grid">
     <% lesson_cards.each do |card| %>
       <% lesson = card[:lesson] %>
       <% coach_profile = card[:coach_profile] %>
@@ -45,6 +45,9 @@
             <% else %>
               <h3><%= lesson.title %></h3>
               <p class="muted">by <%= coach_name %></p>
+              <% if lesson.description.present? %>
+                <p class="ig-overlay__description"><%= truncate(lesson.description, length: 120) %></p>
+              <% end %>
               <span class="btn btn-primary">Open</span>
             <% end %>
           </div>

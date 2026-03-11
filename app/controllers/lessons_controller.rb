@@ -8,7 +8,10 @@ class LessonsController < ApplicationController
     if current_user&.coach?
       @page_title = "My Lessons"
       if current_user.coach_profile.present?
-        @lessons = current_user.lessons.order(created_at: :desc)
+        @lessons = current_user.lessons.includes(
+          { cover_image_attachment: :blob },
+          { lesson_media: { image_file_attachment: :blob } }
+        ).order(created_at: :desc)
       else
         flash.now[:alert] = "Create your coach profile to add lessons."
         @lessons = Lesson.none
