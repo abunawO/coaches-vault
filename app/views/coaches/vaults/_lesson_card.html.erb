@@ -3,22 +3,39 @@
 <% link_target = locked ? (logged_in? ? coach_subscription_path(coach) : login_path) : public_coach_lesson_path(coach_profile.slug, lesson, category_id: section_id) %>
 <% link_options = locked && logged_in? ? { method: :post } : {} %>
 <% searchable = [lesson.title, lesson.description].compact.join(" ").downcase %>
+<% thumbnail = lesson_thumbnail_url(lesson) %>
 
 <%= link_to link_target, link_options.merge(class: "vault-lesson-card #{'is-locked' if locked}", data: { student_vault_target: "lessonCard", search: searchable, section_id: section_id }) do %>
-  <div class="vault-lesson-card__title"><%= lesson.title %></div>
-  <% if lesson.description.present? %>
-    <p class="muted small-text vault-lesson-card__description"><%= truncate(lesson.description, length: 135) %></p>
-  <% else %>
-    <p class="muted small-text vault-lesson-card__description">No description yet.</p>
-  <% end %>
-
-  <div class="vault-lesson-card__meta muted small-text">
-    <span class="vault-lesson-card__date"><%= l(lesson.created_at, format: :short) %></span>
-    <% if locked %>
-      <span class="pill-soft pill-warning">Locked</span>
+  <div class="vault-lesson-card__media">
+    <% if thumbnail.present? %>
+      <img
+        src="<%= thumbnail %>"
+        alt="<%= lesson.title %> preview image"
+        class="vault-lesson-card__image"
+        loading="lazy"
+        decoding="async"
+      >
     <% else %>
-      <span class="pill-soft pill-success">Unlocked</span>
+      <div class="vault-lesson-card__image-placeholder" aria-hidden="true">
+        <span class="vault-lesson-card__placeholder-label">Lesson Preview</span>
+      </div>
     <% end %>
+    <div class="vault-lesson-card__media-badge">
+      <% if locked %>
+        <span class="badge badge-warning">Locked</span>
+      <% else %>
+        <span class="badge badge-success">Unlocked</span>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="vault-lesson-card__body">
+    <div class="vault-lesson-card__title"><%= lesson.title %></div>
+    <div class="vault-lesson-card__meta muted small-text">
+      <span class="vault-lesson-card__date"><%= l(lesson.created_at, format: :short) %></span>
+      <span aria-hidden="true">•</span>
+      <span><%= locked ? "Subscribe to unlock" : "Available now" %></span>
+    </div>
   </div>
 
   <% if locked %>
