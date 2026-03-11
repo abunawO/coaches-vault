@@ -4,6 +4,25 @@
 <% link_options = locked && logged_in? ? { method: :post } : {} %>
 <% searchable = [lesson.title, lesson.description].compact.join(" ").downcase %>
 <% thumbnail = lesson_thumbnail_url(lesson) %>
+<% lesson_view = current_user&.student? ? @lesson_views_by_lesson_id.to_h[lesson.id] : nil %>
+<% learning_state = lesson.learning_state_for(current_user, access_level: access, lesson_view: lesson_view) %>
+<% learning_state_class = learning_state.to_s.tr("_", "-") %>
+<% learning_state_label =
+  case learning_state
+  when :locked then "Locked"
+  when :new then "New"
+  when :watch then "Watch"
+  when :watched_again then "Watch Again"
+  else "Watch"
+  end %>
+<% learning_meta_copy =
+  case learning_state
+  when :locked then "Subscribe to unlock"
+  when :new then "Recently added"
+  when :watch then "Ready to watch"
+  when :watched_again then "Viewed before"
+  else "Ready to watch"
+  end %>
 
 <%= link_to link_target, link_options.merge(class: "vault-lesson-card #{'is-locked' if locked}", data: { student_vault_target: "lessonCard", search: searchable, section_id: section_id }) do %>
   <div class="vault-lesson-card__media">
@@ -21,11 +40,7 @@
       </div>
     <% end %>
     <div class="vault-lesson-card__media-badge">
-      <% if locked %>
-        <span class="badge badge-warning">Locked</span>
-      <% else %>
-        <span class="badge badge-success">Unlocked</span>
-      <% end %>
+      <span class="badge vault-lesson-card__status vault-lesson-card__status--<%= learning_state_class %>"><%= learning_state_label %></span>
     </div>
   </div>
 
@@ -34,7 +49,7 @@
     <div class="vault-lesson-card__meta muted small-text">
       <span class="vault-lesson-card__date"><%= l(lesson.created_at, format: :short) %></span>
       <span aria-hidden="true">•</span>
-      <span><%= locked ? "Subscribe to unlock" : "Available now" %></span>
+      <span><%= learning_meta_copy %></span>
     </div>
   </div>
 

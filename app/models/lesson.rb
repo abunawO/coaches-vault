@@ -1,4 +1,6 @@
 class Lesson < ApplicationRecord
+  RECENT_WINDOW_DAYS = 7
+
   belongs_to :coach, class_name: "User"
   has_one_attached :cover_image
 
@@ -7,6 +9,7 @@ class Lesson < ApplicationRecord
   has_many :lesson_shares, dependent: :destroy
   has_many :shared_users, through: :lesson_shares, source: :user
   has_many :lesson_media, class_name: "LessonMedium", dependent: :destroy
+  has_many :lesson_views, dependent: :destroy
   has_many :category_lessons, dependent: :destroy
   has_many :categories, through: :category_lessons
 
@@ -66,6 +69,22 @@ class Lesson < ApplicationRecord
     return :not_shared if restricted?
 
     :not_subscribed
+  end
+
+  def recent_for_learning_state?(window: RECENT_WINDOW_DAYS.days, now: Time.current)
+    return false unless created_at
+
+    created_at >= (now - window)
+  end
+
+  def learning_state_for(user, access_level:, lesson_view: nil)
+    return :locked unless access_level == :full
+    return :watch unless user&.student?
+
+    return :watched_again if lesson_view&.view_count.to_i.positive?
+    return :new if recent_for_learning_state?
+
+    :watch
   end
 
   private
