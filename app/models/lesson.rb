@@ -79,12 +79,10 @@ class Lesson < ApplicationRecord
 
   def learning_state_for(user, access_level:, lesson_view: nil)
     return :locked unless access_level == :full
-    return :watch unless user&.student?
+    return :available unless user&.student?
+    return :new if lesson_view&.view_count.to_i.zero? && recent_for_learning_state?
 
-    return :watched_again if lesson_view&.view_count.to_i.positive?
-    return :new if recent_for_learning_state?
-
-    :watch
+    :available
   end
 
   private

@@ -317,6 +317,138 @@ a:hover {
   gap: 16px;
 }
 
+.study-system {
+  margin-top: 14px;
+  margin-bottom: 0;
+}
+
+.study-system__header {
+  margin-bottom: 8px;
+}
+
+.study-system__eyebrow {
+  margin: 0 0 6px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.study-system__title {
+  margin: 0 0 4px;
+  font-size: clamp(1.3rem, 1.9vw, 1.55rem);
+}
+
+.study-system__card {
+  display: grid;
+  grid-template-columns: clamp(200px, 26vw, 250px) minmax(0, 1fr);
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+  border-radius: 14px;
+  text-decoration: none;
+  color: inherit;
+  border-color: #d8e4f7;
+  background: linear-gradient(145deg, #ffffff 0%, #f7faff 100%);
+  max-width: 860px;
+  align-items: start;
+}
+
+.study-system__card:hover {
+  border-color: #bfd3f8;
+}
+
+.study-system__media {
+  position: relative;
+  aspect-ratio: 5 / 3;
+  min-height: 138px;
+  background: #dae7ff;
+}
+
+.study-system__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.study-system__image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #d9e6ff 0%, #c5d7fb 100%);
+  color: #355489;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.76rem;
+}
+
+.study-system__body {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  padding: 12px 13px;
+  min-width: 0;
+}
+
+.study-system__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.study-system__name {
+  margin: 0;
+  font-size: clamp(1rem, 1.4vw, 1.2rem);
+  line-height: 1.2;
+}
+
+.study-system__coach {
+  margin: 0;
+}
+
+.study-system__description {
+  margin: 0;
+}
+
+.study-system__lessons {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+.study-system__lessons-label {
+  margin: 0 0 3px;
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.76rem;
+}
+
+.study-system__lessons-list {
+  margin: 0;
+  padding-left: 16px;
+  display: grid;
+  gap: 2px;
+}
+
+.study-system__lessons-list li {
+  margin: 0;
+}
+
+.study-system__cta {
+  justify-self: start;
+  margin-top: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
 .locked-player {
   border: 1px dashed #cbd5e1;
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -894,18 +1026,6 @@ video[data-inline-video]:not([controls])::-moz-media-controls {
   background: #fef9c3;
   color: #854d0e;
   border-color: #fde68a;
-}
-
-.video-card__status--watch {
-  background: #e2e8f0;
-  color: #334155;
-  border-color: #cbd5e1;
-}
-
-.video-card__status--watched-again {
-  background: #dcfce7;
-  color: #166534;
-  border-color: #86efac;
 }
 
 .video-snippet {
@@ -4336,18 +4456,6 @@ details[open] .vault-caret {
   border-color: #fde68a;
 }
 
-.vault-lesson-card__status--watch {
-  background: #e2e8f0;
-  color: #334155;
-  border-color: #cbd5e1;
-}
-
-.vault-lesson-card__status--watched-again {
-  background: #dcfce7;
-  color: #166534;
-  border-color: #86efac;
-}
-
 .vault-lesson-card__body {
   display: grid;
   gap: 8px;
@@ -5239,6 +5347,37 @@ a {
 
   .page {
     padding: 12px 0 22px;
+  }
+
+  .study-system__card {
+    grid-template-columns: 1fr;
+    max-width: none;
+  }
+
+  .study-system__media {
+    aspect-ratio: 16 / 8.5;
+    min-height: 122px;
+  }
+
+  .study-system__body {
+    padding: 10px 11px;
+    gap: 6px;
+  }
+
+  .study-system__description {
+    display: none;
+  }
+
+  .study-system__lessons-label {
+    display: none;
+  }
+
+  .study-system__lessons-list {
+    padding-left: 14px;
+  }
+
+  .study-system + .section {
+    margin-top: 14px;
   }
 }
 

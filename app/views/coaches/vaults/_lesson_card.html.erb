@@ -11,17 +11,13 @@
   case learning_state
   when :locked then "Locked"
   when :new then "New"
-  when :watch then "Watch"
-  when :watched_again then "Watch Again"
-  else "Watch"
+  else nil
   end %>
 <% learning_meta_copy =
   case learning_state
   when :locked then "Subscribe to unlock"
   when :new then "Recently added"
-  when :watch then "Ready to watch"
-  when :watched_again then "Viewed before"
-  else "Ready to watch"
+  else "Available now"
   end %>
 
 <%= link_to link_target, link_options.merge(class: "vault-lesson-card #{'is-locked' if locked}", data: { student_vault_target: "lessonCard", search: searchable, section_id: section_id }) do %>
@@ -40,7 +36,9 @@
       </div>
     <% end %>
     <div class="vault-lesson-card__media-badge">
-      <span class="badge vault-lesson-card__status vault-lesson-card__status--<%= learning_state_class %>"><%= learning_state_label %></span>
+      <% if learning_state_label.present? %>
+        <span class="badge vault-lesson-card__status vault-lesson-card__status--<%= learning_state_class %>"><%= learning_state_label %></span>
+      <% end %>
     </div>
   </div>
 
