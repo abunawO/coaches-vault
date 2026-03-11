@@ -25,6 +25,7 @@ class LessonsController < ApplicationController
     @authorized = @access_level == :full
     @lock_reason = @lesson.lock_reason_for(current_user)
     @can_view_lesson = @access_level == :full
+    record_lesson_view_if_needed
     @root_comments = @lesson.comments.includes(:user, replies: :user).where(parent_id: nil)
     @can_comment = @authorized && current_user&.student? && current_user.subscribed_to?(@lesson.coach)
     @can_reply = @authorized && current_user&.coach? && current_user.id == @lesson.coach_id
@@ -124,5 +125,29 @@ class LessonsController < ApplicationController
 
   def viewable_in_continue_learning?(lesson)
     [:full, :preview].include?(lesson.viewer_access_level(current_user))
+  end
+
+  def record_lesson_view_if_needed
+    return unless current_user&.student?
+    return unless @access_level == :full
+    return if @lesson.coach_id == current_user.id
+
+    now = Time.current
+    lesson_view = LessonView.find_or_initialize_by(user_id: current_user.id, lesson_id: @lesson.id)
+
+    if lesson_view.new_record?
+      lesson_view.view_count = 1
+      lesson_view.first_viewed_at = now
+    else
+      lesson_view.view_count = lesson_view.view_count.to_i + 1
+    end
+
+    lesson_view.last_viewed_at = now
+    lesson_view.save!
+  rescue ActiveRecord::RecordInvalid => e
+    Rails.logger.warn(
+      "[lesson_view] skipped user_id=#{current_user&.id} lesson_id=#{@lesson&.id} " \
+      "error_class=#{e.class} error_message=#{e.message}"
+    )
   end
 end

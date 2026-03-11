@@ -880,6 +880,34 @@ video[data-inline-video]:not([controls])::-moz-media-controls {
   font-size: 0.85rem;
 }
 
+.video-card__status {
+  border: 1px solid transparent;
+}
+
+.video-card__status--locked {
+  background: #ffedd5;
+  color: #9a3412;
+  border-color: #fdba74;
+}
+
+.video-card__status--new {
+  background: #fef9c3;
+  color: #854d0e;
+  border-color: #fde68a;
+}
+
+.video-card__status--watch {
+  background: #e2e8f0;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+.video-card__status--watched-again {
+  background: #dcfce7;
+  color: #166534;
+  border-color: #86efac;
+}
+
 .video-snippet {
   color: var(--muted);
   font-size: 0.9rem;
@@ -4290,6 +4318,34 @@ details[open] .vault-caret {
 
 .vault-lesson-card__media-badge .badge {
   background: rgba(255, 255, 255, 0.92);
+}
+
+.vault-lesson-card__status {
+  border: 1px solid transparent;
+}
+
+.vault-lesson-card__status--locked {
+  background: #ffedd5;
+  color: #9a3412;
+  border-color: #fdba74;
+}
+
+.vault-lesson-card__status--new {
+  background: #fef9c3;
+  color: #854d0e;
+  border-color: #fde68a;
+}
+
+.vault-lesson-card__status--watch {
+  background: #e2e8f0;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+.vault-lesson-card__status--watched-again {
+  background: #dcfce7;
+  color: #166534;
+  border-color: #86efac;
 }
 
 .vault-lesson-card__body {

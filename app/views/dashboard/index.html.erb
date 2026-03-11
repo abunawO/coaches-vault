@@ -144,6 +144,17 @@
           <% coach_profile = lesson.coach&.coach_profile %>
           <% coach_name = coach_profile&.display_name || lesson.coach&.email || "Coach" %>
           <% access_level = lesson.viewer_access_level(current_user) %>
+          <% lesson_view = @lesson_views_by_lesson_id.to_h[lesson.id] %>
+          <% learning_state = lesson.learning_state_for(current_user, access_level: access_level, lesson_view: lesson_view) %>
+          <% learning_state_class = learning_state.to_s.tr("_", "-") %>
+          <% learning_state_label =
+               case learning_state
+               when :locked then "Locked"
+               when :new then "New"
+               when :watch then "Watch"
+               when :watched_again then "Watch Again"
+               else "Watch"
+               end %>
           <% open_path = if coach_profile&.slug && lesson.respond_to?(:slug) && lesson.slug.present?
                            public_coach_lesson_path(coach_profile.slug, lesson.slug)
                          elsif coach_profile&.slug
@@ -163,29 +174,17 @@
                 </div>
               <% end %>
               <div class="thumb-overlay">
-                <span class="badge badge-neutral"><%= lesson.visibility == "restricted" ? "Private" : lesson.visibility.capitalize %></span>
-                <% if access_level == :preview %>
-                  <span class="badge badge-warning">Preview</span>
-                <% end %>
-                <% if access_level == :locked %>
-                  <span class="badge badge-warning">Locked</span>
-                <% end %>
+                <span class="badge video-card__status video-card__status--<%= learning_state_class %>"><%= learning_state_label %></span>
               </div>
             </div>
             <div class="video-meta">
               <div class="video-title"><%= truncate(lesson.title, length: 70) %></div>
               <div class="video-subtitle">by <%= coach_name %></div>
               <div class="video-info">
-                <% if access_level == :preview %>
-                  Preview available
-                <% elsif lesson.visibility == "free" %>
-                  Free
-                <% else %>
-                  Subscribers
-                <% end %>
+                <%= learning_state_label %>
                 <span class="muted">• <%= time_ago_in_words(lesson.created_at) %> ago</span>
               </div>
-              <% if access_level == :preview && lesson.preview_text.present? %>
+              <% if learning_state == :locked && access_level == :preview && lesson.preview_text.present? %>
                 <div class="video-snippet"><%= truncate(lesson.preview_text, length: 90) %></div>
               <% end %>
             </div>

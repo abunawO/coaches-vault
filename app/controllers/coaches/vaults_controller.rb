@@ -30,6 +30,8 @@ module Coaches
         }
       end
 
+      @lesson_views_by_lesson_id = build_lesson_view_lookup
+
       @total_lessons = @vault_sections.sum { |section| section[:total_lessons] }
       present_types = @vault_sections.map { |section| section[:category_type] }.uniq
       built_in_present = Category::CATEGORY_TYPES.select { |type| present_types.include?(type) }
@@ -60,6 +62,15 @@ module Coaches
       return default_path if value.start_with?("//")
 
       value
+    end
+
+    def build_lesson_view_lookup
+      return {} unless current_user&.student?
+
+      lesson_ids = @vault_sections.flat_map { |section| section[:lessons].map(&:id) }.uniq
+      return {} if lesson_ids.empty?
+
+      LessonView.where(user_id: current_user.id, lesson_id: lesson_ids).index_by(&:lesson_id)
     end
   end
 end

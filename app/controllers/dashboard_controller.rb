@@ -22,6 +22,13 @@ class DashboardController < ApplicationController
                             .where.not(visibility: Lesson.visibilities[:restricted])
                             .order(created_at: :desc)
                             .limit(20)
+
+      @lesson_views_by_lesson_id =
+        if current_user.student? && @feed_lessons.any?
+          LessonView.where(user_id: current_user.id, lesson_id: @feed_lessons.map(&:id)).index_by(&:lesson_id)
+        else
+          {}
+        end
     end
   end
 end

@@ -5,6 +5,7 @@ class User < ApplicationRecord
   has_many :lessons, foreign_key: :coach_id, dependent: :destroy
   has_many :favorites, foreign_key: :student_id, dependent: :destroy
   has_many :favorite_lessons, through: :favorites, source: :lesson
+  has_many :lesson_views, dependent: :destroy
   has_many :comments, dependent: :destroy
   has_many :notifications, foreign_key: :recipient_id, dependent: :destroy
   has_many :student_conversations, class_name: "Conversation", foreign_key: :student_id, dependent: :destroy, inverse_of: :student

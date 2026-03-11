@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_06_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_10_220917) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -143,6 +143,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_06_120000) do
     t.index ["user_id"], name: "index_lesson_shares_on_user_id"
   end
 
+  create_table "lesson_views", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "first_viewed_at"
+    t.datetime "last_viewed_at"
+    t.bigint "lesson_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.integer "view_count", default: 0, null: false
+    t.index ["last_viewed_at"], name: "index_lesson_views_on_last_viewed_at"
+    t.index ["lesson_id"], name: "index_lesson_views_on_lesson_id"
+    t.index ["user_id", "lesson_id"], name: "index_lesson_views_on_user_id_and_lesson_id", unique: true
+    t.index ["user_id"], name: "index_lesson_views_on_user_id"
+  end
+
   create_table "lessons", force: :cascade do |t|
     t.bigint "coach_id", null: false
     t.datetime "created_at", null: false
@@ -237,6 +251,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_06_120000) do
   add_foreign_key "lesson_media", "lessons"
   add_foreign_key "lesson_shares", "lessons"
   add_foreign_key "lesson_shares", "users"
+  add_foreign_key "lesson_views", "lessons"
+  add_foreign_key "lesson_views", "users"
   add_foreign_key "lessons", "users", column: "coach_id"
   add_foreign_key "messages", "conversations"
   add_foreign_key "messages", "users", column: "sender_id"
