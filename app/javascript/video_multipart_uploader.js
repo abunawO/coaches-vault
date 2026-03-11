@@ -55,7 +55,14 @@ function setMultipartFooterMessage(formEl, message) {
   statusEl.style.display = message ? "inline" : "none";
 }
 
+function isDestroyedRowInput(input) {
+  if (!input) return false;
+  const dom = adapterRegistry.get(input) || new VideoUploadDomAdapter(input);
+  return dom.isRowDestroyed();
+}
+
 function blockingReasonForInput(input) {
+  if (isDestroyedRowInput(input)) return null;
   const { state, signedId } = stateStore.get(input);
 
   if (state === "queued" || state === "uploading") {
@@ -79,7 +86,8 @@ function blockingReasonForInput(input) {
 
 function syncFormSubmitState(formEl) {
   if (!formEl) return;
-  const inputs = Array.from(formEl.querySelectorAll("[data-video-multipart-upload='true']"));
+  const inputs = Array.from(formEl.querySelectorAll("[data-video-multipart-upload='true']"))
+    .filter((input) => !isDestroyedRowInput(input));
   const blockingReason = inputs.map(blockingReasonForInput).find(Boolean);
 
   if (blockingReason) {
@@ -143,6 +151,36 @@ async function applyUploader(input) {
   }
 }
 
+function clearMultipartBindingForInput(input) {
+  if (!input) return;
+  const form = input.closest("form");
+  const service = serviceByInput.get(input);
+  if (service) {
+    service.destroy();
+    serviceByInput.delete(input);
+  } else {
+    stateStore.set(input, "idle", null);
+  }
+
+  const dom = adapterRegistry.get(input) || new VideoUploadDomAdapter(input);
+  const hiddenField = dom.ensureHiddenField();
+  dom.clearHiddenSignedId(hiddenField);
+  dom.resetUploadUi();
+  dom.preventRawFileSubmit({ clearValue: true });
+  trackedInputs.delete(input);
+  syncFormSubmitState(form);
+}
+
+export function clearVideoMultipartUploadForRow(rowEl) {
+  if (!rowEl || typeof rowEl.querySelectorAll !== "function") return;
+  const videoInputs = Array.from(rowEl.querySelectorAll("[data-video-multipart-upload='true']"));
+  videoInputs.forEach((input) => clearMultipartBindingForInput(input));
+}
+
+export function syncVideoMultipartSubmitState(formEl) {
+  syncFormSubmitState(formEl);
+}
+
 export function initVideoMultipartUploads(root = document) {
   try {
     trackedInputs.forEach((input) => {
@@ -170,6 +208,8 @@ export function initVideoMultipartUploads(root = document) {
 }
 
 window.initVideoMultipartUploads ||= initVideoMultipartUploads;
+window.clearVideoMultipartUploadForRow ||= clearVideoMultipartUploadForRow;
+window.syncVideoMultipartSubmitState ||= syncVideoMultipartSubmitState;
 
 function addFormGuards(inputs) {
   inputs
@@ -187,6 +227,7 @@ function addFormGuards(inputs) {
 
           videoInputs.forEach((input) => {
             const dom = adapterRegistry.get(input) || new VideoUploadDomAdapter(input);
+            if (dom.isRowDestroyed()) return;
             const reason = blockingReasonForInput(input);
             const hasFile = (input.files?.length || 0) > 0;
             const multipartEnabled = input.dataset.uploaderBound === "true";

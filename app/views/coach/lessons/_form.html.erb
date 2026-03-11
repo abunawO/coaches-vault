@@ -1,5 +1,5 @@
 <div class="lesson-form-page">
-    <%= form_with model: [:coach, @lesson], local: true, html: { multipart: true, data: { controller: "form-submit-lock lesson-form", action: "submit->form-submit-lock#handleSubmit turbo:submit-end->form-submit-lock#handleTurboEnd ajax:complete->form-submit-lock#handleAjaxComplete" } } do |form| %>
+    <%= form_with model: [:coach, @lesson], local: true, html: { multipart: true, data: { controller: "form-submit-lock lesson-form", action: "submit->form-submit-lock#handleSubmit turbo:submit-end->form-submit-lock#handleTurboEnd turbo:fetch-request-error->form-submit-lock#handleFetchRequestError ajax:complete->form-submit-lock#handleAjaxComplete" } } do |form| %>
     <div class="form-submit-lock__overlay" data-form-submit-lock-target="overlay" aria-hidden="true">
         <div class="form-submit-lock__dialog">
             <div class="form-submit-lock__spinner" aria-hidden="true"></div>

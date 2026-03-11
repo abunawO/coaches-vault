@@ -469,6 +469,9 @@ export default class extends Controller {
     })
 
     this.on(removeBtn, "click", () => {
+      if (window.clearVideoMultipartUploadForRow) {
+        window.clearVideoMultipartUploadForRow(row)
+      }
       this.revokeRowObjectUrls(row)
       if (destroyField) {
         destroyField.checked = true
@@ -482,6 +485,9 @@ export default class extends Controller {
       this.reindexPositions()
       this.updateSlideLimitState()
       this.markDirty()
+      if (window.syncVideoMultipartSubmitState) {
+        window.syncVideoMultipartSubmitState(this.form)
+      }
     })
   }
 

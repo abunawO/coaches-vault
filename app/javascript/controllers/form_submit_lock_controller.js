@@ -3,7 +3,8 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["status", "error", "submit", "cancel", "overlay", "overlayMessage"]
   static values = {
-    successDuration: { type: Number, default: 1000 }
+    successDuration: { type: Number, default: 1000 },
+    lockTimeout: { type: Number, default: 15000 }
   }
 
   connect() {
@@ -11,12 +12,14 @@ export default class extends Controller {
     this.previouslyDisabled = new WeakSet()
     this.successTimeout = null
     this.disableTimeout = null
+    this.lockWatchdogTimeout = null
     this.originalSubmitLabel = this.readSubmitLabel()
   }
 
   disconnect() {
     this.clearSuccessTimeout()
     this.clearDisableTimeout()
+    this.clearLockWatchdogTimeout()
   }
 
   handleSubmit(event) {
@@ -33,6 +36,11 @@ export default class extends Controller {
     if (!this.isLocked) return
     const success = this.resolveTurboSuccess(event.detail)
     success ? this.handleSuccess() : this.handleFailure()
+  }
+
+  handleFetchRequestError() {
+    if (!this.isLocked) return
+    this.handleFailure("Network error while saving. Please retry.")
   }
 
   handleAjaxComplete(event) {
@@ -60,9 +68,14 @@ export default class extends Controller {
     // Defer disabling fields so file inputs remain included in the outgoing request
     this.disableTimeout = setTimeout(() => this.toggleFormElements(true), 0)
     this.disableCancel()
+    this.lockWatchdogTimeout = setTimeout(() => {
+      if (!this.isLocked) return
+      this.handleFailure("Save timed out. Please retry.")
+    }, this.lockTimeoutValue)
   }
 
   handleSuccess() {
+    if (!this.isLocked) return
     this.unlockForm()
     this.hideOverlay()
     this.showStatus("Saved ✓")
@@ -73,16 +86,18 @@ export default class extends Controller {
     }, this.successDurationValue)
   }
 
-  handleFailure() {
+  handleFailure(message = "Something went wrong. Please try again.") {
+    if (!this.isLocked) return
     this.unlockForm()
     this.hideOverlay()
     this.resetSubmitLabel()
     this.hideStatus()
-    this.showError("Something went wrong. Please try again.")
+    this.showError(message)
   }
 
   unlockForm() {
     this.clearDisableTimeout()
+    this.clearLockWatchdogTimeout()
     this.toggleFormElements(false)
     this.enableCancel()
     this.isLocked = false
@@ -221,6 +236,13 @@ export default class extends Controller {
     if (this.disableTimeout) {
       clearTimeout(this.disableTimeout)
       this.disableTimeout = null
+    }
+  }
+
+  clearLockWatchdogTimeout() {
+    if (this.lockWatchdogTimeout) {
+      clearTimeout(this.lockWatchdogTimeout)
+      this.lockWatchdogTimeout = null
     }
   }
 

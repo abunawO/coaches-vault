@@ -26,6 +26,14 @@ export class VideoUploadDomAdapter {
     this.input = input;
   }
 
+  get row() {
+    return this.input.closest("[data-slide-row]");
+  }
+
+  get destroyField() {
+    return this.row?.querySelector("[data-destroy-field]") || null;
+  }
+
   get form() {
     return this.input.closest("form");
   }
@@ -175,6 +183,17 @@ export class VideoUploadDomAdapter {
     if (!hiddenField) return;
     hiddenField.value = "";
     hiddenField.name = "";
+  }
+
+  isRowDestroyed() {
+    if (!this.row) return false;
+    if (this.row.classList.contains("is-destroyed")) return true;
+    return this.destroyField?.checked === true;
+  }
+
+  resetUploadUi({ clearStatus = true, clearProgress = true } = {}) {
+    if (clearStatus) this.setStatus("");
+    if (clearProgress) this.hideUploadProgress();
   }
 
   focusAndScroll() {
