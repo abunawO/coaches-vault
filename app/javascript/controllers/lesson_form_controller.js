@@ -18,6 +18,13 @@ export default class extends Controller {
     this.nestedIndex = Number(this.element.dataset.lessonFormNestedIndex || Date.now())
     this.objectUrls = new Map()
     this.bulkRemainingSlots = 0
+    this.draftSaveTimer = null
+    this.isApplyingDraft = false
+    this.hasRestoredDraft = false
+    this.storage = this.resolveDraftStorage()
+    this.draftSchemaVersion = this.element.dataset.lessonFormDraftVersion || "1"
+    this.draftKey = this.element.dataset.lessonFormDraftKey || null
+    this.draftScope = this.element.dataset.lessonFormDraftScope || null
     this.bulkCoordinator = new LessonMediaBulkCoordinator({
       appendRowForKind: (kind) => this.appendRowForBulk(kind),
       assignFileToRow: (row, kind, file) => this.assignBulkFileToRow(row, kind, file),
@@ -31,7 +38,12 @@ export default class extends Controller {
     this.bindVisibilitySection()
     this.bindDirtyTracking()
     this.bindSlideSection()
+    this.bindDraftRecoveryUi()
+    this.restoreDraftIfPresent()
     this.on(this.form, "submit", () => this.revokeAllObjectUrls())
+    this.on(this.form, "turbo:submit-end", (event) => {
+      if (event?.detail?.success) this.clearDraft()
+    })
 
     this.toggleVisibility()
     this.togglePreviewVisibility()
@@ -41,6 +53,7 @@ export default class extends Controller {
     this.updateSlideLimitState()
     this.markDirty()
     this.initMultipart(this.form)
+    this.persistDraftSoon()
   }
 
   disconnect() {
@@ -54,6 +67,10 @@ export default class extends Controller {
     if (this.bulkFeedbackTimer) {
       clearTimeout(this.bulkFeedbackTimer)
       this.bulkFeedbackTimer = null
+    }
+    if (this.draftSaveTimer) {
+      clearTimeout(this.draftSaveTimer)
+      this.draftSaveTimer = null
     }
   }
 
@@ -100,6 +117,9 @@ export default class extends Controller {
     this.draftClose = q("#draft-close")
     this.draftCancel = q("#draft-cancel")
     this.draftAdd = q("#draft-add")
+    this.draftBanner = q("#lesson-draft-banner")
+    this.draftBannerMessage = q("#lesson-draft-message")
+    this.discardDraftBtn = q("#lesson-draft-discard")
   }
 
   on(element, eventName, handler, options) {
@@ -238,12 +258,14 @@ export default class extends Controller {
         this.toggleVisibility()
         this.togglePreviewVisibility()
         this.markDirty()
+        this.persistDraftSoon()
       })
     })
 
     this.on(this.previewCheckbox, "change", () => {
       this.togglePreviewText()
       this.markDirty()
+      this.persistDraftSoon()
     })
 
     this.on(this.search, "input", (event) => {
@@ -259,6 +281,7 @@ export default class extends Controller {
       this.on(cb, "change", () => {
         this.updateCount()
         this.markDirty()
+        this.persistDraftSoon()
       })
     })
 
@@ -269,6 +292,7 @@ export default class extends Controller {
       })
       this.updateCount()
       this.markDirty()
+      this.persistDraftSoon()
     })
 
     this.on(this.clearAllBtn, "click", () => {
@@ -278,12 +302,17 @@ export default class extends Controller {
       })
       this.updateCount()
       this.markDirty()
+      this.persistDraftSoon()
     })
   }
 
   bindDirtyTracking() {
     this.initialSnapshot = this.form ? new FormData(this.form) : null
-    this.on(this.form, "change", () => this.markDirty())
+    this.on(this.form, "change", () => {
+      this.markDirty()
+      this.persistDraftSoon()
+    })
+    this.on(this.form, "input", () => this.persistDraftSoon())
   }
 
   bindSlideSection() {
@@ -456,6 +485,7 @@ export default class extends Controller {
         this.mediaList.insertBefore(row, prev)
         this.reindexPositions()
         this.markDirty()
+        this.persistDraftSoon()
       }
     })
 
@@ -465,6 +495,7 @@ export default class extends Controller {
         this.mediaList.insertBefore(next, row)
         this.reindexPositions()
         this.markDirty()
+        this.persistDraftSoon()
       }
     })
 
@@ -488,6 +519,7 @@ export default class extends Controller {
       if (window.syncVideoMultipartSubmitState) {
         window.syncVideoMultipartSubmitState(this.form)
       }
+      this.persistDraftSoon()
     })
   }
 
@@ -599,6 +631,7 @@ export default class extends Controller {
     this.closeDraft()
     this.updateSlideLimitState()
     this.markDirty()
+    this.persistDraftSoon()
   }
 
   async handleBulkFiles(fileList) {
@@ -624,6 +657,7 @@ export default class extends Controller {
     this.reindexPositions()
     this.updateSlideLimitState()
     this.markDirty()
+    this.persistDraftSoon()
 
     const overflowCount = Math.max(processResult.supportedCount - remaining, 0)
     const messages = []
@@ -658,10 +692,10 @@ export default class extends Controller {
     return true
   }
 
-  appendRowForKind(kind) {
+  appendRowForKind(kind, initialData = {}) {
     if (!this.mediaList) return null
     const index = this.nextNestedIndex()
-    const row = createLessonMediaRow({ index, kind, initialData: {} })
+    const row = createLessonMediaRow({ index, kind, initialData })
     if (!row) return null
     this.mediaList.appendChild(row)
     return row
@@ -742,5 +776,238 @@ export default class extends Controller {
     } catch (_error) {
       // uploader module handles its own fallback warnings
     }
+  }
+
+  resolveDraftStorage() {
+    try {
+      if (window.sessionStorage) return window.sessionStorage
+    } catch (_e) {}
+    return null
+  }
+
+  bindDraftRecoveryUi() {
+    this.on(this.discardDraftBtn, "click", () => {
+      this.clearDraft()
+      window.location.reload()
+    })
+  }
+
+  persistDraftSoon() {
+    if (!this.storage || !this.draftKey || this.isApplyingDraft) return
+    if (this.draftSaveTimer) clearTimeout(this.draftSaveTimer)
+    this.draftSaveTimer = setTimeout(() => this.persistDraftNow(), 180)
+  }
+
+  persistDraftNow() {
+    if (!this.storage || !this.draftKey || this.isApplyingDraft) return
+    const payload = this.buildDraftPayload()
+    try {
+      this.storage.setItem(this.draftKey, JSON.stringify(payload))
+    } catch (_e) {}
+  }
+
+  buildDraftPayload() {
+    const fieldValue = (name) => this.form?.querySelector(`[name='${name}']`)?.value || ""
+    const checkedValue = (name) => this.form?.querySelector(`[name='${name}']`)?.checked === true
+    const selectedVisibility = this.form?.querySelector("input[name='lesson[visibility]']:checked")?.value || "subscribers"
+    const selectedSubscribers = Array.from(this.form?.querySelectorAll("input[name='lesson[allowed_subscriber_ids][]']:checked") || [])
+      .map((el) => el.value)
+      .filter(Boolean)
+
+    return {
+      schemaVersion: this.draftSchemaVersion,
+      key: this.draftKey,
+      scope: this.draftScope,
+      formAction: this.form?.getAttribute("action") || "",
+      savedAt: new Date().toISOString(),
+      fields: {
+        title: fieldValue("lesson[title]"),
+        description: fieldValue("lesson[description]"),
+        visibility: selectedVisibility,
+        preview: checkedValue("lesson[preview]"),
+        preview_text: fieldValue("lesson[preview_text]"),
+        allowed_subscriber_ids: selectedSubscribers
+      },
+      clientRows: this.serializeClientRows()
+    }
+  }
+
+  serializeClientRows() {
+    const rows = Array.from(this.mediaList?.querySelectorAll("[data-slide-row][data-client-row='true']") || [])
+    return rows
+      .filter((row) => !row.classList.contains("is-destroyed"))
+      .map((row, index) => {
+        const adapter = new LessonMediaRowAdapter(row)
+        const kind = row.querySelector("input[name*='[kind]']")?.value || "image"
+        const videoUrl = adapter.videoUrlInput?.value?.trim() || ""
+        const signedIdField = row.querySelector("[data-video-signed-id]")
+        const signedId = signedIdField?.value || ""
+        const signedIdName = signedIdField?.name || ""
+        const statusText = (adapter.statusEl?.textContent || "").toLowerCase()
+        const hasSelectedImageFile = (adapter.imageFileInput?.files?.length || 0) > 0
+        const hasSelectedVideoFile = (adapter.videoFileInput?.files?.length || 0) > 0
+        const needsFileReselect =
+          kind === "image"
+            ? hasSelectedImageFile
+            : (!signedId && hasSelectedVideoFile) || statusText.includes("failed") || statusText.includes("uploading") || statusText.includes("queued")
+
+        return {
+          index,
+          kind,
+          videoUrl,
+          signedId,
+          signedIdName,
+          needsFileReselect
+        }
+      })
+  }
+
+  restoreDraftIfPresent() {
+    if (!this.storage || !this.draftKey) return
+    let parsed
+    try {
+      parsed = JSON.parse(this.storage.getItem(this.draftKey) || "null")
+    } catch (_e) {
+      return
+    }
+
+    if (!parsed || parsed.schemaVersion !== this.draftSchemaVersion) return
+    if ((parsed.formAction || "") !== (this.form?.getAttribute("action") || "")) return
+
+    const hasData = this.draftHasMeaningfulData(parsed)
+    if (!hasData) return
+
+    this.isApplyingDraft = true
+    try {
+      this.restoreFields(parsed.fields || {})
+      this.restoreClientRows(parsed.clientRows || [])
+      this.hasRestoredDraft = true
+    } finally {
+      this.isApplyingDraft = false
+    }
+
+    if (this.hasRestoredDraft) this.showDraftRestoredNotice(parsed.savedAt)
+  }
+
+  restoreFields(fields) {
+    const setValue = (name, value) => {
+      const el = this.form?.querySelector(`[name='${name}']`)
+      if (el && typeof value === "string") el.value = value
+    }
+
+    setValue("lesson[title]", fields.title || "")
+    setValue("lesson[description]", fields.description || "")
+    setValue("lesson[preview_text]", fields.preview_text || "")
+
+    if (fields.visibility) {
+      const visibilityRadio = this.form?.querySelector(`input[name='lesson[visibility]'][value='${fields.visibility}']`)
+      if (visibilityRadio) visibilityRadio.checked = true
+    }
+
+    const previewCheckbox = this.form?.querySelector("input[name='lesson[preview]']")
+    if (previewCheckbox) previewCheckbox.checked = fields.preview === true
+
+    const selectedSubscribers = new Set(Array.isArray(fields.allowed_subscriber_ids) ? fields.allowed_subscriber_ids.map(String) : [])
+    const subscriberCheckboxes = Array.from(this.form?.querySelectorAll("input[name='lesson[allowed_subscriber_ids][]']") || [])
+    subscriberCheckboxes.forEach((checkbox) => {
+      checkbox.checked = selectedSubscribers.has(String(checkbox.value))
+    })
+
+    this.toggleVisibility()
+    this.togglePreviewVisibility()
+    this.togglePreviewText()
+    this.updateCount()
+  }
+
+  restoreClientRows(clientRows) {
+    if (!this.mediaList || !Array.isArray(clientRows)) return
+    Array.from(this.mediaList.querySelectorAll("[data-slide-row][data-client-row='true']")).forEach((row) => row.remove())
+
+    clientRows.forEach((savedRow) => {
+      const kind = savedRow?.kind === "video" ? "video" : "image"
+      const row = this.appendRowForKind(kind, { videoUrl: savedRow?.videoUrl || "" })
+      if (!row) return
+
+      const adapter = new LessonMediaRowAdapter(row)
+      if (kind === "video" && savedRow?.signedId && savedRow?.signedIdName && adapter.videoFileInput) {
+        const videoInput = adapter.videoFileInput
+        let hiddenField = row.querySelector("[data-video-signed-id]")
+        if (!hiddenField) {
+          hiddenField = document.createElement("input")
+          hiddenField.type = "hidden"
+          hiddenField.dataset.videoSignedId = "true"
+          videoInput.insertAdjacentElement("afterend", hiddenField)
+        }
+
+        hiddenField.name = savedRow.signedIdName
+        hiddenField.value = savedRow.signedId
+        videoInput.dataset.multipartOriginalName = savedRow.signedIdName
+        videoInput.removeAttribute("name")
+        videoInput.disabled = true
+        if (adapter.statusEl) adapter.statusEl.textContent = "Uploaded video restored from draft."
+      }
+
+      if (savedRow?.needsFileReselect && kind === "video" && adapter.statusEl) {
+        adapter.statusEl.textContent = "File needs to be reselected after refresh."
+        adapter.statusEl.classList.add("upload-status--warning")
+      }
+
+      if (savedRow?.needsFileReselect && kind === "image") {
+        const fieldsEl = adapter.fieldsEl
+        if (fieldsEl) {
+          const warning = document.createElement("div")
+          warning.className = "muted small-text upload-status upload-status--warning"
+          warning.textContent = "File needs to be reselected after refresh."
+          fieldsEl.appendChild(warning)
+        }
+      }
+
+      this.attachRowHandlers(row, true)
+      this.initMultipart(row)
+    })
+
+    this.reindexPositions()
+    this.updateSlideLimitState()
+    if (window.syncVideoMultipartSubmitState) window.syncVideoMultipartSubmitState(this.form)
+  }
+
+  showDraftRestoredNotice(savedAt) {
+    if (!this.draftBanner) return
+    if (this.draftBannerMessage && savedAt) {
+      const time = this.formatSavedAt(savedAt)
+      this.draftBannerMessage.textContent = `Your unsaved lesson changes were restored${time ? ` (${time})` : ""}.`
+    }
+    this.draftBanner.hidden = false
+  }
+
+  formatSavedAt(isoString) {
+    try {
+      const date = new Date(isoString)
+      if (Number.isNaN(date.getTime())) return ""
+      return date.toLocaleString()
+    } catch (_e) {
+      return ""
+    }
+  }
+
+  clearDraft() {
+    if (!this.storage || !this.draftKey) return
+    try {
+      this.storage.removeItem(this.draftKey)
+    } catch (_e) {}
+    if (this.draftBanner) this.draftBanner.hidden = true
+  }
+
+  draftHasMeaningfulData(draft) {
+    const fields = draft?.fields || {}
+    const hasFields =
+      Boolean(fields.title) ||
+      Boolean(fields.description) ||
+      Boolean(fields.preview_text) ||
+      fields.preview === true ||
+      (fields.visibility && fields.visibility !== "subscribers") ||
+      (Array.isArray(fields.allowed_subscriber_ids) && fields.allowed_subscriber_ids.length > 0)
+    const hasRows = Array.isArray(draft?.clientRows) && draft.clientRows.length > 0
+    return hasFields || hasRows
   }
 }

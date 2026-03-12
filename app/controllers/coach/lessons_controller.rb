@@ -176,6 +176,9 @@ module Coach
       media_hash = media_attrs.respond_to?(:to_unsafe_h) ? media_attrs.to_unsafe_h : media_attrs.to_h
       media_hash.each_value do |attrs|
         attrs = attrs.to_h
+        destroy_requested = ActiveModel::Type::Boolean.new.cast(attrs["_destroy"])
+        next if destroy_requested
+
         media =
           if attrs["id"].present?
             lesson.lesson_media.detect { |m| m.id == attrs["id"].to_i } || lesson.lesson_media.build(id: attrs["id"])
@@ -183,7 +186,7 @@ module Coach
             lesson.lesson_media.build
           end
 
-        cleaned_attrs = attrs.except("id").dup
+        cleaned_attrs = attrs.except("id", "_destroy").dup
         %w[image_file video_file].each do |file_key|
           cleaned_attrs.delete(file_key) if cleaned_attrs[file_key].blank?
         end

@@ -147,6 +147,27 @@ a:hover {
   color: #991b1b;
 }
 
+.form-banner--info {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.form-banner--info .form-banner__hint,
+.form-banner--info .form-banner__text {
+  color: #1e40af;
+}
+
+.form-banner--info .btn-ghost {
+  border-color: #bfdbfe;
+  color: #1e40af;
+}
+
+.upload-status--warning {
+  color: #9a3412;
+  font-weight: 600;
+}
+
 #lesson-media-list {
   scroll-margin-top: 120px;
 }
