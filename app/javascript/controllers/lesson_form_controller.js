@@ -532,7 +532,7 @@ export default class extends Controller {
 
     if (this.slideLimitMessage) {
       this.slideLimitMessage.textContent = limitReached
-        ? "Slide limit reached (5). Remove a slide to add another."
+        ? "Slide limit reached (10). Remove a slide to add another."
         : "You can add up to 10 slides per lesson."
     }
 
@@ -728,7 +728,7 @@ export default class extends Controller {
 
     const remaining = Math.max(this.MAX_SLIDES - this.currentSlidesCount(), 0)
     if (remaining === 0) {
-      this.showBulkFeedback("Slide limit reached (5). Remove a slide to add more.")
+      this.showBulkFeedback("Slide limit reached (10). Remove a slide to add more.")
       this.updateSlideLimitState()
       return
     }
@@ -749,7 +749,7 @@ export default class extends Controller {
     const overflowCount = Math.max(processResult.supportedCount - remaining, 0)
     const messages = []
     if (processResult.addedCount > 0) messages.push(`Added ${processResult.addedCount} slide${processResult.addedCount === 1 ? "" : "s"}.`)
-    if (overflowCount > 0) messages.push(`Only the first ${remaining} file${remaining === 1 ? "" : "s"} were added (max 5 slides).`)
+    if (overflowCount > 0) messages.push(`Only the first ${remaining} file${remaining === 1 ? "" : "s"} were added (max 10 slides).`)
     if (processResult.unsupportedCount > 0) messages.push(`${processResult.unsupportedCount} unsupported file${processResult.unsupportedCount === 1 ? "" : "s"} skipped.`)
     if (processResult.assignmentFailures > 0) messages.push("Your browser requires adding some files one at a time for uploads.")
     this.showBulkFeedback(messages.join(" "))
