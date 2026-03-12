@@ -71,16 +71,21 @@
                     <div class="form-row">
                         <%= form.label :cover_image, "Cover image (optional)" %>
                         <p class="muted small-text" style="margin:0 0 8px 0;">Shown in dashboard and feed cards.</p>
-                        <%= form.file_field :cover_image, class: "input", accept: "image/png,image/jpeg,image/webp,image/*" %>
+                        <%= form.file_field :cover_image, class: "input", accept: "image/png,image/jpeg,image/webp,image/*", data: { cover_image_input: true } %>
+                        <div class="cover-image-preview" data-cover-image-preview>
+                            <% if @lesson.cover_image.attached? && @lesson.cover_image.blob&.persisted? %>
+                            <%= image_tag url_for(@lesson.cover_image.variant(resize_to_limit: [600, 338])), alt: "Current cover image", class: "cover-image-preview__image", data: { cover_image_preview_image: true, persisted: true } %>
+                            <p class="cover-image-preview__meta muted small-text" data-cover-image-preview-filename>Current cover image</p>
+                            <% else %>
+                            <img alt="Selected cover image preview" class="cover-image-preview__image" data-cover-image-preview-image hidden />
+                            <p class="cover-image-preview__meta muted small-text" data-cover-image-preview-filename hidden></p>
+                            <p class="cover-image-preview__empty muted small-text" data-cover-image-preview-empty>No cover image selected yet.</p>
+                            <% end %>
+                        </div>
                         <% if @lesson.cover_image.attached? %>
                         <div style="margin-top:10px; display:grid; gap:8px;">
-                            <% if @lesson.cover_image.blob&.persisted? %>
-                            <%= image_tag url_for(@lesson.cover_image.variant(resize_to_limit: [600, 338])), alt: "Current cover image", style: "width: 220px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; border: 1px solid #e5e7eb;" %>
-                            <% else %>
-                            <p class="muted small-text" style="margin:0;">Cover image selected. Preview will appear after save.</p>
-                            <% end %>
                             <label class="muted small-text" style="display:flex; align-items:center; gap:8px;">
-                                <%= check_box_tag "lesson[remove_cover_image]", "1", false %>
+                                <%= check_box_tag "lesson[remove_cover_image]", "1", false, data: { remove_cover_image_input: true } %>
                                 Remove current cover image
                             </label>
                         </div>

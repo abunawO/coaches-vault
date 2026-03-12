@@ -5,7 +5,7 @@
       <p class="page-subtitle"><%= @lesson.title %></p>
       <p class="muted">Control who can view this lesson.</p>
     </div>
-    <%= link_to "Back to lessons", lessons_path, class: "btn btn-secondary" %>
+    <%= link_to "Back to lessons", coach_lessons_path, class: "btn btn-secondary" %>
   </div>
 
   <%= form_with model: @lesson, url: access_coach_lesson_path(@lesson), method: :patch, local: true do |f| %>

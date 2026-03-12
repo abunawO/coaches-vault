@@ -39,6 +39,7 @@ export default class extends Controller {
     this.bindVisibilitySection()
     this.bindDirtyTracking()
     this.bindSlideSection()
+    this.bindCoverImagePreview()
     this.bindDraftRecoveryUi()
     this.on(this.form, "video-multipart:state-change", (event) => {
       const state = event?.detail?.state
@@ -65,6 +66,7 @@ export default class extends Controller {
 
   disconnect() {
     this.revokeAllObjectUrls()
+    this.revokeCoverPreviewObjectUrl()
     if (this.element?.dataset) {
       delete this.element.dataset.lessonFormInitialized
       this.element.dataset.lessonFormNestedIndex = String(this.nestedIndex || Date.now())
@@ -127,6 +129,11 @@ export default class extends Controller {
     this.draftBanner = q("#lesson-draft-banner")
     this.draftBannerMessage = q("#lesson-draft-message")
     this.discardDraftBtn = q("#lesson-draft-discard")
+    this.coverImageInput = q("[data-cover-image-input]")
+    this.coverImagePreviewImage = q("[data-cover-image-preview-image]")
+    this.coverImagePreviewFilename = q("[data-cover-image-preview-filename]")
+    this.coverImagePreviewEmpty = q("[data-cover-image-preview-empty]")
+    this.removeCoverImageInput = q("[data-remove-cover-image-input]")
   }
 
   on(element, eventName, handler, options) {
@@ -160,6 +167,79 @@ export default class extends Controller {
     }
     const precision = unitIdx === 0 ? 0 : 1
     return `${size.toFixed(precision)} ${units[unitIdx]}`
+  }
+
+  bindCoverImagePreview() {
+    if (!this.coverImageInput || !this.coverImagePreviewImage) return
+    this.on(this.coverImageInput, "change", () => this.updateCoverImagePreviewFromInput())
+    this.on(this.removeCoverImageInput, "change", () => this.updateCoverImagePreviewForRemoval())
+  }
+
+  updateCoverImagePreviewFromInput() {
+    if (!this.coverImageInput || !this.coverImagePreviewImage) return
+    const file = this.coverImageInput.files?.[0]
+    if (!file) {
+      this.restorePersistedCoverPreview()
+      return
+    }
+
+    this.revokeCoverPreviewObjectUrl()
+    const url = URL.createObjectURL(file)
+    this.coverPreviewObjectUrl = url
+    this.coverImagePreviewImage.src = url
+    this.coverImagePreviewImage.hidden = false
+    if (this.coverImagePreviewFilename) {
+      this.coverImagePreviewFilename.hidden = false
+      this.coverImagePreviewFilename.textContent = `Selected: ${file.name}`
+    }
+    if (this.coverImagePreviewEmpty) this.coverImagePreviewEmpty.hidden = true
+    if (this.removeCoverImageInput) this.removeCoverImageInput.checked = false
+  }
+
+  updateCoverImagePreviewForRemoval() {
+    if (!this.removeCoverImageInput) return
+    if (this.removeCoverImageInput.checked) {
+      if (this.coverImageInput && (this.coverImageInput.files?.length || 0) > 0) return
+      this.revokeCoverPreviewObjectUrl()
+      if (this.coverImagePreviewImage) this.coverImagePreviewImage.hidden = true
+      if (this.coverImagePreviewFilename) this.coverImagePreviewFilename.hidden = true
+      if (this.coverImagePreviewEmpty) {
+        this.coverImagePreviewEmpty.hidden = false
+        this.coverImagePreviewEmpty.textContent = "Cover image will be removed when you save."
+      }
+      return
+    }
+    this.restorePersistedCoverPreview()
+  }
+
+  restorePersistedCoverPreview() {
+    if (!this.coverImagePreviewImage) return
+    this.revokeCoverPreviewObjectUrl()
+    const persisted = this.coverImagePreviewImage.dataset.persisted === "true"
+    if (persisted && this.coverImagePreviewImage.getAttribute("src")) {
+      this.coverImagePreviewImage.hidden = false
+      if (this.coverImagePreviewFilename) {
+        this.coverImagePreviewFilename.hidden = false
+        this.coverImagePreviewFilename.textContent = "Current cover image"
+      }
+      if (this.coverImagePreviewEmpty) this.coverImagePreviewEmpty.hidden = true
+      return
+    }
+
+    this.coverImagePreviewImage.hidden = true
+    if (this.coverImagePreviewFilename) this.coverImagePreviewFilename.hidden = true
+    if (this.coverImagePreviewEmpty) {
+      this.coverImagePreviewEmpty.hidden = false
+      this.coverImagePreviewEmpty.textContent = "No cover image selected yet."
+    }
+  }
+
+  revokeCoverPreviewObjectUrl() {
+    if (!this.coverPreviewObjectUrl) return
+    try {
+      URL.revokeObjectURL(this.coverPreviewObjectUrl)
+    } catch (_e) {}
+    this.coverPreviewObjectUrl = null
   }
 
   setThumbToImage(row, file) {

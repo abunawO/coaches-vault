@@ -3895,6 +3895,26 @@ details[open] .vault-caret {
   gap: 12px;
 }
 
+.cover-image-preview {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.cover-image-preview__image {
+  width: min(320px, 100%);
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.cover-image-preview__meta,
+.cover-image-preview__empty {
+  margin: 0;
+}
+
 .sticky-sidebar {
   position: sticky;
   top: 88px;

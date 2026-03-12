@@ -1,7 +1,8 @@
 <div class="container" data-controller="lessons-index">
   <% if current_user&.coach? %>
+    <% coach_lessons_index_path = defined?(coach_lessons_path) ? coach_lessons_path : lessons_path %>
     <%= render "shared/page_header",
-          breadcrumbs: [["Dashboard", root_path], ["Lessons", lessons_path]],
+          breadcrumbs: [["Dashboard", root_path], ["Lessons", coach_lessons_index_path]],
           title: content_tag(:span, "🎓", class: "page-title-icon") + " My Lessons",
           subtitle: "Manage your library, edit content, and publish updates.",
           primary_action: { label: "New Lesson", url: new_coach_lesson_path(return_to: request.fullpath) },

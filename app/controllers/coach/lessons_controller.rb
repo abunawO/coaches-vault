@@ -6,6 +6,12 @@ module Coach
 
     def index
       @lessons = current_user.lessons
+                             .includes(
+                               { cover_image_attachment: :blob },
+                               { lesson_media: { image_file_attachment: :blob } }
+                             )
+                             .order(created_at: :desc)
+      render "lessons/index"
     end
 
     def new
