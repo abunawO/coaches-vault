@@ -23,8 +23,9 @@ export default class extends Controller {
     this.hasRestoredDraft = false
     this.storage = this.resolveDraftStorage()
     this.draftSchemaVersion = this.element.dataset.lessonFormDraftVersion || "1"
-    this.draftKey = this.element.dataset.lessonFormDraftKey || null
+    this.baseDraftKey = this.element.dataset.lessonFormDraftKey || null
     this.draftScope = this.element.dataset.lessonFormDraftScope || null
+    this.draftKey = this.resolveDraftKey()
     this.bulkCoordinator = new LessonMediaBulkCoordinator({
       appendRowForKind: (kind) => this.appendRowForBulk(kind),
       assignFileToRow: (row, kind, file) => this.assignBulkFileToRow(row, kind, file),
@@ -39,6 +40,12 @@ export default class extends Controller {
     this.bindDirtyTracking()
     this.bindSlideSection()
     this.bindDraftRecoveryUi()
+    this.on(this.form, "video-multipart:state-change", (event) => {
+      const state = event?.detail?.state
+      if (state === "complete" || state === "failed" || state === "idle") {
+        this.persistDraftSoon()
+      }
+    })
     this.restoreDraftIfPresent()
     this.on(this.form, "submit", () => this.revokeAllObjectUrls())
     this.on(this.form, "turbo:submit-end", (event) => {
@@ -785,6 +792,29 @@ export default class extends Controller {
     return null
   }
 
+  resolveDraftKey() {
+    if (!this.baseDraftKey) return null
+    if (this.draftScope !== "new") return this.baseDraftKey
+    const tabId = this.ensureDraftTabId()
+    if (!tabId) return this.baseDraftKey
+    return `${this.baseDraftKey}:tab:${tabId}`
+  }
+
+  ensureDraftTabId() {
+    if (!this.storage) return null
+    const key = "lesson-form:draft-tab-id"
+    try {
+      let tabId = this.storage.getItem(key)
+      if (!tabId) {
+        tabId = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`
+        this.storage.setItem(key, tabId)
+      }
+      return tabId
+    } catch (_e) {
+      return null
+    }
+  }
+
   bindDraftRecoveryUi() {
     this.on(this.discardDraftBtn, "click", () => {
       this.clearDraft()
@@ -842,7 +872,6 @@ export default class extends Controller {
         const videoUrl = adapter.videoUrlInput?.value?.trim() || ""
         const signedIdField = row.querySelector("[data-video-signed-id]")
         const signedId = signedIdField?.value || ""
-        const signedIdName = signedIdField?.name || ""
         const statusText = (adapter.statusEl?.textContent || "").toLowerCase()
         const hasSelectedImageFile = (adapter.imageFileInput?.files?.length || 0) > 0
         const hasSelectedVideoFile = (adapter.videoFileInput?.files?.length || 0) > 0
@@ -856,7 +885,6 @@ export default class extends Controller {
           kind,
           videoUrl,
           signedId,
-          signedIdName,
           needsFileReselect
         }
       })
@@ -929,8 +957,9 @@ export default class extends Controller {
       if (!row) return
 
       const adapter = new LessonMediaRowAdapter(row)
-      if (kind === "video" && savedRow?.signedId && savedRow?.signedIdName && adapter.videoFileInput) {
+      if (kind === "video" && savedRow?.signedId && adapter.videoFileInput) {
         const videoInput = adapter.videoFileInput
+        const originalName = videoInput.getAttribute("name") || savedRow?.signedIdName || ""
         let hiddenField = row.querySelector("[data-video-signed-id]")
         if (!hiddenField) {
           hiddenField = document.createElement("input")
@@ -939,12 +968,17 @@ export default class extends Controller {
           videoInput.insertAdjacentElement("afterend", hiddenField)
         }
 
-        hiddenField.name = savedRow.signedIdName
-        hiddenField.value = savedRow.signedId
-        videoInput.dataset.multipartOriginalName = savedRow.signedIdName
-        videoInput.removeAttribute("name")
-        videoInput.disabled = true
-        if (adapter.statusEl) adapter.statusEl.textContent = "Uploaded video restored from draft."
+        if (originalName) {
+          hiddenField.name = originalName
+          hiddenField.value = savedRow.signedId
+          videoInput.dataset.multipartOriginalName = originalName
+          videoInput.removeAttribute("name")
+          videoInput.disabled = true
+          if (adapter.statusEl) {
+            adapter.statusEl.classList.remove("upload-status--warning")
+            adapter.statusEl.textContent = "Uploaded video restored from draft."
+          }
+        }
       }
 
       if (savedRow?.needsFileReselect && kind === "video" && adapter.statusEl) {
@@ -991,9 +1025,10 @@ export default class extends Controller {
   }
 
   clearDraft() {
-    if (!this.storage || !this.draftKey) return
+    if (!this.storage || (!this.draftKey && !this.baseDraftKey)) return
     try {
-      this.storage.removeItem(this.draftKey)
+      if (this.draftKey) this.storage.removeItem(this.draftKey)
+      if (this.baseDraftKey && this.baseDraftKey !== this.draftKey) this.storage.removeItem(this.baseDraftKey)
     } catch (_e) {}
     if (this.draftBanner) this.draftBanner.hidden = true
   }

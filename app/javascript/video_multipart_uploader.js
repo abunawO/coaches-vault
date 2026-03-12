@@ -55,6 +55,19 @@ function setMultipartFooterMessage(formEl, message) {
   statusEl.style.display = message ? "inline" : "none";
 }
 
+function dispatchMultipartState(formEl, state, input = null) {
+  if (!formEl || !state) return;
+  formEl.dispatchEvent(
+    new CustomEvent("video-multipart:state-change", {
+      bubbles: true,
+      detail: {
+        state,
+        inputName: input?.dataset?.multipartOriginalName || input?.name || null
+      }
+    })
+  );
+}
+
 function isDestroyedRowInput(input) {
   if (!input) return false;
   const dom = adapterRegistry.get(input) || new VideoUploadDomAdapter(input);
@@ -133,7 +146,13 @@ async function applyUploader(input) {
       loadUppy,
       chunkSizeBytes: MULTIPART_CHUNK_SIZE_BYTES,
       maxActiveUploads: MAX_ACTIVE_UPLOADS,
-      onStateChange: ({ input: changedInput }) => syncFormSubmitState(changedInput?.closest("form")),
+      onStateChange: ({ input: changedInput, state }) => {
+        const form = changedInput?.closest("form");
+        syncFormSubmitState(form);
+        if (state === "complete" || state === "failed" || state === "idle") {
+          dispatchMultipartState(form, state, changedInput);
+        }
+      },
       onSyncSubmit: (form) => syncFormSubmitState(form)
     });
 
@@ -169,6 +188,7 @@ function clearMultipartBindingForInput(input) {
   dom.preventRawFileSubmit({ clearValue: true });
   trackedInputs.delete(input);
   syncFormSubmitState(form);
+  dispatchMultipartState(form, "idle", input);
 }
 
 export function clearVideoMultipartUploadForRow(rowEl) {
