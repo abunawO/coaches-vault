@@ -18,6 +18,14 @@ export default class extends Controller {
     this.nestedIndex = Number(this.element.dataset.lessonFormNestedIndex || Date.now())
     this.objectUrls = new Map()
     this.bulkRemainingSlots = 0
+    this.draftSaveTimer = null
+    this.isApplyingDraft = false
+    this.hasRestoredDraft = false
+    this.storage = this.resolveDraftStorage()
+    this.draftSchemaVersion = this.element.dataset.lessonFormDraftVersion || "1"
+    this.baseDraftKey = this.element.dataset.lessonFormDraftKey || null
+    this.draftScope = this.element.dataset.lessonFormDraftScope || null
+    this.draftKey = this.resolveDraftKey()
     this.bulkCoordinator = new LessonMediaBulkCoordinator({
       appendRowForKind: (kind) => this.appendRowForBulk(kind),
       assignFileToRow: (row, kind, file) => this.assignBulkFileToRow(row, kind, file),
@@ -31,7 +39,19 @@ export default class extends Controller {
     this.bindVisibilitySection()
     this.bindDirtyTracking()
     this.bindSlideSection()
+    this.bindCoverImagePreview()
+    this.bindDraftRecoveryUi()
+    this.on(this.form, "video-multipart:state-change", (event) => {
+      const state = event?.detail?.state
+      if (state === "complete" || state === "failed" || state === "idle") {
+        this.persistDraftSoon()
+      }
+    })
+    this.restoreDraftIfPresent()
     this.on(this.form, "submit", () => this.revokeAllObjectUrls())
+    this.on(this.form, "turbo:submit-end", (event) => {
+      if (event?.detail?.success) this.clearDraft()
+    })
 
     this.toggleVisibility()
     this.togglePreviewVisibility()
@@ -41,10 +61,12 @@ export default class extends Controller {
     this.updateSlideLimitState()
     this.markDirty()
     this.initMultipart(this.form)
+    this.persistDraftSoon()
   }
 
   disconnect() {
     this.revokeAllObjectUrls()
+    this.revokeCoverPreviewObjectUrl()
     if (this.element?.dataset) {
       delete this.element.dataset.lessonFormInitialized
       this.element.dataset.lessonFormNestedIndex = String(this.nestedIndex || Date.now())
@@ -54,6 +76,10 @@ export default class extends Controller {
     if (this.bulkFeedbackTimer) {
       clearTimeout(this.bulkFeedbackTimer)
       this.bulkFeedbackTimer = null
+    }
+    if (this.draftSaveTimer) {
+      clearTimeout(this.draftSaveTimer)
+      this.draftSaveTimer = null
     }
   }
 
@@ -100,6 +126,14 @@ export default class extends Controller {
     this.draftClose = q("#draft-close")
     this.draftCancel = q("#draft-cancel")
     this.draftAdd = q("#draft-add")
+    this.draftBanner = q("#lesson-draft-banner")
+    this.draftBannerMessage = q("#lesson-draft-message")
+    this.discardDraftBtn = q("#lesson-draft-discard")
+    this.coverImageInput = q("[data-cover-image-input]")
+    this.coverImagePreviewImage = q("[data-cover-image-preview-image]")
+    this.coverImagePreviewFilename = q("[data-cover-image-preview-filename]")
+    this.coverImagePreviewEmpty = q("[data-cover-image-preview-empty]")
+    this.removeCoverImageInput = q("[data-remove-cover-image-input]")
   }
 
   on(element, eventName, handler, options) {
@@ -133,6 +167,79 @@ export default class extends Controller {
     }
     const precision = unitIdx === 0 ? 0 : 1
     return `${size.toFixed(precision)} ${units[unitIdx]}`
+  }
+
+  bindCoverImagePreview() {
+    if (!this.coverImageInput || !this.coverImagePreviewImage) return
+    this.on(this.coverImageInput, "change", () => this.updateCoverImagePreviewFromInput())
+    this.on(this.removeCoverImageInput, "change", () => this.updateCoverImagePreviewForRemoval())
+  }
+
+  updateCoverImagePreviewFromInput() {
+    if (!this.coverImageInput || !this.coverImagePreviewImage) return
+    const file = this.coverImageInput.files?.[0]
+    if (!file) {
+      this.restorePersistedCoverPreview()
+      return
+    }
+
+    this.revokeCoverPreviewObjectUrl()
+    const url = URL.createObjectURL(file)
+    this.coverPreviewObjectUrl = url
+    this.coverImagePreviewImage.src = url
+    this.coverImagePreviewImage.hidden = false
+    if (this.coverImagePreviewFilename) {
+      this.coverImagePreviewFilename.hidden = false
+      this.coverImagePreviewFilename.textContent = `Selected: ${file.name}`
+    }
+    if (this.coverImagePreviewEmpty) this.coverImagePreviewEmpty.hidden = true
+    if (this.removeCoverImageInput) this.removeCoverImageInput.checked = false
+  }
+
+  updateCoverImagePreviewForRemoval() {
+    if (!this.removeCoverImageInput) return
+    if (this.removeCoverImageInput.checked) {
+      if (this.coverImageInput && (this.coverImageInput.files?.length || 0) > 0) return
+      this.revokeCoverPreviewObjectUrl()
+      if (this.coverImagePreviewImage) this.coverImagePreviewImage.hidden = true
+      if (this.coverImagePreviewFilename) this.coverImagePreviewFilename.hidden = true
+      if (this.coverImagePreviewEmpty) {
+        this.coverImagePreviewEmpty.hidden = false
+        this.coverImagePreviewEmpty.textContent = "Cover image will be removed when you save."
+      }
+      return
+    }
+    this.restorePersistedCoverPreview()
+  }
+
+  restorePersistedCoverPreview() {
+    if (!this.coverImagePreviewImage) return
+    this.revokeCoverPreviewObjectUrl()
+    const persisted = this.coverImagePreviewImage.dataset.persisted === "true"
+    if (persisted && this.coverImagePreviewImage.getAttribute("src")) {
+      this.coverImagePreviewImage.hidden = false
+      if (this.coverImagePreviewFilename) {
+        this.coverImagePreviewFilename.hidden = false
+        this.coverImagePreviewFilename.textContent = "Current cover image"
+      }
+      if (this.coverImagePreviewEmpty) this.coverImagePreviewEmpty.hidden = true
+      return
+    }
+
+    this.coverImagePreviewImage.hidden = true
+    if (this.coverImagePreviewFilename) this.coverImagePreviewFilename.hidden = true
+    if (this.coverImagePreviewEmpty) {
+      this.coverImagePreviewEmpty.hidden = false
+      this.coverImagePreviewEmpty.textContent = "No cover image selected yet."
+    }
+  }
+
+  revokeCoverPreviewObjectUrl() {
+    if (!this.coverPreviewObjectUrl) return
+    try {
+      URL.revokeObjectURL(this.coverPreviewObjectUrl)
+    } catch (_e) {}
+    this.coverPreviewObjectUrl = null
   }
 
   setThumbToImage(row, file) {
@@ -238,12 +345,14 @@ export default class extends Controller {
         this.toggleVisibility()
         this.togglePreviewVisibility()
         this.markDirty()
+        this.persistDraftSoon()
       })
     })
 
     this.on(this.previewCheckbox, "change", () => {
       this.togglePreviewText()
       this.markDirty()
+      this.persistDraftSoon()
     })
 
     this.on(this.search, "input", (event) => {
@@ -259,6 +368,7 @@ export default class extends Controller {
       this.on(cb, "change", () => {
         this.updateCount()
         this.markDirty()
+        this.persistDraftSoon()
       })
     })
 
@@ -269,6 +379,7 @@ export default class extends Controller {
       })
       this.updateCount()
       this.markDirty()
+      this.persistDraftSoon()
     })
 
     this.on(this.clearAllBtn, "click", () => {
@@ -278,12 +389,17 @@ export default class extends Controller {
       })
       this.updateCount()
       this.markDirty()
+      this.persistDraftSoon()
     })
   }
 
   bindDirtyTracking() {
     this.initialSnapshot = this.form ? new FormData(this.form) : null
-    this.on(this.form, "change", () => this.markDirty())
+    this.on(this.form, "change", () => {
+      this.markDirty()
+      this.persistDraftSoon()
+    })
+    this.on(this.form, "input", () => this.persistDraftSoon())
   }
 
   bindSlideSection() {
@@ -416,7 +532,7 @@ export default class extends Controller {
 
     if (this.slideLimitMessage) {
       this.slideLimitMessage.textContent = limitReached
-        ? "Slide limit reached (5). Remove a slide to add another."
+        ? "Slide limit reached (10). Remove a slide to add another."
         : "You can add up to 10 slides per lesson."
     }
 
@@ -456,6 +572,7 @@ export default class extends Controller {
         this.mediaList.insertBefore(row, prev)
         this.reindexPositions()
         this.markDirty()
+        this.persistDraftSoon()
       }
     })
 
@@ -465,10 +582,14 @@ export default class extends Controller {
         this.mediaList.insertBefore(next, row)
         this.reindexPositions()
         this.markDirty()
+        this.persistDraftSoon()
       }
     })
 
     this.on(removeBtn, "click", () => {
+      if (window.clearVideoMultipartUploadForRow) {
+        window.clearVideoMultipartUploadForRow(row)
+      }
       this.revokeRowObjectUrls(row)
       if (destroyField) {
         destroyField.checked = true
@@ -482,6 +603,10 @@ export default class extends Controller {
       this.reindexPositions()
       this.updateSlideLimitState()
       this.markDirty()
+      if (window.syncVideoMultipartSubmitState) {
+        window.syncVideoMultipartSubmitState(this.form)
+      }
+      this.persistDraftSoon()
     })
   }
 
@@ -593,6 +718,7 @@ export default class extends Controller {
     this.closeDraft()
     this.updateSlideLimitState()
     this.markDirty()
+    this.persistDraftSoon()
   }
 
   async handleBulkFiles(fileList) {
@@ -602,7 +728,7 @@ export default class extends Controller {
 
     const remaining = Math.max(this.MAX_SLIDES - this.currentSlidesCount(), 0)
     if (remaining === 0) {
-      this.showBulkFeedback("Slide limit reached (5). Remove a slide to add more.")
+      this.showBulkFeedback("Slide limit reached (10). Remove a slide to add more.")
       this.updateSlideLimitState()
       return
     }
@@ -618,11 +744,12 @@ export default class extends Controller {
     this.reindexPositions()
     this.updateSlideLimitState()
     this.markDirty()
+    this.persistDraftSoon()
 
     const overflowCount = Math.max(processResult.supportedCount - remaining, 0)
     const messages = []
     if (processResult.addedCount > 0) messages.push(`Added ${processResult.addedCount} slide${processResult.addedCount === 1 ? "" : "s"}.`)
-    if (overflowCount > 0) messages.push(`Only the first ${remaining} file${remaining === 1 ? "" : "s"} were added (max 5 slides).`)
+    if (overflowCount > 0) messages.push(`Only the first ${remaining} file${remaining === 1 ? "" : "s"} were added (max 10 slides).`)
     if (processResult.unsupportedCount > 0) messages.push(`${processResult.unsupportedCount} unsupported file${processResult.unsupportedCount === 1 ? "" : "s"} skipped.`)
     if (processResult.assignmentFailures > 0) messages.push("Your browser requires adding some files one at a time for uploads.")
     this.showBulkFeedback(messages.join(" "))
@@ -652,10 +779,10 @@ export default class extends Controller {
     return true
   }
 
-  appendRowForKind(kind) {
+  appendRowForKind(kind, initialData = {}) {
     if (!this.mediaList) return null
     const index = this.nextNestedIndex()
-    const row = createLessonMediaRow({ index, kind, initialData: {} })
+    const row = createLessonMediaRow({ index, kind, initialData })
     if (!row) return null
     this.mediaList.appendChild(row)
     return row
@@ -736,5 +863,266 @@ export default class extends Controller {
     } catch (_error) {
       // uploader module handles its own fallback warnings
     }
+  }
+
+  resolveDraftStorage() {
+    try {
+      if (window.sessionStorage) return window.sessionStorage
+    } catch (_e) {}
+    return null
+  }
+
+  resolveDraftKey() {
+    if (!this.baseDraftKey) return null
+    if (this.draftScope !== "new") return this.baseDraftKey
+    const tabId = this.ensureDraftTabId()
+    if (!tabId) return this.baseDraftKey
+    return `${this.baseDraftKey}:tab:${tabId}`
+  }
+
+  ensureDraftTabId() {
+    if (!this.storage) return null
+    const key = "lesson-form:draft-tab-id"
+    try {
+      let tabId = this.storage.getItem(key)
+      if (!tabId) {
+        tabId = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`
+        this.storage.setItem(key, tabId)
+      }
+      return tabId
+    } catch (_e) {
+      return null
+    }
+  }
+
+  bindDraftRecoveryUi() {
+    this.on(this.discardDraftBtn, "click", () => {
+      this.clearDraft()
+      window.location.reload()
+    })
+  }
+
+  persistDraftSoon() {
+    if (!this.storage || !this.draftKey || this.isApplyingDraft) return
+    if (this.draftSaveTimer) clearTimeout(this.draftSaveTimer)
+    this.draftSaveTimer = setTimeout(() => this.persistDraftNow(), 180)
+  }
+
+  persistDraftNow() {
+    if (!this.storage || !this.draftKey || this.isApplyingDraft) return
+    const payload = this.buildDraftPayload()
+    try {
+      this.storage.setItem(this.draftKey, JSON.stringify(payload))
+    } catch (_e) {}
+  }
+
+  buildDraftPayload() {
+    const fieldValue = (name) => this.form?.querySelector(`[name='${name}']`)?.value || ""
+    const checkedValue = (name) => this.form?.querySelector(`[name='${name}']`)?.checked === true
+    const selectedVisibility = this.form?.querySelector("input[name='lesson[visibility]']:checked")?.value || "subscribers"
+    const selectedSubscribers = Array.from(this.form?.querySelectorAll("input[name='lesson[allowed_subscriber_ids][]']:checked") || [])
+      .map((el) => el.value)
+      .filter(Boolean)
+
+    return {
+      schemaVersion: this.draftSchemaVersion,
+      key: this.draftKey,
+      scope: this.draftScope,
+      formAction: this.form?.getAttribute("action") || "",
+      savedAt: new Date().toISOString(),
+      fields: {
+        title: fieldValue("lesson[title]"),
+        description: fieldValue("lesson[description]"),
+        visibility: selectedVisibility,
+        preview: checkedValue("lesson[preview]"),
+        preview_text: fieldValue("lesson[preview_text]"),
+        allowed_subscriber_ids: selectedSubscribers
+      },
+      clientRows: this.serializeClientRows()
+    }
+  }
+
+  serializeClientRows() {
+    const rows = Array.from(this.mediaList?.querySelectorAll("[data-slide-row][data-client-row='true']") || [])
+    return rows
+      .filter((row) => !row.classList.contains("is-destroyed"))
+      .map((row, index) => {
+        const adapter = new LessonMediaRowAdapter(row)
+        const kind = row.querySelector("input[name*='[kind]']")?.value || "image"
+        const videoUrl = adapter.videoUrlInput?.value?.trim() || ""
+        const signedIdField = row.querySelector("[data-video-signed-id]")
+        const signedId = signedIdField?.value || ""
+        const statusText = (adapter.statusEl?.textContent || "").toLowerCase()
+        const hasSelectedImageFile = (adapter.imageFileInput?.files?.length || 0) > 0
+        const hasSelectedVideoFile = (adapter.videoFileInput?.files?.length || 0) > 0
+        const needsFileReselect =
+          kind === "image"
+            ? hasSelectedImageFile
+            : (!signedId && hasSelectedVideoFile) || statusText.includes("failed") || statusText.includes("uploading") || statusText.includes("queued")
+
+        return {
+          index,
+          kind,
+          videoUrl,
+          signedId,
+          needsFileReselect
+        }
+      })
+  }
+
+  restoreDraftIfPresent() {
+    if (!this.storage || !this.draftKey) return
+    let parsed
+    try {
+      parsed = JSON.parse(this.storage.getItem(this.draftKey) || "null")
+    } catch (_e) {
+      return
+    }
+
+    if (!parsed || parsed.schemaVersion !== this.draftSchemaVersion) return
+    if ((parsed.formAction || "") !== (this.form?.getAttribute("action") || "")) return
+
+    const hasData = this.draftHasMeaningfulData(parsed)
+    if (!hasData) return
+
+    this.isApplyingDraft = true
+    try {
+      this.restoreFields(parsed.fields || {})
+      this.restoreClientRows(parsed.clientRows || [])
+      this.hasRestoredDraft = true
+    } finally {
+      this.isApplyingDraft = false
+    }
+
+    if (this.hasRestoredDraft) this.showDraftRestoredNotice(parsed.savedAt)
+  }
+
+  restoreFields(fields) {
+    const setValue = (name, value) => {
+      const el = this.form?.querySelector(`[name='${name}']`)
+      if (el && typeof value === "string") el.value = value
+    }
+
+    setValue("lesson[title]", fields.title || "")
+    setValue("lesson[description]", fields.description || "")
+    setValue("lesson[preview_text]", fields.preview_text || "")
+
+    if (fields.visibility) {
+      const visibilityRadio = this.form?.querySelector(`input[name='lesson[visibility]'][value='${fields.visibility}']`)
+      if (visibilityRadio) visibilityRadio.checked = true
+    }
+
+    const previewCheckbox = this.form?.querySelector("input[name='lesson[preview]']")
+    if (previewCheckbox) previewCheckbox.checked = fields.preview === true
+
+    const selectedSubscribers = new Set(Array.isArray(fields.allowed_subscriber_ids) ? fields.allowed_subscriber_ids.map(String) : [])
+    const subscriberCheckboxes = Array.from(this.form?.querySelectorAll("input[name='lesson[allowed_subscriber_ids][]']") || [])
+    subscriberCheckboxes.forEach((checkbox) => {
+      checkbox.checked = selectedSubscribers.has(String(checkbox.value))
+    })
+
+    this.toggleVisibility()
+    this.togglePreviewVisibility()
+    this.togglePreviewText()
+    this.updateCount()
+  }
+
+  restoreClientRows(clientRows) {
+    if (!this.mediaList || !Array.isArray(clientRows)) return
+    Array.from(this.mediaList.querySelectorAll("[data-slide-row][data-client-row='true']")).forEach((row) => row.remove())
+
+    clientRows.forEach((savedRow) => {
+      const kind = savedRow?.kind === "video" ? "video" : "image"
+      const row = this.appendRowForKind(kind, { videoUrl: savedRow?.videoUrl || "" })
+      if (!row) return
+
+      const adapter = new LessonMediaRowAdapter(row)
+      if (kind === "video" && savedRow?.signedId && adapter.videoFileInput) {
+        const videoInput = adapter.videoFileInput
+        const originalName = videoInput.getAttribute("name") || savedRow?.signedIdName || ""
+        let hiddenField = row.querySelector("[data-video-signed-id]")
+        if (!hiddenField) {
+          hiddenField = document.createElement("input")
+          hiddenField.type = "hidden"
+          hiddenField.dataset.videoSignedId = "true"
+          videoInput.insertAdjacentElement("afterend", hiddenField)
+        }
+
+        if (originalName) {
+          hiddenField.name = originalName
+          hiddenField.value = savedRow.signedId
+          videoInput.dataset.multipartOriginalName = originalName
+          videoInput.removeAttribute("name")
+          videoInput.disabled = true
+          if (adapter.statusEl) {
+            adapter.statusEl.classList.remove("upload-status--warning")
+            adapter.statusEl.textContent = "Uploaded video restored from draft."
+          }
+        }
+      }
+
+      if (savedRow?.needsFileReselect && kind === "video" && adapter.statusEl) {
+        adapter.statusEl.textContent = "File needs to be reselected after refresh."
+        adapter.statusEl.classList.add("upload-status--warning")
+      }
+
+      if (savedRow?.needsFileReselect && kind === "image") {
+        const fieldsEl = adapter.fieldsEl
+        if (fieldsEl) {
+          const warning = document.createElement("div")
+          warning.className = "muted small-text upload-status upload-status--warning"
+          warning.textContent = "File needs to be reselected after refresh."
+          fieldsEl.appendChild(warning)
+        }
+      }
+
+      this.attachRowHandlers(row, true)
+      this.initMultipart(row)
+    })
+
+    this.reindexPositions()
+    this.updateSlideLimitState()
+    if (window.syncVideoMultipartSubmitState) window.syncVideoMultipartSubmitState(this.form)
+  }
+
+  showDraftRestoredNotice(savedAt) {
+    if (!this.draftBanner) return
+    if (this.draftBannerMessage && savedAt) {
+      const time = this.formatSavedAt(savedAt)
+      this.draftBannerMessage.textContent = `Your unsaved lesson changes were restored${time ? ` (${time})` : ""}.`
+    }
+    this.draftBanner.hidden = false
+  }
+
+  formatSavedAt(isoString) {
+    try {
+      const date = new Date(isoString)
+      if (Number.isNaN(date.getTime())) return ""
+      return date.toLocaleString()
+    } catch (_e) {
+      return ""
+    }
+  }
+
+  clearDraft() {
+    if (!this.storage || (!this.draftKey && !this.baseDraftKey)) return
+    try {
+      if (this.draftKey) this.storage.removeItem(this.draftKey)
+      if (this.baseDraftKey && this.baseDraftKey !== this.draftKey) this.storage.removeItem(this.baseDraftKey)
+    } catch (_e) {}
+    if (this.draftBanner) this.draftBanner.hidden = true
+  }
+
+  draftHasMeaningfulData(draft) {
+    const fields = draft?.fields || {}
+    const hasFields =
+      Boolean(fields.title) ||
+      Boolean(fields.description) ||
+      Boolean(fields.preview_text) ||
+      fields.preview === true ||
+      (fields.visibility && fields.visibility !== "subscribers") ||
+      (Array.isArray(fields.allowed_subscriber_ids) && fields.allowed_subscriber_ids.length > 0)
+    const hasRows = Array.isArray(draft?.clientRows) && draft.clientRows.length > 0
+    return hasFields || hasRows
   }
 }

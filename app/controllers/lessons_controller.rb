@@ -6,21 +6,12 @@ class LessonsController < ApplicationController
 
   def index
     if current_user&.coach?
-      @page_title = "My Lessons"
-      if current_user.coach_profile.present?
-        @lessons = current_user.lessons.includes(
-          { cover_image_attachment: :blob },
-          { lesson_media: { image_file_attachment: :blob } }
-        ).order(created_at: :desc)
-      else
-        flash.now[:alert] = "Create your coach profile to add lessons."
-        @lessons = Lesson.none
-      end
-    else
-      @lessons = Lesson.includes(:coach)
-      @lessons = @lessons.where(coach: @coach) if @coach
-      @lessons = @lessons.all
+      redirect_to coach_lessons_path and return
     end
+
+    @lessons = Lesson.includes(:coach)
+    @lessons = @lessons.where(coach: @coach) if @coach
+    @lessons = @lessons.all
   end
 
   def show

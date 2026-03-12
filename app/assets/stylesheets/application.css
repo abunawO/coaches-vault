@@ -147,6 +147,27 @@ a:hover {
   color: #991b1b;
 }
 
+.form-banner--info {
+  border-color: #bfdbfe;
+  background: #eff6ff;
+  color: #1e3a8a;
+}
+
+.form-banner--info .form-banner__hint,
+.form-banner--info .form-banner__text {
+  color: #1e40af;
+}
+
+.form-banner--info .btn-ghost {
+  border-color: #bfdbfe;
+  color: #1e40af;
+}
+
+.upload-status--warning {
+  color: #9a3412;
+  font-weight: 600;
+}
+
 #lesson-media-list {
   scroll-margin-top: 120px;
 }
@@ -3872,6 +3893,26 @@ details[open] .vault-caret {
 .lesson-form-sidebar {
   display: grid;
   gap: 12px;
+}
+
+.cover-image-preview {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.cover-image-preview__image {
+  width: min(320px, 100%);
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.cover-image-preview__meta,
+.cover-image-preview__empty {
+  margin: 0;
 }
 
 .sticky-sidebar {
