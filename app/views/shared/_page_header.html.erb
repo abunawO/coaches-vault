@@ -23,7 +23,9 @@
       </nav>
     <% end %>
 
-    <h1 class="page-header__title"><%= title %></h1>
+    <div class="page-header__title-wrap">
+      <h1 class="page-header__title"><%= title %></h1>
+    </div>
     <% if local_assigns[:subtitle].present? %>
       <p class="page-header__subtitle"><%= subtitle %></p>
     <% end %>
@@ -31,7 +33,10 @@
     <% if local_assigns[:meta].present? %>
       <div class="page-header__meta">
         <% meta.each do |chip| %>
-          <span class="chip chip--neutral"><%= chip[:label] %>: <strong><%= chip[:value] %></strong></span>
+          <span class="chip chip--neutral page-header__meta-chip">
+            <span class="page-header__meta-label"><%= chip[:label] %></span>
+            <strong class="page-header__meta-value"><%= chip[:value] %></strong>
+          </span>
         <% end %>
       </div>
     <% end %>

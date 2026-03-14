@@ -26,9 +26,11 @@
       </div>
     </div>
   <% else %>
-    <%= render "shared/page_header",
-          title: (@coach ? "Lessons by #{@coach_profile.display_name}" : "Lessons"),
-          subtitle: "Browse lessons across coach vaults." %>
+    <div class="lessons-intro">
+      <%= render "shared/page_header",
+            title: (@coach ? "Lessons by #{@coach_profile.display_name}" : "Lessons"),
+            subtitle: "Browse lessons across coach vaults." %>
+    </div>
   <% end %>
 
   <div class="grid lessons-index-grid">
