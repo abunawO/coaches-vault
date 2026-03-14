@@ -5548,6 +5548,10 @@ a {
   border-color: rgba(147, 197, 253, 0.72);
 }
 
+.topnav__student-quick-label--short {
+  display: none;
+}
+
 .topnav__student-quick-badge {
   min-width: 16px;
   height: 16px;
@@ -5771,6 +5775,14 @@ a {
     box-sizing: border-box;
     padding: 4px 16px 8px;
     background: rgba(255, 255, 255, 0.72);
+  }
+
+  .topnav__student-quick-label--full {
+    display: none;
+  }
+
+  .topnav__student-quick-label--short {
+    display: inline;
   }
 
   .topnav__account {
