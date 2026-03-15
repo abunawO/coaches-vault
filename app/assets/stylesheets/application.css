@@ -3493,6 +3493,7 @@ details[open] .vault-caret {
 .mv-inbox__main {
   display: grid;
   gap: 4px;
+  min-width: 0;
 }
 
 .mv-inbox__title {
@@ -3501,6 +3502,7 @@ details[open] .vault-caret {
   gap: 6px;
   font-weight: 700;
   font-size: 0.97rem;
+  min-width: 0;
 }
 
 .mv-inbox__preview {
@@ -3554,6 +3556,7 @@ details[open] .vault-caret {
   justify-content: flex-end;
   white-space: nowrap;
   position: relative;
+  min-width: 0;
 }
 
 /* Coach content filters */
@@ -3653,12 +3656,58 @@ details[open] .vault-caret {
 
 @media (max-width: 768px) {
   .mv-inbox__row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     align-items: flex-start;
   }
+
+  .mv-inbox__main,
+  .mv-inbox__title,
+  .mv-inbox__right,
+  .mv-inbox__time,
+  .notification-confirm {
+    min-width: 0;
+  }
+
+  .mv-inbox__title {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .mv-inbox__title strong,
+  .mv-inbox__title .muted {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .mv-inbox__title .muted {
+    flex-basis: 100%;
+  }
+
+  .mv-inbox__right {
+    display: grid;
+    gap: 8px;
+    justify-items: flex-start;
+    justify-content: stretch;
+    width: 100%;
+    white-space: normal;
+  }
+
   .mv-inbox__actions {
+    width: 100%;
+    flex-wrap: wrap;
     justify-content: flex-start;
     opacity: 1;
+  }
+
+  .notification-confirm {
+    width: 100%;
+    text-align: left;
+  }
+
+  .notification-confirm__actions {
+    flex-wrap: wrap;
+    justify-content: flex-start;
   }
 }
 
