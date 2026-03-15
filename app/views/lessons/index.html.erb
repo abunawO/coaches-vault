@@ -30,6 +30,21 @@
       <%= render "shared/page_header",
             title: (@coach ? "Lessons by #{@coach_profile.display_name}" : "Lessons"),
             subtitle: "Browse lessons across coach vaults." %>
+
+      <% if @coach && @lessons.any? %>
+        <div class="lessons-index-controls lessons-index-controls--student">
+          <div class="lessons-hero__filter lessons-index-toolbar">
+            <label class="sr-only" for="student-lesson-filter">Search this coach's lessons</label>
+            <input id="student-lesson-filter"
+                   class="input"
+                   type="text"
+                   placeholder="Search this coach's lessons…"
+                   autocomplete="off"
+                   data-lessons-index-target="search"
+                   data-action="input->lessons-index#search" />
+          </div>
+        </div>
+      <% end %>
     </div>
   <% end %>
 
@@ -134,10 +149,18 @@
     <% end %>
   </div>
 
-  <% if current_user&.coach? && @lessons.any? %>
+  <% if @lessons.any? %>
     <div class="empty-state empty-state--sm" data-lessons-index-target="empty" hidden>
-      <h3 class="empty-state__title">No lessons match your filters</h3>
-      <p class="empty-state__body">Try another search term or switch visibility filters.</p>
+      <% if current_user&.coach? %>
+        <h3 class="empty-state__title">No lessons match your filters</h3>
+        <p class="empty-state__body">Try another search term or switch visibility filters.</p>
+      <% elsif @coach %>
+        <h3 class="empty-state__title">No matching lessons found</h3>
+        <p class="empty-state__body">Try another search term or switch the access filter.</p>
+      <% else %>
+        <h3 class="empty-state__title">No matching lessons found</h3>
+        <p class="empty-state__body">Try another search term.</p>
+      <% end %>
     </div>
   <% end %>
 

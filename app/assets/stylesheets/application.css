@@ -5860,6 +5860,16 @@ a {
   max-width: 52ch;
 }
 
+.lessons-intro .lessons-index-controls {
+  margin: 0 0 12px;
+}
+
+.lessons-intro .lessons-index-controls--student {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(249, 251, 255, 0.94), rgba(242, 246, 253, 0.9));
+}
+
 @media (max-width: 640px) {
   .lessons-intro {
     max-width: none;
@@ -5878,6 +5888,15 @@ a {
 
   .lessons-intro .page-header__subtitle {
     font-size: 0.92rem;
+  }
+
+  .lessons-intro .lessons-index-controls {
+    margin-bottom: 10px;
+  }
+
+  .lessons-intro .lessons-index-controls--student {
+    padding: 8px;
+    border-radius: 10px;
   }
 }
 
@@ -7269,6 +7288,10 @@ body.auth-page .auth-card {
   border: 1px solid #dbe4f2;
   border-radius: 14px;
   background: linear-gradient(180deg, #f9fbff 0%, #f2f6fd 100%);
+}
+
+.lessons-index-controls--student {
+  max-width: 992px;
 }
 
 .lessons-index-controls .lessons-hero__filter {
