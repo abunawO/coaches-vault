@@ -1,1 +1,6 @@
-<span id="<%= id %>" class="topnav__badge <%= 'is-hidden' unless count.to_i.positive? %>"><%= count %></span>
+<%
+  badge_classes = ["topnav__badge"]
+  badge_classes << local_assigns[:extra_class] if local_assigns[:extra_class].present?
+  badge_classes << "is-hidden" unless count.to_i.positive?
+%>
+<span id="<%= id %>" class="<%= badge_classes.join(' ') %>"><%= count %></span>

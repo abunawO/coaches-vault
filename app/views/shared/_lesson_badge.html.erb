@@ -5,7 +5,7 @@
            when "subscribers" then "Subscribers"
            else visibility.to_s.capitalize
            end %>
-<span class="visibility-pill visibility-pill--<%= visibility %>">
-  <span class="pill-dot"></span>
-  <%= label %>
+<span class="visibility-pill chip-status visibility-pill--<%= visibility %>">
+  <span class="pill-dot visibility-pill__dot" aria-hidden="true"></span>
+  <span class="visibility-pill__label"><%= label %></span>
 </span>

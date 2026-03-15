@@ -38,7 +38,7 @@
       <h3>No vaults found<%= @q.present? ? " for “#{@q}”" : "" %>.</h3>
       <p class="muted">Try a different search to find a subscribed coach vault.</p>
       <div class="card-actions">
-        <%= link_to "Clear search", student_my_vaults_path, class: "btn btn-primary" %>
+        <%= link_to "Clear search", student_my_vaults_path, class: "btn btn-ghost" %>
       </div>
     </div>
   <% else %>

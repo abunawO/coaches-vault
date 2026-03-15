@@ -38,14 +38,14 @@
                         <% else %>
                         <strong>System</strong>
                         <% end %>
-                        <span class="mv-type-chip <%= kind_symbol == :comment ? 'mv-type-chip--comment' : 'mv-type-chip--message' %>"><%= kind_symbol == :comment ? 'Comment' : 'Message' %></span>
+                        <span class="mv-type-chip chip-meta <%= kind_symbol == :comment ? 'mv-type-chip--comment' : 'mv-type-chip--message' %>"><%= kind_symbol == :comment ? 'Comment' : 'Message' %></span>
                         <span class="muted">· <%= notification.message %></span>
                     </div>
                     <div class="mv-inbox__meta muted"></div>
                 </div>
                 <div class="mv-inbox__time muted"><%= time_ago_in_words(notification.created_at) %> ago</div>
                 <div class="mv-inbox__right">
-                    <div class="mv-chip <%= unread ? 'mv-chip--subscribers' : 'mv-chip--free' %>">
+                    <div class="mv-chip chip-status <%= unread ? 'mv-chip--subscribers' : 'mv-chip--free' %>">
                         <span class="mv-chip__dot"></span>
                         <%= unread ? "Unread" : "Read" %>
                     </div>
