@@ -5,31 +5,73 @@
                title: content_tag(:span, "📬", class: "page-title-icon") + " My Subscriptions",
                subtitle: "Manage coaches you follow." %>
 
-    <section class="section">
-      <h2>Active Subscriptions</h2>
+    <section class="section subscriptions-section">
+      <div class="subscriptions-section__header">
+        <h2>Active Subscriptions</h2>
+        <% if @active_subscriptions.any? %>
+          <p class="muted">Your current coach relationships and the fastest path back into each vault.</p>
+        <% end %>
+      </div>
       <% if @active_subscriptions.any? %>
-        <div class="grid">
+        <div class="subscriptions-grid">
           <% @active_subscriptions.each do |sub| %>
             <% coach = sub.coach %>
             <% coach_profile = coach.coach_profile %>
             <% coach_name = coach_profile&.display_name || coach.email %>
-            <div class="card">
-              <div class="card-header">
-                <div>
-                  <strong><%= coach_name %></strong>
-                  <p class="muted">Active since <%= (sub.started_at || sub.created_at).to_date %></p>
+            <% coach_handle = coach_profile&.slug.present? ? "@#{coach_profile.slug}" : coach.email %>
+            <% lesson_count = coach.lessons.count %>
+            <% started_on = (sub.started_at || sub.created_at).to_date %>
+            <article class="mv-card subscription-card subscription-card--active">
+              <div class="subscription-card__identity">
+                <div class="subscription-card__avatar">
+                  <% if coach_profile&.avatar&.attached? %>
+                    <% begin %>
+                      <%= image_tag url_for(coach_profile.avatar.variant(resize_to_fill: [64, 64])), alt: coach_name, class: "subscription-card__avatar-img" %>
+                    <% rescue StandardError %>
+                      <%= image_tag url_for(coach_profile.avatar), alt: coach_name, class: "subscription-card__avatar-img" %>
+                    <% end %>
+                  <% elsif coach_profile&.avatar_url.present? %>
+                    <div class="subscription-card__avatar-img subscription-card__avatar-bg" style="background-image: url('<%= coach_profile.avatar_url %>');"></div>
+                  <% else %>
+                    <span class="subscription-card__avatar-fallback"><%= coach_name.to_s.first.upcase %></span>
+                  <% end %>
+                </div>
+                <div class="subscription-card__identity-copy">
+                  <div class="subscription-card__name-row">
+                    <h3 class="subscription-card__name"><%= coach_name %></h3>
+                    <span class="chip-status subscription-card__status">Active</span>
+                  </div>
+                  <div class="subscription-card__handle muted"><%= coach_handle %></div>
+                  <p class="subscription-card__date muted">Subscribed since <%= started_on %></p>
                 </div>
               </div>
-              <div class="card-actions">
-                <%= link_to "Coach page", coach_profile&.slug ? coach_path(coach_profile.slug) : coaches_path, class: "btn btn-secondary" %>
-                <% if coach_profile&.slug %>
-                  <%= link_to "Lessons", public_coach_lessons_path(coach_profile.slug), class: "btn btn-secondary" %>
-                <% else %>
-                  <%= link_to "Lessons", lessons_path, class: "btn btn-secondary" %>
+
+              <div class="subscription-card__meta">
+                <span class="chip-meta"><%= pluralize(lesson_count, "lesson") %></span>
+                <% if coach_profile&.headline.present? %>
+                  <span class="chip-meta subscription-card__headline-chip"><%= truncate(coach_profile.headline, length: 42) %></span>
                 <% end %>
-                <%= button_to "Cancel", cancel_coach_subscription_path(coach), method: :delete, class: "btn btn-danger" %>
               </div>
-            </div>
+
+              <% if coach_profile&.bio.present? %>
+                <p class="subscription-card__summary muted"><%= truncate(coach_profile.bio, length: 120) %></p>
+              <% end %>
+
+              <div class="subscription-card__actions">
+                <div class="subscription-card__actions-main">
+                  <%= link_to "Open Vault", coach_profile&.slug ? coach_public_vault_path(coach_profile.slug) : coaches_path, class: "btn btn-primary" %>
+                  <%= link_to "Coach page", coach_profile&.slug ? coach_path(coach_profile.slug) : coaches_path, class: "btn btn-secondary" %>
+                  <% if coach_profile&.slug %>
+                    <%= link_to "Lessons", public_coach_lessons_path(coach_profile.slug), class: "btn btn-ghost" %>
+                  <% else %>
+                    <%= link_to "Lessons", lessons_path, class: "btn btn-ghost" %>
+                  <% end %>
+                </div>
+                <div class="subscription-card__actions-danger">
+                  <%= button_to "Cancel", cancel_coach_subscription_path(coach), method: :delete, class: "btn btn-danger btn-sm" %>
+                </div>
+              </div>
+            </article>
           <% end %>
         </div>
       <% else %>
@@ -40,30 +82,65 @@
       <% end %>
     </section>
 
-    <section class="section">
-      <h2>Previously Subscribed Coaches</h2>
+    <section class="section subscriptions-section">
+      <div class="subscriptions-section__header">
+        <h2>Previously Subscribed Coaches</h2>
+        <% if @past_subscriptions.any? %>
+          <p class="muted">Past subscriptions stay accessible as lightweight coach summaries and lesson entry points.</p>
+        <% end %>
+      </div>
       <% if @past_subscriptions.any? %>
-        <div class="grid">
+        <div class="subscriptions-grid subscriptions-grid--past">
           <% @past_subscriptions.each do |sub| %>
             <% coach = sub.coach %>
             <% coach_profile = coach.coach_profile %>
             <% coach_name = coach_profile&.display_name || coach.email %>
-            <div class="card">
-              <div class="card-header">
-                <div>
-                  <strong><%= coach_name %></strong>
-                  <p class="muted">Ended on <%= (sub.ended_at || sub.updated_at).to_date %></p>
+            <% coach_handle = coach_profile&.slug.present? ? "@#{coach_profile.slug}" : coach.email %>
+            <% lesson_count = coach.lessons.count %>
+            <% ended_on = (sub.ended_at || sub.updated_at).to_date %>
+            <article class="mv-card subscription-card subscription-card--past">
+              <div class="subscription-card__identity">
+                <div class="subscription-card__avatar">
+                  <% if coach_profile&.avatar&.attached? %>
+                    <% begin %>
+                      <%= image_tag url_for(coach_profile.avatar.variant(resize_to_fill: [64, 64])), alt: coach_name, class: "subscription-card__avatar-img" %>
+                    <% rescue StandardError %>
+                      <%= image_tag url_for(coach_profile.avatar), alt: coach_name, class: "subscription-card__avatar-img" %>
+                    <% end %>
+                  <% elsif coach_profile&.avatar_url.present? %>
+                    <div class="subscription-card__avatar-img subscription-card__avatar-bg" style="background-image: url('<%= coach_profile.avatar_url %>');"></div>
+                  <% else %>
+                    <span class="subscription-card__avatar-fallback"><%= coach_name.to_s.first.upcase %></span>
+                  <% end %>
+                </div>
+                <div class="subscription-card__identity-copy">
+                  <div class="subscription-card__name-row">
+                    <h3 class="subscription-card__name"><%= coach_name %></h3>
+                    <span class="chip-meta subscription-card__status subscription-card__status--past">Past</span>
+                  </div>
+                  <div class="subscription-card__handle muted"><%= coach_handle %></div>
+                  <p class="subscription-card__date muted">Ended on <%= ended_on %></p>
                 </div>
               </div>
-              <div class="card-actions">
-                <%= link_to "Coach page", coach_profile&.slug ? coach_path(coach_profile.slug) : coaches_path, class: "btn btn-secondary" %>
-                <% if coach_profile&.slug %>
-                  <%= link_to "Lessons", public_coach_lessons_path(coach_profile.slug), class: "btn btn-secondary" %>
-                <% else %>
-                  <%= link_to "Lessons", lessons_path, class: "btn btn-secondary" %>
+
+              <div class="subscription-card__meta">
+                <span class="chip-meta"><%= pluralize(lesson_count, "lesson") %></span>
+                <% if coach_profile&.headline.present? %>
+                  <span class="chip-meta subscription-card__headline-chip"><%= truncate(coach_profile.headline, length: 42) %></span>
                 <% end %>
               </div>
-            </div>
+
+              <div class="subscription-card__actions">
+                <div class="subscription-card__actions-main">
+                  <%= link_to "Coach page", coach_profile&.slug ? coach_path(coach_profile.slug) : coaches_path, class: "btn btn-secondary" %>
+                  <% if coach_profile&.slug %>
+                    <%= link_to "Browse Lessons", public_coach_lessons_path(coach_profile.slug), class: "btn btn-ghost" %>
+                  <% else %>
+                    <%= link_to "Browse Lessons", lessons_path, class: "btn btn-ghost" %>
+                  <% end %>
+                </div>
+              </div>
+            </article>
           <% end %>
         </div>
       <% else %>
@@ -73,5 +150,4 @@
       <% end %>
     </section>
   </div>
-</div>
 </div>

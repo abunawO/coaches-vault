@@ -20,7 +20,7 @@
                   <h1 class="profile-name"><%= @coach_profile.display_name %></h1>
                   <span class="profile-handle">@<%= @coach_profile.slug %></span>
                   <% if @coach_profile.verified? %>
-                  <span class="verified-badge">Verified</span>
+                  <span class="verified-badge chip-status">Verified</span>
                   <% end %>
               </div>
               <% if @coach_profile.headline.present? %>
@@ -58,17 +58,17 @@
               <%= link_to "Explore Lessons", public_coach_lessons_path(@coach_profile.slug), class: "btn btn-primary", aria: { label: "Explore lessons" } %>
               <%= link_to "Log in to subscribe", login_path, class: "btn btn-secondary", aria: { label: "Log in to subscribe" } %>
               <% elsif owning_coach %>
-              <%= link_to "Go to Vault", coach_public_vault_path(@coach_profile.slug), class: "btn btn-secondary", aria: { label: "Go to vault" } %>
+              <%= link_to "Go to Vault", coach_public_vault_path(@coach_profile.slug), class: "btn btn-primary", aria: { label: "Go to vault" } %>
               <%= link_to "Edit profile", edit_my_coach_profile_path, class: "btn btn-secondary", aria: { label: "Edit profile" } %>
               <span class="muted coach-hero__note">You are viewing your profile.</span>
               <% elsif current_user.student? %>
               <% if subscribed_student %>
               <%= button_to "Message", conversations_path(coach_id: @coach.id), method: :post, form_class: "coach-hero__action-form", class: "btn btn-secondary", aria: { label: "Message coach" } %>
-              <%= link_to "Go to Vault", coach_public_vault_path(@coach_profile.slug), class: "btn btn-secondary", aria: { label: "Go to vault" } %>
+              <%= link_to "Go to Vault", coach_public_vault_path(@coach_profile.slug), class: "btn btn-primary", aria: { label: "Go to vault" } %>
               <% else %>
               <%= button_to "Subscribe to unlock all lessons", coach_subscription_path(@coach), method: :post, form_class: "coach-hero__action-form", class: "btn btn-primary", aria: { label: "Subscribe to unlock all lessons" } %>
-              <%= link_to "View free lessons", public_coach_lessons_path(@coach_profile.slug), class: "btn btn-secondary", aria: { label: "View free lessons" } %>
-              <button class="btn btn-secondary" aria-label="Subscribe to message this coach" disabled>🔒 Message (subscribers only)</button>
+              <%= link_to "View free lessons", public_coach_lessons_path(@coach_profile.slug), class: "btn btn-ghost", aria: { label: "View free lessons" } %>
+              <button class="btn btn-ghost" aria-label="Subscribe to message this coach" disabled>🔒 Message (subscribers only)</button>
               <% end %>
           <% else %>
           <%= link_to "Explore Lessons", public_coach_lessons_path(@coach_profile.slug), class: "btn btn-primary", aria: { label: "Explore lessons" } %>
@@ -111,7 +111,7 @@
                         <h3><%= lesson.title %></h3>
                         <p><%= truncate(lesson.description.to_s, length: 80) %></p>
                         <% if locked %>
-                        <span class="badge badge-warning">Subscriber-only</span>
+                        <span class="badge badge-warning chip-status">Subscriber-only</span>
                         <% end %>
                     </div>
                     <% end %>

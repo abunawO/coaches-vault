@@ -4,7 +4,7 @@
       <div>
         <h3 class="vault-name"><%= selected_category.name %></h3>
         <div class="muted">
-          <span class="pill-soft"><%= selected_category.category_type %></span>
+          <span class="pill-soft chip-meta"><%= selected_category.category_type %></span>
           <%= selected_category.description.presence || "No description provided." %>
         </div>
         <% selected_type_value = selected_category.built_in_category_type? ? selected_category.category_type : "__custom__" %>
@@ -52,7 +52,7 @@
         <% end %>
       </div>
       <div class="vault-main__meta">
-        <span class="pill-soft" id="vault_category_count"><%= pluralize(selected_category.lessons.count, "lesson") %></span>
+        <span class="pill-soft chip-meta" id="vault_category_count"><%= pluralize(selected_category.lessons.count, "lesson") %></span>
         <button type="button"
                 class="icon-btn icon-btn--danger"
                 data-action="click->confirm-modal#open"

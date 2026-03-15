@@ -19,7 +19,7 @@
             <% end %>
             <% end %>
         </div>
-        <span class="mv-chip mv-chip--<%= lesson.visibility == 'restricted' ? 'private' : (lesson.visibility == 'subscribers' ? 'subscribers' : 'free') %>">
+        <span class="mv-chip chip-status mv-chip--<%= lesson.visibility == 'restricted' ? 'private' : (lesson.visibility == 'subscribers' ? 'subscribers' : 'free') %>">
             <span class="mv-chip__dot"></span>
             <%= lesson.visibility == "restricted" ? "Private" : lesson.visibility.capitalize %>
         </span>
@@ -31,20 +31,20 @@
         <% end %>
     </div>
     <div class="mv-card__actions">
-        <%= link_to lesson_path(lesson), class: "icon-btn", aria: { label: "View" }, data: { tooltip: "View" } do %>
+        <%= link_to lesson_path(lesson), class: "btn-icon icon-btn", aria: { label: "View" }, data: { tooltip: "View" } do %>
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M1 9s3-6 11-6 11 6 11 6-3 6-11 6S1 9 1 9Z" />
             <circle cx="12" cy="9" r="2.5" />
         </svg>
         <% end %>
-        <%= link_to edit_coach_lesson_path(lesson), class: "icon-btn", aria: { label: "Edit" }, data: { tooltip: "Edit" } do %>
+        <%= link_to edit_coach_lesson_path(lesson), class: "btn-icon icon-btn", aria: { label: "Edit" }, data: { tooltip: "Edit" } do %>
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 20h9" />
             <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4Z" />
         </svg>
         <% end %>
         <% if lesson.restricted? %>
-        <%= link_to access_coach_lesson_path(lesson), class: "icon-btn", aria: { label: "Manage access" }, data: { tooltip: "Manage access" } do %>
+        <%= link_to access_coach_lesson_path(lesson), class: "btn-icon icon-btn", aria: { label: "Manage access" }, data: { tooltip: "Manage access" } do %>
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="4" />
             <path d="M4 21v-2a4 4 0 0 1 4-4h1" />
@@ -57,7 +57,7 @@
     <% if lesson.description.present? %>
     <div class="mv-card__overlay" data-lesson-card-target="overlay">
         <div class="mv-card__overlay-content">
-            <button type="button" class="icon-btn icon-btn--ghost mv-card__overlay-close" aria-label="Close" data-action="lesson-card#collapse">
+            <button type="button" class="btn-icon icon-btn icon-btn--ghost mv-card__overlay-close" aria-label="Close" data-action="lesson-card#collapse">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="m4 4 8 8" />
                     <path d="m12 4-8 8" />
@@ -65,7 +65,7 @@
             </button>
             <h4 class="mv-card__overlay-title"><%= lesson.title %></h4>
             <div class="mv-card__overlay-body"><%= simple_format(lesson.description) %></div>
-            <button type="button" class="btn btn-secondary btn-small" data-action="lesson-card#collapse">
+            <button type="button" class="btn btn-ghost btn-small" data-action="lesson-card#collapse">
                 Show less
             </button>
         </div>

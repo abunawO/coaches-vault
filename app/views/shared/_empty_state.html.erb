@@ -13,13 +13,31 @@
     <% if local_assigns[:primary_action].present? || local_assigns[:secondary_action].present? %>
       <div class="empty-state__actions">
         <% if local_assigns[:primary_action].present? %>
-          <%= link_to primary_action[:label],
-                      primary_action[:url],
-                      method: primary_action[:method] || :get,
-                      class: "btn btn-primary" %>
+          <% primary_class = primary_action[:class].presence || "btn btn-primary" %>
+          <% if primary_action[:method].present? && primary_action[:method].to_s.downcase != "get" %>
+            <%= button_to primary_action[:label],
+                          primary_action[:url],
+                          method: primary_action[:method],
+                          form: { class: "inline-form" },
+                          class: primary_class %>
+          <% else %>
+            <%= link_to primary_action[:label],
+                        primary_action[:url],
+                        method: primary_action[:method] || :get,
+                        class: primary_class %>
+          <% end %>
         <% end %>
         <% if local_assigns[:secondary_action].present? %>
-          <%= link_to secondary_action[:label], secondary_action[:url], class: "btn btn-secondary" %>
+          <% secondary_class = secondary_action[:class].presence || "btn btn-secondary" %>
+          <% if secondary_action[:method].present? && secondary_action[:method].to_s.downcase != "get" %>
+            <%= button_to secondary_action[:label],
+                          secondary_action[:url],
+                          method: secondary_action[:method],
+                          form: { class: "inline-form" },
+                          class: secondary_class %>
+          <% else %>
+            <%= link_to secondary_action[:label], secondary_action[:url], class: secondary_class %>
+          <% end %>
         <% end %>
       </div>
     <% end %>

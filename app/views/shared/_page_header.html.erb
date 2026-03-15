@@ -33,7 +33,7 @@
     <% if local_assigns[:meta].present? %>
       <div class="page-header__meta">
         <% meta.each do |chip| %>
-          <span class="chip chip--neutral page-header__meta-chip">
+          <span class="chip chip-meta chip--neutral page-header__meta-chip">
             <span class="page-header__meta-label"><%= chip[:label] %></span>
             <strong class="page-header__meta-value"><%= chip[:value] %></strong>
           </span>
@@ -45,18 +45,20 @@
   <% if local_assigns[:primary_action].present? || local_assigns[:secondary_actions].present? %>
     <div class="page-header__actions">
       <% Array(local_assigns[:secondary_actions]).each do |action| %>
+        <% action_class = action[:class].presence || "btn btn-ghost" %>
         <% if action[:method].present? && action[:method].to_s.downcase != "get" %>
-          <%= button_to action[:label], action[:url], method: action[:method], form: { class: "inline-form" }, class: "btn btn-ghost" %>
+          <%= button_to action[:label], action[:url], method: action[:method], form: { class: "inline-form" }, class: action_class %>
         <% else %>
-          <%= link_to action[:label], action[:url], method: action[:method], class: "btn btn-ghost" %>
+          <%= link_to action[:label], action[:url], method: action[:method], class: action_class %>
         <% end %>
       <% end %>
 
       <% if local_assigns[:primary_action].present? %>
+        <% primary_class = primary_action[:class].presence || "btn btn-primary" %>
         <% if primary_action[:method].present? && primary_action[:method].to_s.downcase != "get" %>
-          <%= button_to primary_action[:label], primary_action[:url], method: primary_action[:method], form: { class: "inline-form" }, class: "btn btn-primary" %>
+          <%= button_to primary_action[:label], primary_action[:url], method: primary_action[:method], form: { class: "inline-form" }, class: primary_class %>
         <% else %>
-          <%= link_to primary_action[:label], primary_action[:url], method: primary_action[:method], class: "btn btn-primary" %>
+          <%= link_to primary_action[:label], primary_action[:url], method: primary_action[:method], class: primary_class %>
         <% end %>
       <% end %>
     </div>

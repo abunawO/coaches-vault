@@ -47,7 +47,7 @@
                     <% value = type == "Custom" ? "__custom__" : type %>
                     <button
                       type="button"
-                      class="vault-type-picker__option <%= "is-active" if value == Category::CATEGORY_TYPES.first %>"
+                      class="vault-type-picker__option chip-filter <%= "is-active" if value == Category::CATEGORY_TYPES.first %>"
                       data-category-type-field-target="option"
                       data-value="<%= value %>"
                       data-action="category-type-field#select"
@@ -99,7 +99,7 @@
                           aria: { current: selected ? "true" : "false" } do %>
                 <div class="vault-list__title-row">
                   <span class="vault-name"><%= category.name %></span>
-                  <span class="pill-soft" id="category_<%= category.id %>_count"><%= pluralize(category.lessons.count, "lesson") %></span>
+                  <span class="pill-soft chip-meta" id="category_<%= category.id %>_count"><%= pluralize(category.lessons.count, "lesson") %></span>
                 </div>
                 <% if category.description.present? %>
                   <div class="muted vault-desc-preview"><%= truncate(category.description, length: 80) %></div>

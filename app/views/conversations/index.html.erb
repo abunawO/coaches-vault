@@ -46,7 +46,7 @@
               </div>
               <div class="mv-inbox__time muted"><%= last_message ? time_ago_in_words(last_message.created_at) : "" %><%= last_message ? " ago" : "" %></div>
               <div class="mv-inbox__right">
-                <div class="mv-chip <%= unread ? 'mv-chip--subscribers' : 'mv-chip--free' %>">
+                <div class="mv-chip chip-status <%= unread ? 'mv-chip--subscribers' : 'mv-chip--free' %>">
                   <span class="mv-chip__dot"></span>
                   <%= unread ? "Unread" : "Read" %>
                 </div>

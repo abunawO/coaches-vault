@@ -36,7 +36,7 @@
 
   <div class="vault-header__status">
     <% if subscribed || owning_coach %>
-      <span class="pill-soft pill-success">Unlocked</span>
+      <span class="pill-soft pill-success chip-status">Unlocked</span>
     <% else %>
       <%= button_to "Subscribe to unlock", coach_subscription_path(coach), method: :post, class: "btn btn-primary btn-small" %>
     <% end %>

@@ -10,9 +10,9 @@
     <div class="vault-section__title-wrap">
       <div class="vault-section__labels">
         <% if section[:category_type].present? %>
-          <span class="pill-soft vault-section__type"><%= section[:category_type] %></span>
+          <span class="pill-soft chip-meta vault-section__type"><%= section[:category_type] %></span>
         <% end %>
-        <span class="pill-soft"><%= pluralize(section[:total_lessons], "lesson") %></span>
+        <span class="pill-soft chip-meta"><%= pluralize(section[:total_lessons], "lesson") %></span>
       </div>
       <h2 class="vault-section__title"><%= section[:category].name %></h2>
       <% if section[:category].description.present? %>
