@@ -44,6 +44,9 @@ class SubscriptionsController < ApplicationController
     canceled = Subscription.canceled.where(student_id: current_user.id).includes(coach: :coach_profile).order(ended_at: :desc, updated_at: :desc)
     grouped = canceled.group_by(&:coach_id)
     @past_subscriptions = grouped.values.map(&:first)
+
+    coach_ids = (@active_subscriptions.map(&:coach_id) + @past_subscriptions.map(&:coach_id)).uniq
+    @lesson_counts_by_coach_id = Lesson.where(user_id: coach_ids).group(:user_id).count
   end
 
   private

@@ -19,7 +19,7 @@
             <% coach_profile = coach.coach_profile %>
             <% coach_name = coach_profile&.display_name || coach.email %>
             <% coach_handle = coach_profile&.slug.present? ? "@#{coach_profile.slug}" : coach.email %>
-            <% lesson_count = coach.lessons.count %>
+            <% lesson_count = @lesson_counts_by_coach_id[coach.id].to_i %>
             <% started_on = (sub.started_at || sub.created_at).to_date %>
             <article class="mv-card subscription-card subscription-card--active">
               <div class="subscription-card__identity">
@@ -96,7 +96,7 @@
             <% coach_profile = coach.coach_profile %>
             <% coach_name = coach_profile&.display_name || coach.email %>
             <% coach_handle = coach_profile&.slug.present? ? "@#{coach_profile.slug}" : coach.email %>
-            <% lesson_count = coach.lessons.count %>
+            <% lesson_count = @lesson_counts_by_coach_id[coach.id].to_i %>
             <% ended_on = (sub.ended_at || sub.updated_at).to_date %>
             <article class="mv-card subscription-card subscription-card--past">
               <div class="subscription-card__identity">
