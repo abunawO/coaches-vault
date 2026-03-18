@@ -68,6 +68,111 @@
                         <%= form.label :description %>
                         <%= form.text_area :description, rows: 4, class: "textarea", placeholder: "What students will learn in this lesson..." %>
                     </div>
+                    <div class="form-row lesson-category-row">
+                        <div class="lesson-category-field category-picker" data-controller="category-picker">
+                            <div class="lesson-category-field__header">
+                                <%= form.label :category_id, "Add to category", class: "lesson-category-field__label" %>
+                                <span class="pill-soft lesson-category-field__badge">Vault</span>
+                            </div>
+                            <div class="lesson-category-field__control">
+                                <span class="lesson-category-field__icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" focusable="false">
+                                        <path d="M3 7.75A2.75 2.75 0 0 1 5.75 5h4.14c.72 0 1.4.28 1.9.79l1.17 1.17c.22.22.53.34.84.34h4.45A2.75 2.75 0 0 1 21 10.05v6.2A2.75 2.75 0 0 1 18.25 19H5.75A2.75 2.75 0 0 1 3 16.25v-8.5Z"/>
+                                    </svg>
+                                </span>
+                                <%= form.select :category_id,
+                                    options_from_collection_for_select(@categories, :id, :name, @selected_category_id),
+                                    { include_blank: "No category" },
+                                    { class: "lesson-category-field__select category-picker__native-select", data: { category_picker_target: "nativeSelect", action: "change->category-picker#syncFromSelect" } } %>
+                                <button type="button"
+                                    class="lesson-category-field__trigger category-picker__trigger"
+                                    data-action="category-picker#open"
+                                    data-category-picker-target="trigger"
+                                    aria-haspopup="dialog"
+                                    aria-expanded="false">
+                                    <span class="lesson-category-field__trigger-copy">
+                                        <span class="lesson-category-field__trigger-label" data-category-picker-target="selectedLabel">No category</span>
+                                        <span class="lesson-category-field__trigger-meta muted small-text" data-category-picker-target="selectedMeta">Leave this lesson uncategorized for now.</span>
+                                    </span>
+                                    <span class="lesson-category-field__trigger-chevron" aria-hidden="true">
+                                        <svg viewBox="0 0 20 20" focusable="false">
+                                            <path d="M5 7.5L10 12.5L15 7.5" />
+                                        </svg>
+                                    </span>
+                                </button>
+                            </div>
+                            <p class="lesson-category-field__hint muted small-text">Optional. Place this lesson into one of your existing vault categories now, or organize it later from the Vault page.</p>
+                            <div class="category-picker__overlay" data-category-picker-target="overlay" data-action="click->category-picker#close" aria-hidden="true"></div>
+                            <section class="category-picker__sheet" data-category-picker-target="sheet" role="dialog" aria-modal="true" aria-labelledby="category-picker-title" aria-hidden="true">
+                                <div class="category-picker__sheet-header category-picker__header">
+                                    <div>
+                                        <h3 id="category-picker-title" class="category-picker__title">Select Category</h3>
+                                        <p class="category-picker__subtitle muted small-text">Choose where this lesson should appear in your vault.</p>
+                                    </div>
+                                    <button type="button" class="icon-btn icon-btn--ghost" data-action="category-picker#close" aria-label="Close category picker">×</button>
+                                </div>
+                                <div class="category-picker__search">
+                                    <label class="sr-only" for="lesson-category-mobile-search">Search categories</label>
+                                    <div class="category-picker__search-field">
+                                        <span class="category-picker__search-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 20 20" focusable="false">
+                                                <path d="M8.5 3.5a5 5 0 1 0 0 10a5 5 0 0 0 0-10Zm0 0l6.5 6.5" />
+                                            </svg>
+                                        </span>
+                                        <input type="search"
+                                            id="lesson-category-mobile-search"
+                                            class="category-picker__search-input"
+                                            placeholder="Search categories..."
+                                            autocomplete="off"
+                                            spellcheck="false"
+                                            data-category-picker-target="searchInput"
+                                            data-action="input->category-picker#filter" />
+                                    </div>
+                                </div>
+                                <div class="category-picker__pinned">
+                                    <button type="button"
+                                        class="category-picker__row category-picker__row--empty"
+                                        data-action="category-picker#select"
+                                        data-category-picker-target="row"
+                                        data-value=""
+                                        data-label="No category"
+                                        data-meta="Leave this lesson uncategorized for now."
+                                        data-search-text="no category uncategorized"
+                                        role="option"
+                                        aria-selected="false">
+                                        <span class="category-picker__row-copy">
+                                            <span class="category-picker__row-title">No category</span>
+                                            <span class="category-picker__row-meta muted small-text">Leave this lesson uncategorized for now.</span>
+                                        </span>
+                                        <span class="category-picker__row-check" aria-hidden="true">✓</span>
+                                    </button>
+                                </div>
+                                <div class="category-picker__sheet-list category-picker__list" data-category-picker-target="list" role="listbox" aria-label="Lesson categories">
+                                    <% @categories.each do |category| %>
+                                    <button type="button"
+                                        class="category-picker__row"
+                                        data-action="category-picker#select"
+                                        data-category-picker-target="row"
+                                        data-value="<%= category.id %>"
+                                        data-label="<%= category.name %>"
+                                        data-meta="<%= category.category_type.presence || "Category" %>"
+                                        data-search-text="<%= [category.name, category.category_type.presence].compact.join(" ") %>"
+                                        role="option"
+                                        aria-selected="false">
+                                        <span class="category-picker__row-copy">
+                                            <span class="category-picker__row-title"><%= category.name %></span>
+                                            <% if category.category_type.present? %>
+                                            <span class="category-picker__row-meta muted small-text"><%= category.category_type %></span>
+                                            <% end %>
+                                        </span>
+                                        <span class="category-picker__row-check" aria-hidden="true">✓</span>
+                                    </button>
+                                    <% end %>
+                                    <p class="category-picker__empty-state muted small-text" data-category-picker-target="emptyState" hidden>No matching categories found.</p>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
                     <div class="form-row">
                         <%= form.label :cover_image, "Cover image (optional)" %>
                         <p class="muted small-text" style="margin:0 0 8px 0;">Shown in dashboard and feed cards.</p>
