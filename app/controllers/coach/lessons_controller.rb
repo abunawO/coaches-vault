@@ -3,6 +3,7 @@ module Coach
     before_action :require_coach
     before_action :set_lesson, only: %i[edit update destroy]
     before_action :load_active_subscribers, only: %i[new create edit update]
+    before_action :load_categories, only: %i[new create edit update]
 
     def index
       @lessons = current_user.lessons
@@ -16,12 +17,15 @@ module Coach
 
     def new
       @lesson = current_user.lessons.build
+      @selected_category_id = resolved_selected_category_id
     end
 
     def create
-      @lesson = current_user.lessons.build(lesson_params.except(:allowed_subscriber_ids, :remove_cover_image))
+      @lesson = current_user.lessons.build(lesson_params.except(:allowed_subscriber_ids, :remove_cover_image, :category_id))
+      @selected_category_id = resolved_selected_category_id
       ActiveRecord::Base.transaction do
         if @lesson.save
+          reconcile_category_assignment!(@lesson, lesson_params[:category_id])
           purge_cover_image_if_requested!(@lesson, lesson_params)
           log_video_upload_expectations(@lesson)
           reconcile_shares!(@lesson, lesson_params[:allowed_subscriber_ids])
@@ -31,16 +35,20 @@ module Coach
         end
       end
       rebuild_lesson_media_from_params(@lesson, lesson_params)
+      @selected_category_id = resolved_selected_category_id
       render :new, status: :unprocessable_entity
     rescue Aws::S3::MultipartUploadError, Seahorse::Client::NetworkingError => e
       handle_upload_error(e, :new)
     end
 
-    def edit; end
+    def edit
+      @selected_category_id = resolved_selected_category_id
+    end
 
     def update
       ActiveRecord::Base.transaction do
-        if @lesson.update(lesson_params.except(:allowed_subscriber_ids, :remove_cover_image))
+        if @lesson.update(lesson_params.except(:allowed_subscriber_ids, :remove_cover_image, :category_id))
+          reconcile_category_assignment!(@lesson, lesson_params[:category_id])
           purge_cover_image_if_requested!(@lesson, lesson_params)
           log_video_upload_expectations(@lesson)
           reconcile_shares!(@lesson, lesson_params[:allowed_subscriber_ids])
@@ -49,7 +57,10 @@ module Coach
           raise ActiveRecord::Rollback
         end
       end
-      render(:edit, status: :unprocessable_entity) if performed? == false && @lesson.errors.any?
+      if performed? == false && @lesson.errors.any?
+        @selected_category_id = resolved_selected_category_id
+        render :edit, status: :unprocessable_entity
+      end
     rescue Aws::S3::MultipartUploadError, Seahorse::Client::NetworkingError => e
       handle_upload_error(e, :edit)
     end
@@ -75,9 +86,14 @@ module Coach
         :visibility,
         :preview,
         :preview_text,
+        :category_id,
         allowed_subscriber_ids: [],
         lesson_media_attributes: %i[id kind video_url position _destroy image_file video_file]
       )
+    end
+
+    def load_categories
+      @categories = current_user.categories.ordered
     end
 
     def purge_cover_image_if_requested!(lesson, permitted_params)
@@ -157,14 +173,42 @@ module Coach
       raise ActiveRecord::Rollback
     end
 
+    def reconcile_category_assignment!(lesson, selected_category_id)
+      selected_id = selected_category_id.to_s.strip
+      previous_selected_id = persisted_selected_category_id_for(lesson).to_s
+
+      if selected_id.blank?
+        if previous_selected_id.present?
+          lesson.category_lessons.where(category_id: previous_selected_id).delete_all
+        end
+        return
+      end
+
+      category = current_user.categories.find_by(id: selected_id)
+      unless category
+        lesson.errors.add(:category_id, "is invalid")
+        raise ActiveRecord::Rollback
+      end
+
+      if previous_selected_id.present? && previous_selected_id != category.id.to_s
+        lesson.category_lessons.where(category_id: previous_selected_id).delete_all
+      end
+
+      lesson.category_lessons.find_or_create_by!(category: category)
+    rescue ActiveRecord::RecordInvalid => e
+      lesson.errors.add(:base, e.record.errors.full_messages.to_sentence)
+      raise ActiveRecord::Rollback
+    end
+
     def handle_upload_error(error, template)
       return if performed?
 
       Rails.logger.error("[lesson upload] multipart failure lesson_id=#{@lesson&.id} error=#{error.class} message=#{error.message}")
       @lesson ||= current_user.lessons.build
       begin
-        @lesson.assign_attributes(lesson_params)
+        @lesson.assign_attributes(lesson_params.except(:allowed_subscriber_ids, :remove_cover_image, :category_id))
         @preselected_allowed_ids = Array(lesson_params[:allowed_subscriber_ids]).reject(&:blank?).map(&:to_i)
+        @selected_category_id = resolved_selected_category_id
       rescue ActionController::ParameterMissing
         # no params present
       end
@@ -199,6 +243,25 @@ module Coach
 
         media.assign_attributes(cleaned_attrs)
       end
+    end
+
+    def resolved_selected_category_id
+      return params[:lesson][:category_id].to_s if submitted_category_id_provided?
+
+      persisted_selected_category_id_for(@lesson).to_s
+    end
+
+    def persisted_selected_category_id_for(lesson)
+      lesson
+        &.category_lessons
+        &.joins(:category)
+        &.where(categories: { coach_id: current_user.id })
+        &.order(Arel.sql("COALESCE(category_lessons.position, 2147483647) ASC"), "categories.position ASC", "categories.created_at ASC")
+        &.pick(:category_id)
+    end
+
+    def submitted_category_id_provided?
+      params[:lesson].is_a?(ActionController::Parameters) && params[:lesson].key?(:category_id)
     end
   end
 end

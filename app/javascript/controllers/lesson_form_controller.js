@@ -933,6 +933,7 @@ export default class extends Controller {
       fields: {
         title: fieldValue("lesson[title]"),
         description: fieldValue("lesson[description]"),
+        category_id: fieldValue("lesson[category_id]"),
         visibility: selectedVisibility,
         preview: checkedValue("lesson[preview]"),
         preview_text: fieldValue("lesson[preview_text]"),
@@ -998,13 +999,17 @@ export default class extends Controller {
   }
 
   restoreFields(fields) {
-    const setValue = (name, value) => {
+    const setValue = (name, value, dispatchChange = false) => {
       const el = this.form?.querySelector(`[name='${name}']`)
-      if (el && typeof value === "string") el.value = value
+      if (el && typeof value === "string") {
+        el.value = value
+        if (dispatchChange) el.dispatchEvent(new Event("change", { bubbles: true }))
+      }
     }
 
     setValue("lesson[title]", fields.title || "")
     setValue("lesson[description]", fields.description || "")
+    setValue("lesson[category_id]", fields.category_id || "", true)
     setValue("lesson[preview_text]", fields.preview_text || "")
 
     if (fields.visibility) {
@@ -1115,14 +1120,24 @@ export default class extends Controller {
 
   draftHasMeaningfulData(draft) {
     const fields = draft?.fields || {}
+    const categoryChangedFromInitial =
+      typeof fields.category_id === "string" &&
+      fields.category_id !== this.initialFieldValue("lesson[category_id]")
     const hasFields =
       Boolean(fields.title) ||
       Boolean(fields.description) ||
+      categoryChangedFromInitial ||
       Boolean(fields.preview_text) ||
       fields.preview === true ||
       (fields.visibility && fields.visibility !== "subscribers") ||
       (Array.isArray(fields.allowed_subscriber_ids) && fields.allowed_subscriber_ids.length > 0)
     const hasRows = Array.isArray(draft?.clientRows) && draft.clientRows.length > 0
     return hasFields || hasRows
+  }
+
+  initialFieldValue(name) {
+    if (!this.initialSnapshot || !name) return ""
+    const value = this.initialSnapshot.get(name)
+    return typeof value === "string" ? value : ""
   }
 }
