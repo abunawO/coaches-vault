@@ -1120,15 +1120,24 @@ export default class extends Controller {
 
   draftHasMeaningfulData(draft) {
     const fields = draft?.fields || {}
+    const categoryChangedFromInitial =
+      typeof fields.category_id === "string" &&
+      fields.category_id !== this.initialFieldValue("lesson[category_id]")
     const hasFields =
       Boolean(fields.title) ||
       Boolean(fields.description) ||
-      Boolean(fields.category_id) ||
+      categoryChangedFromInitial ||
       Boolean(fields.preview_text) ||
       fields.preview === true ||
       (fields.visibility && fields.visibility !== "subscribers") ||
       (Array.isArray(fields.allowed_subscriber_ids) && fields.allowed_subscriber_ids.length > 0)
     const hasRows = Array.isArray(draft?.clientRows) && draft.clientRows.length > 0
     return hasFields || hasRows
+  }
+
+  initialFieldValue(name) {
+    if (!this.initialSnapshot || !name) return ""
+    const value = this.initialSnapshot.get(name)
+    return typeof value === "string" ? value : ""
   }
 }

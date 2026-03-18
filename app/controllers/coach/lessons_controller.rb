@@ -174,11 +174,13 @@ module Coach
     end
 
     def reconcile_category_assignment!(lesson, selected_category_id)
-      coach_category_joins = lesson.category_lessons.joins(:category).where(categories: { coach_id: current_user.id })
       selected_id = selected_category_id.to_s.strip
+      previous_selected_id = persisted_selected_category_id_for(lesson).to_s
 
       if selected_id.blank?
-        coach_category_joins.delete_all
+        if previous_selected_id.present?
+          lesson.category_lessons.where(category_id: previous_selected_id).delete_all
+        end
         return
       end
 
@@ -188,7 +190,10 @@ module Coach
         raise ActiveRecord::Rollback
       end
 
-      coach_category_joins.where.not(category_id: category.id).delete_all
+      if previous_selected_id.present? && previous_selected_id != category.id.to_s
+        lesson.category_lessons.where(category_id: previous_selected_id).delete_all
+      end
+
       lesson.category_lessons.find_or_create_by!(category: category)
     rescue ActiveRecord::RecordInvalid => e
       lesson.errors.add(:base, e.record.errors.full_messages.to_sentence)
@@ -241,16 +246,22 @@ module Coach
     end
 
     def resolved_selected_category_id
-      submitted_id = params.dig(:lesson, :category_id).presence
-      return submitted_id if submitted_id.present?
+      return params[:lesson][:category_id].to_s if submitted_category_id_provided?
 
-      @lesson
+      persisted_selected_category_id_for(@lesson).to_s
+    end
+
+    def persisted_selected_category_id_for(lesson)
+      lesson
         &.category_lessons
         &.joins(:category)
         &.where(categories: { coach_id: current_user.id })
         &.order(Arel.sql("COALESCE(category_lessons.position, 2147483647) ASC"), "categories.position ASC", "categories.created_at ASC")
         &.pick(:category_id)
-        &.to_s
+    end
+
+    def submitted_category_id_provided?
+      params[:lesson].is_a?(ActionController::Parameters) && params[:lesson].key?(:category_id)
     end
   end
 end
