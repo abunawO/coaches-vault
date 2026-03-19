@@ -1,35 +1,72 @@
-<div class="container">
-  <div class="mx-auto max-w-4xl px-4">
-    <%= render "shared/page_header",
-               breadcrumbs: [["Dashboard", root_path], ["Favorites", favorites_path]],
-               title: content_tag(:span, "⭐️", class: "page-title-icon") + " Your Favorites",
-               subtitle: "Save lessons for quick access." %>
-
-  <% if @favorites.any? %>
-    <div class="grid">
-      <% @favorites.each do |favorite| %>
-        <% lesson = favorite.lesson %>
-        <div class="card">
-          <div class="card-header">
-            <strong><%= link_to lesson.title, lesson_path(lesson) %></strong>
-            <% if lesson.coach&.coach_profile %>
-              <span class="muted">by <%= lesson.coach.coach_profile.display_name %></span>
-            <% end %>
-          </div>
-          <% if lesson.description.present? %>
-            <p class="muted"><%= truncate(lesson.description, length: 120) %></p>
-          <% end %>
-          <div class="card-actions">
-            <%= button_to "Unfavorite", unfavorite_lesson_path(lesson), method: :delete, class: "btn btn-secondary" %>
-          </div>
-        </div>
-      <% end %>
+<div class="container favorites-library">
+  <div class="favorites-library__inner">
+    <div class="favorites-library__intro">
+      <%= render "shared/page_header",
+                 breadcrumbs: [["Dashboard", root_path], ["Favorites", favorites_path]],
+                 title: content_tag(:span, "⭐️", class: "page-title-icon") + " Your Favorites",
+                 subtitle: "Jump back into saved lessons through a more visual study library." %>
     </div>
-  <% else %>
-      <div class="card empty-state">
-        <p>No favorites yet.</p>
-        <p><%= link_to "Browse coaches", coaches_path, class: "btn btn-primary" %></p>
-      </div>
+
+    <% if @favorites.any? %>
+      <section class="favorites-library__grid" aria-label="Favorite lessons">
+        <% @favorites.each do |favorite| %>
+          <% lesson = favorite.lesson %>
+          <% thumbnail = lesson_thumbnail_url(lesson) %>
+          <% coach_name = lesson.coach&.coach_profile&.display_name.presence || lesson.coach&.email || "Coach" %>
+          <% step_count = lesson.lesson_media.size %>
+
+          <article class="favorite-lesson-card">
+            <%= link_to lesson_path(lesson),
+                        class: "favorite-lesson-card__media-link",
+                        aria: { label: "Open lesson #{lesson.title}" } do %>
+              <div class="favorite-lesson-card__media">
+                <% if thumbnail.present? %>
+                  <%= image_tag thumbnail,
+                                alt: "#{lesson.title} thumbnail",
+                                class: "favorite-lesson-card__image",
+                                loading: "lazy",
+                                decoding: "async" %>
+                <% else %>
+                  <div class="favorite-lesson-card__placeholder" aria-hidden="true">
+                    <span class="favorite-lesson-card__placeholder-mark">MCV</span>
+                    <span class="favorite-lesson-card__placeholder-label">Lesson Library</span>
+                  </div>
+                <% end %>
+
+                <% if step_count.positive? %>
+                  <div class="favorite-lesson-card__badge">
+                    <span class="chip-status badge"><%= pluralize(step_count, "step") %></span>
+                  </div>
+                <% end %>
+              </div>
+            <% end %>
+
+            <div class="favorite-lesson-card__body">
+              <p class="favorite-lesson-card__coach muted">by <%= coach_name %></p>
+              <h2 class="favorite-lesson-card__title">
+                <%= link_to lesson.title, lesson_path(lesson), class: "favorite-lesson-card__title-link" %>
+              </h2>
+            </div>
+
+            <div class="favorite-lesson-card__footer">
+              <%= link_to "Open lesson",
+                          lesson_path(lesson),
+                          class: "btn btn-primary btn-small favorite-lesson-card__primary-action" %>
+              <%= button_to "Unfavorite",
+                            unfavorite_lesson_path(lesson),
+                            method: :delete,
+                            class: "btn btn-ghost btn-small favorite-lesson-card__secondary-action",
+                            form: { class: "favorite-lesson-card__unfavorite-form" } %>
+            </div>
+          </article>
+        <% end %>
+      </section>
+    <% else %>
+      <%= render "shared/empty_state",
+                 icon: "☆",
+                 title: "No favorites yet",
+                 body: "Save lessons to build a quick-return study library.",
+                 primary_action: { label: "Browse coaches", url: coaches_path } %>
     <% end %>
   </div>
 </div>

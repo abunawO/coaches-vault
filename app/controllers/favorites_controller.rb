@@ -3,7 +3,16 @@ class FavoritesController < ApplicationController
   before_action :set_lesson, only: %i[create destroy]
 
   def index
-    @favorites = current_user.favorites.includes(lesson: :coach)
+    @favorites = current_user
+      .favorites
+      .includes(
+        lesson: [
+          { coach: :coach_profile },
+          { cover_image_attachment: :blob },
+          { lesson_media: { image_file_attachment: :blob } }
+        ]
+      )
+      .order(created_at: :desc)
   end
 
   def create
