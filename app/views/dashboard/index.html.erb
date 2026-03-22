@@ -106,7 +106,7 @@
   <% else %>
     <section class="card dashboard-hero">
       <% student_profile = current_user.student_profile %>
-      <% initials = current_user.email.to_s.first(2).upcase %>
+      <% initials = current_user.display_name.to_s.first(2).upcase %>
       <div class="dashboard-hero__top">
         <div class="dashboard-hero__identity">
           <div class="hero__avatar">
@@ -122,8 +122,8 @@
           </div>
           <div class="dashboard-hero__text">
             <div class="hero__kicker muted">Dashboard</div>
-            <div class="hero__name">Welcome back, <%= student_profile&.display_name.presence || current_user.email %></div>
-            <div class="hero__meta"><%= student_profile&.location.presence || current_user.email %></div>
+            <div class="hero__name">Welcome back, <%= current_user.display_name %></div>
+            <div class="hero__meta"><%= student_profile&.location.presence || current_user.display_name %></div>
             <div class="dashboard-hero__chips">
               <span class="pill chip-status dashboard-hero__chip"><%= current_user.role.capitalize %></span>
               <% if current_user.student? %>

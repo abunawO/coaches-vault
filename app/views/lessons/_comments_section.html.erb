@@ -24,9 +24,9 @@
       <% root_comments.each do |comment| %>
         <div class="comment-card" id="comment-<%= comment.id %>">
           <div class="comment-header">
-            <div class="avatar"><%= comment.user.email.first.upcase %></div>
+            <div class="avatar"><%= comment.user.display_name.first.upcase %></div>
             <div>
-              <p class="comment-author"><%= comment.user.email %></p>
+              <p class="comment-author"><%= comment.user.display_name %></p>
               <p class="muted">Student comment</p>
             </div>
           </div>
@@ -75,9 +75,9 @@
               <% comment.replies.each do |reply| %>
                 <div class="comment-card reply-card">
                   <div class="comment-header">
-                    <div class="avatar coach-avatar"><%= reply.user.email.first.upcase %></div>
+                    <div class="avatar coach-avatar"><%= reply.user.display_name.first.upcase %></div>
                     <div>
-                      <p class="comment-author"><%= reply.user.email %></p>
+                      <p class="comment-author"><%= reply.user.display_name %></p>
                       <p class="muted">Coach reply</p>
                     </div>
                   </div>
