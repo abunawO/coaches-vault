@@ -142,7 +142,7 @@
                     <% if logged_in? %>
                     <div class="topnav__user">
                         <span class="topnav__signedin">Signed in as</span>
-                        <span class="topnav__email"><%= current_user.email %></span>
+                        <span class="topnav__email"><%= current_user.display_name %></span>
                     </div>
                     <%= button_to "Logout", logout_path, method: :delete, form: { class: "inline-form" }, class: "btn btn-secondary" %>
                     <% end %>
@@ -217,7 +217,7 @@
                 <div class="topnav__panel-account">
                     <div class="topnav__user">
                         <span class="topnav__signedin">Signed in as</span>
-                        <span class="topnav__email"><%= current_user.email %></span>
+                        <span class="topnav__email"><%= current_user.display_name %></span>
                     </div>
                     <%= button_to "Logout", logout_path, method: :delete, form: { class: "inline-form" }, class: "btn btn-secondary btn-full" %>
                 </div>
